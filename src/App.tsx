@@ -22,6 +22,8 @@ import ContactPage from './pages/ContactPage';
 import AProposPage from './pages/AproposPage';
 import ConsultantsPage from './pages/ConsultantsPage';
 import ConsultantDetailPage from './pages/ConsultantDetailPage';
+import AuthCallbackPage from './pages/AuthCallbackPage';
+import ProfileCompletionPage from './pages/ProfileCompletionPage';
 
 // Composants Particuliers
 import Particuliers from './pages/Particuliers/Particuliers';
@@ -206,6 +208,8 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignupPage />} />
+            <Route path="auth/callback" element={<AuthCallbackPage />} />
+            <Route path="complete-profile" element={<ProfileCompletionPage />} />
             <Route path="prendre-rendez-vous" element={<AppointmentBookingPage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="apropos" element={<AProposPage />} />

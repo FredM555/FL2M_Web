@@ -339,10 +339,21 @@ const logUserLogin = (userId: string, isDirectAuth = false) => {
 
   const signInWithGoogle = () => {
     console.log('[SIGNIN_GOOGLE] Tentative de connexion avec Google');
+
+    // Sauvegarder la page actuelle pour redirection après OAuth
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/login' && currentPath !== '/signup') {
+      sessionStorage.setItem('oauth_redirect', currentPath);
+    }
+
     return supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent',
+        },
       },
     })
       .then(({ error }) => {
@@ -356,6 +367,13 @@ const logUserLogin = (userId: string, isDirectAuth = false) => {
 
   const signInWithApple = () => {
     console.log('[SIGNIN_APPLE] Tentative de connexion avec Apple');
+
+    // Sauvegarder la page actuelle pour redirection après OAuth
+    const currentPath = window.location.pathname;
+    if (currentPath !== '/login' && currentPath !== '/signup') {
+      sessionStorage.setItem('oauth_redirect', currentPath);
+    }
+
     return supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {

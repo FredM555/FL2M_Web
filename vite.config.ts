@@ -12,7 +12,7 @@ export default defineConfig({
   },
   server: {
     headers: {
-      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.ipify.org; frame-src 'self' https://*.supabase.co; style-src 'self' 'unsafe-inline';img-src 'self' https://source.unsplash.com;"
+      'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://*.supabase.co https://accounts.google.com https://appleid.apple.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.ipify.org https://accounts.google.com https://appleid.apple.com; frame-src 'self' https://*.supabase.co https://accounts.google.com https://appleid.apple.com; style-src 'self' 'unsafe-inline' https://accounts.google.com; img-src 'self' https://source.unsplash.com https://*.googleusercontent.com;"
     }
   }
 })
