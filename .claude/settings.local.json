@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep:*)",
+      "Bash(awk:*)",
+      "Bash(npx eslint:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

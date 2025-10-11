@@ -1,0 +1,538 @@
+// src/services/supabase.ts
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { Database } from '../types/database.types';
+
+// Types pour la base de données
+export type Profile = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  phone?: string;
+  email?: string;
+  birth_date?: string;
+  user_type: 'admin' | 'intervenant' | 'client';
+  created_at: string;
+  updated_at: string;
+  // Nouveaux champs
+  is_active?: boolean;
+  created_by?: string;
+  updated_by?: string;
+};
+
+export type Service = {
+  id: string;
+  code: string;
+  name: string;
+  category: 'particuliers' | 'professionnels' | 'sportifs';
+  subcategory: string;
+  price: number;
+  duration: number;
+  description?: string;
+  is_on_demand: boolean;
+  created_at: string;
+  updated_at: string;
+  // Nouveaux champs
+  created_by?: string;
+  updated_by?: string;
+};
+
+export type Practitioner = {
+  id: string;
+  user_id: string;
+  bio?: string;
+  priority: number;
+  created_at: string;
+  updated_at: string;
+  profile?: Profile;
+  // Nouveaux champs
+  created_by?: string;
+  updated_by?: string;
+};
+
+export type Appointment = {
+  id: string;
+  client_id: string;
+  practitioner_id: string;
+  service_id: string;
+  start_time: string;
+  end_time: string;
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  payment_status: 'unpaid' | 'paid' | 'refunded';
+  payment_id?: string;
+  notes?: string;
+  // Les champs beneficiary existaient déjà
+  beneficiary_first_name?: string;
+  beneficiary_last_name?: string;
+  beneficiary_birth_date?: string;
+  created_at: string;
+  updated_at: string;
+  // Relations
+  client?: Profile;
+  practitioner?: Practitioner;
+  service?: Service;
+  // Nouveaux champs
+  created_by?: string;
+  updated_by?: string;
+  rating?: number;
+  review?: string;
+};
+
+export type Availability = {
+  id: string;
+  practitioner_id: string;
+  day_of_week: number;
+  start_time: string;
+  end_time: string;
+};
+
+// Nouveau type pour les logs de connexion
+export type LoginLog = {
+  id: string;
+  user_id: string;
+  login_time: string;
+  ip_address?: string;
+  user_agent?: string;
+  country?: string;
+  city?: string;
+  region?: string;
+  latitude?: number;
+  longitude?: number;
+};
+
+// Nouveau type pour les documents de rendez-vous
+export type AppointmentDocument = {
+  id: string;
+  appointment_id: string;
+  file_name: string;
+  file_path: string;
+  file_size?: number;
+  file_type?: string;
+  uploaded_at: string;
+  uploaded_by?: string;
+  description?: string;
+};
+
+// URL et clé d'API Supabase
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+// Création du client Supabase avec options de persistance
+export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,  // Persister la session dans localStorage
+    autoRefreshToken: true, // Rafraîchir automatiquement le token
+    detectSessionInUrl: true // Détecter la session dans l'URL (pour les connexions OAuth)
+  }
+});
+
+// Fonctions d'aide pour les opérations Supabase
+
+// Profils
+export const getProfile = async (userId: string) => {
+  console.log('[GET_PROFILE] Début récupération profil pour utilisateur:', userId);
+  try {
+    const result = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+    
+    console.log('[GET_PROFILE] Résultat de la requête:', result);
+    return result;
+  } catch (error) {
+    console.error('[GET_PROFILE] Exception dans getProfile:', error);
+    throw error;
+  }
+};
+
+export const createProfile = async (profileData: Partial<Profile>) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .insert(profileData)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const updateProfile = async (userId: string, profileData: Partial<Profile>) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update(profileData)
+    .eq('id', userId)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+// Fonction pour désactiver un profil utilisateur
+export const deactivateProfile = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('profiles')
+    .update({ is_active: false })
+    .eq('id', userId)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+// Services
+export const getServices = async (category?: string) => {
+  let query = supabase.from('services').select('*');
+  
+  if (category) {
+    query = query.eq('category', category);
+  }
+  
+  const { data, error } = await query.order('name');
+  
+  return { data, error };
+};
+
+export const getServiceById = async (serviceId: string) => {
+  const { data, error } = await supabase
+    .from('services')
+    .select('*')
+    .eq('id', serviceId)
+    .single();
+  
+  return { data, error };
+};
+
+export const createService = async (serviceData: Partial<Service>) => {
+  const { data, error } = await supabase
+    .from('services')
+    .insert(serviceData)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const updateService = async (serviceId: string, serviceData: Partial<Service>) => {
+  const { data, error } = await supabase
+    .from('services')
+    .update(serviceData)
+    .eq('id', serviceId)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const deleteService = async (serviceId: string) => {
+  const { error } = await supabase
+    .from('services')
+    .delete()
+    .eq('id', serviceId);
+  
+  return { error };
+};
+
+// Intervenants
+export const getPractitioners = async () => {
+  const { data, error } = await supabase
+    .from('practitioners')
+    .select(`
+      *,
+      profile:profiles(*)
+    `)
+    .order('priority', { ascending: false });
+  
+  return { data, error };
+};
+
+export const getPractitionerById = async (practitionerId: string) => {
+  const { data, error } = await supabase
+    .from('practitioners')
+    .select(`
+      *,
+      profile:profiles(*)
+    `)
+    .eq('id', practitionerId)
+    .single();
+  
+  return { data, error };
+};
+
+export const createPractitioner = async (practitionerData: Partial<Practitioner>) => {
+  const { data, error } = await supabase
+    .from('practitioners')
+    .insert(practitionerData)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const updatePractitioner = async (practitionerId: string, practitionerData: Partial<Practitioner>) => {
+  const { data, error } = await supabase
+    .from('practitioners')
+    .update(practitionerData)
+    .eq('id', practitionerId)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const deletePractitioner = async (practitionerId: string) => {
+  const { error } = await supabase
+    .from('practitioners')
+    .delete()
+    .eq('id', practitionerId);
+  
+  return { error };
+};
+
+// Disponibilités
+export const getAvailabilities = async (practitionerId: string) => {
+  const { data, error } = await supabase
+    .from('availability')
+    .select('*')
+    .eq('practitioner_id', practitionerId);
+  
+  return { data, error };
+};
+
+export const createAvailability = async (availabilityData: Partial<Availability>) => {
+  const { data, error } = await supabase
+    .from('availability')
+    .insert(availabilityData)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const deleteAvailability = async (availabilityId: string) => {
+  const { error } = await supabase
+    .from('availability')
+    .delete()
+    .eq('id', availabilityId);
+  
+  return { error };
+};
+
+// Rendez-vous
+export const getAppointments = async (userId: string, isAdmin: boolean = false) => {
+  let query = supabase.from('appointments').select(`
+    *,
+    client:profiles!client_id(*),
+    practitioner:practitioners!practitioner_id(
+      *,
+      profile:profiles(*)
+    ),
+    service:services(*)
+  `);
+  
+  if (!isAdmin) {
+    query = query.eq('client_id', userId);
+  }
+  
+  const { data, error } = await query.order('start_time', { ascending: true });
+  
+  return { data, error };
+};
+
+export const getAppointmentById = async (appointmentId: string) => {
+  const { data, error } = await supabase
+    .from('appointments')
+    .select(`
+      *,
+      client:profiles!client_id(*),
+      practitioner:practitioners!practitioner_id(
+        *,
+        profile:profiles(*)
+      ),
+      service:services(*)
+    `)
+    .eq('id', appointmentId)
+    .single();
+  
+  return { data, error };
+};
+
+export const createAppointment = async (appointmentData: Partial<Appointment>) => {
+  const { data, error } = await supabase
+    .from('appointments')
+    .insert(appointmentData)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const updateAppointment = async (appointmentId: string, appointmentData: Partial<Appointment>) => {
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(appointmentData)
+    .eq('id', appointmentId)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const updateAppointmentStatus = async (appointmentId: string, status: string) => {
+  const { data, error } = await supabase
+    .from('appointments')
+    .update({ status })
+    .eq('id', appointmentId)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const updatePaymentStatus = async (appointmentId: string, paymentStatus: string, paymentId?: string) => {
+  const updateData: any = { payment_status: paymentStatus };
+  if (paymentId) {
+    updateData.payment_id = paymentId;
+  }
+  
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(updateData)
+    .eq('id', appointmentId)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const rateAppointment = async (appointmentId: string, rating: number, review?: string) => {
+  const updateData: Partial<Appointment> = { rating };
+  if (review) {
+    updateData.review = review;
+  }
+  
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(updateData)
+    .eq('id', appointmentId)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+// Documents de rendez-vous
+export const getAppointmentDocuments = async (appointmentId: string) => {
+  const { data, error } = await supabase
+    .from('appointment_documents')
+    .select('*')
+    .eq('appointment_id', appointmentId);
+  
+  return { data, error };
+};
+
+export const uploadAppointmentDocument = async (
+  appointmentId: string, 
+  file: File, 
+  description?: string
+) => {
+  // 1. Téléchargement du fichier dans le stockage Supabase
+  const fileName = `${Date.now()}_${file.name}`;
+  const filePath = `appointments/${appointmentId}/${fileName}`;
+  
+  const { data: fileData, error: fileError } = await supabase
+    .storage
+    .from('documents')
+    .upload(filePath, file);
+  
+  if (fileError) {
+    return { error: fileError };
+  }
+  
+  // 2. Enregistrement des métadonnées du document dans la base de données
+  const documentData: Partial<AppointmentDocument> = {
+    appointment_id: appointmentId,
+    file_name: fileName,
+    file_path: filePath,
+    file_size: file.size,
+    file_type: file.type,
+    description
+  };
+  
+  const { data, error } = await supabase
+    .from('appointment_documents')
+    .insert(documentData)
+    .select()
+    .single();
+  
+  return { data, error };
+};
+
+export const deleteAppointmentDocument = async (documentId: string) => {
+  // 1. Récupérer les informations du document
+  const { data: document, error: fetchError } = await supabase
+    .from('appointment_documents')
+    .select('*')
+    .eq('id', documentId)
+    .single();
+  
+  if (fetchError || !document) {
+    return { error: fetchError || new Error('Document not found') };
+  }
+  
+  // 2. Supprimer le fichier du stockage
+  const { error: storageError } = await supabase
+    .storage
+    .from('documents')
+    .remove([document.file_path]);
+  
+  if (storageError) {
+    return { error: storageError };
+  }
+  
+  // 3. Supprimer l'enregistrement de la base de données
+  const { error } = await supabase
+    .from('appointment_documents')
+    .delete()
+    .eq('id', documentId);
+  
+  return { error };
+};
+
+// Logs de connexion utilisateur
+export const getLoginLogs = async (userId: string) => {
+  const { data, error } = await supabase
+    .from('login_logs')
+    .select('*')
+    .eq('user_id', userId)
+    .order('login_time', { ascending: false });
+  
+  return { data, error };
+};
+
+// Fonction pour enregistrer manuellement une connexion (utile si la fonction RPC ne fonctionne pas)
+export const logUserLogin = async (
+  userId: string, 
+  ipAddress?: string, 
+  userAgent?: string, 
+  geoData?: {
+    country?: string;
+    city?: string;
+    region?: string;
+    latitude?: number;
+    longitude?: number;
+  }
+) => {
+  const logData: Partial<LoginLog> = {
+    user_id: userId,
+    ip_address: ipAddress,
+    user_agent: userAgent,
+    ...geoData
+  };
+  
+  const { data, error } = await supabase
+    .from('login_logs')
+    .insert(logData)
+    .select()
+    .single();
+  
+  return { data, error };
+};
