@@ -2,6 +2,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Database } from '../types/database.types';
 
+
 // Types pour la base de données
 export type Profile = {
   id: string;
