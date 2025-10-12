@@ -168,9 +168,8 @@ const ModulesPage: React.FC = () => {
             className="bg-white shadow-md rounded-lg overflow-hidden hover:shadow-lg transition-shadow flex flex-col"
           >
             <div className="p-6 flex flex-col items-center text-center">
-              <module.icone 
-                className="w-16 h-16 text-blue-600 mb-4" 
-                strokeWidth={1.5} 
+              <module.icone
+                className="w-16 h-16 text-blue-600 mb-4"
               />
               <h2 className="text-xl font-semibold mb-2">
                 {module.titre}

@@ -1,22 +1,18 @@
 // src/pages/ConsultantsPage.tsx
 import React, { useState, useEffect } from 'react';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  Grid, 
-  Card, 
-  CardContent, 
-  CardMedia, 
-  Avatar, 
-  Divider, 
-  Button, 
-  Chip, 
-  CircularProgress, 
+import {
+  Container,
+  Typography,
+  Box,
+  Grid,
+  Card,
+  CardContent,
+  Avatar,
+  Button,
+  Chip,
+  CircularProgress,
   Alert,
-  Paper,
-  useTheme,
-  useMediaQuery
+  Paper
 } from '@mui/material';
 import { supabase } from '../services/supabase';
 import { Link as RouterLink } from 'react-router-dom';
@@ -43,8 +39,6 @@ interface Consultant {
 }
 
 const ConsultantsPage: React.FC = () => {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

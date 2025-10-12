@@ -638,7 +638,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                   value={currentAppointment.status || 'pending'}
                   onChange={(e) => setCurrentAppointment({
                     ...currentAppointment,
-                    status: e.target.value
+                    status: e.target.value as 'pending' | 'confirmed' | 'cancelled' | 'completed'
                   })}
                   label="Statut"
                 >
@@ -657,7 +657,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                   value={currentAppointment.payment_status || 'unpaid'}
                   onChange={(e) => setCurrentAppointment({
                     ...currentAppointment,
-                    payment_status: e.target.value
+                    payment_status: e.target.value as 'unpaid' | 'paid' | 'refunded'
                   })}
                   label="Statut de paiement"
                 >

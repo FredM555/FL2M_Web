@@ -25,7 +25,6 @@ import {
   Container,
   Badge
 } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -52,7 +51,7 @@ const AdminLayout: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [menuOpen, setMenuOpen] = useState(!isMobile);
-  const { user, profile, signOut } = useAuth();
+  const { profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);

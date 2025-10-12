@@ -43,15 +43,15 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon, color, loading 
     >
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6" color="text.secondary">{title}</Typography>
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
           justifyContent: 'center',
           bgcolor: `${color}20`, // Couleur avec 20% d'opacité
           borderRadius: '50%',
           p: 1
         }}>
-          {React.cloneElement(icon, { sx: { fontSize: 28, color: color } })}
+          {React.cloneElement(icon, { sx: { fontSize: 28, color: color } } as any)}
         </Box>
       </Box>
       

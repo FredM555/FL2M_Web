@@ -8,7 +8,6 @@ import {
   Button,
   Card,
   CardContent,
-  Divider,
   IconButton,
   useTheme,
   useMediaQuery,
@@ -17,7 +16,7 @@ import {
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { format, parseISO, addDays, isSameDay, eachDayOfInterval } from 'date-fns';
+import { format, parseISO, eachDayOfInterval } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 // Type pour les créneaux de rendez-vous

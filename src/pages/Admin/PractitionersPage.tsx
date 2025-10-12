@@ -1,7 +1,7 @@
 // src/pages/admin/PractitionersPage.tsx
 import React, { useState, useEffect } from 'react';
-import { 
-  Box, 
+import {
+  Box,
   Typography,
   Paper,
   Button,
@@ -21,7 +21,6 @@ import {
   Alert,
   Card,
   CardContent,
-  Divider,
   Table,
   TableBody,
   TableCell,
@@ -36,7 +35,6 @@ import { supabase, Practitioner, Profile } from '../../services/supabase';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
-import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '../../context/AuthContext';

@@ -52,9 +52,6 @@ interface Consultant {
 
 const ConsultantDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const navigate = useNavigate();
   const [consultant, setConsultant] = useState<Consultant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

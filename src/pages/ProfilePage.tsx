@@ -46,9 +46,9 @@ const ProfilePage = () => {
         first_name: firstName,
         last_name: lastName,
         pseudo: pseudo,
-        phone: phone || null,
+        phone: phone || undefined,
         email: email || user?.email,
-        birth_date: birthDate || null
+        birth_date: birthDate || undefined
       });
       
       if (error) throw error;

@@ -21,9 +21,6 @@ import {
   Select,
   Alert,
   CircularProgress,
-  Divider,
-  Tabs,
-  Tab,
   useTheme,
   useMediaQuery,
   TextField,
@@ -41,7 +38,7 @@ import {
   bookAppointment
 } from '../services/supabase-appointments';
 import { Service, Practitioner, Appointment } from '../services/supabase';
-import { format, parseISO, addDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import WeeklyCalendar from '../components/appointments/WeeklyCalendar'; // Importer le nouveau composant
 
@@ -81,7 +78,6 @@ const steps = ['Choix du service', 'Sélection du créneau', 'Confirmation et pa
 
 const AppointmentBookingPage: React.FC = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const navigate = useNavigate();
   const location = useLocation();
   const { user, profile } = useAuth();
@@ -202,7 +198,7 @@ const AppointmentBookingPage: React.FC = () => {
       if (slotsError) throw slotsError;
       
       if (slots) {
-        setAppointmentSlots(slots as AppointmentSlot[]);
+        setAppointmentSlots(slots as unknown as AppointmentSlot[]);
       }
     } catch (err) {
       console.error('Erreur lors du chargement des créneaux:', err);
@@ -289,7 +285,7 @@ const AppointmentBookingPage: React.FC = () => {
   };
   
   // Gestion des sélections
-  const handleCategoryChange = (e: React.ChangeEvent<{ value: unknown }>) => {
+  const handleCategoryChange = (e: any) => {
     const category = e.target.value as string;
     setSelectedCategory(category);
     setSelectedService(null);
@@ -310,10 +306,10 @@ const AppointmentBookingPage: React.FC = () => {
     }
   };
   
-  const handlePractitionerChange = (e: React.ChangeEvent<{ value: unknown }>) => {
+  const handlePractitionerChange = (e: any) => {
     const practitionerId = e.target.value as string;
     setSelectedPractitioner(practitionerId);
-    
+
     if (selectedService && selectedWeek) {
       loadSlotsForWeek(
         selectedService.id,
@@ -480,7 +476,7 @@ const AppointmentBookingPage: React.FC = () => {
             onWeekChange={handleWeekChange}
             appointmentSlots={appointmentSlots}
             selectedSlot={selectedSlot}
-            onSlotSelect={handleSlotSelect}
+            onSlotSelect={handleSlotSelect as any}
             loading={loading}
           />
         ) : (

@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Typography, 
-  Container, 
-  Grid, 
-  Card, 
-  CardContent, 
+import {
+  Typography,
+  Container,
+  Grid,
+  Card,
+  CardContent,
   Button,
   CircularProgress,
   Alert
 } from '@mui/material';
-import ChildCareIcon from '@mui/icons-material/ChildCare';
 import SchoolIcon from '@mui/icons-material/School';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SportsIcon from '@mui/icons-material/SportsScore';

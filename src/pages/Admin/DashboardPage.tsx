@@ -1,11 +1,9 @@
 // src/pages/admin/DashboardPage.tsx
 import React from 'react';
-import { 
-  Grid, 
-  Typography, 
-  Box,
-  Paper,
-  Divider
+import {
+  Grid,
+  Typography,
+  Box
 } from '@mui/material';
 import AdminStats from '../../components/admin/AdminStats';
 import RecentEntries from '../../components/admin/RecentEntries';

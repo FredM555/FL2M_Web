@@ -1,6 +1,5 @@
 // src/services/supabase.ts
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '../types/database.types';
 
 // Types pour la base de données
 export type Profile = {
@@ -383,23 +382,23 @@ export const getAppointmentDocuments = (appointmentId: string) => {
 };
 
 export const uploadAppointmentDocument = (
-  appointmentId: string, 
-  file: File, 
+  appointmentId: string,
+  file: File,
   description?: string
-) => {
+): Promise<any> => {
   // 1. Téléchargement du fichier dans le stockage Supabase
   const fileName = `${Date.now()}_${file.name}`;
   const filePath = `appointments/${appointmentId}/${fileName}`;
-  
+
   return supabase
     .storage
     .from('documents')
     .upload(filePath, file)
-    .then(({ data: fileData, error: fileError }) => {
+    .then(({ data: fileData, error: fileError }: any) => {
       if (fileError) {
         return { error: fileError };
       }
-      
+
       // 2. Enregistrement des métadonnées du document dans la base de données
       const documentData: Partial<AppointmentDocument> = {
         appointment_id: appointmentId,
@@ -409,44 +408,44 @@ export const uploadAppointmentDocument = (
         file_type: file.type,
         description
       };
-      
+
       return supabase
         .from('appointment_documents')
         .insert(documentData)
         .select()
         .single();
-    });
+    }) as any;
 };
 
-export const deleteAppointmentDocument = (documentId: string) => {
+export const deleteAppointmentDocument = (documentId: string): Promise<any> => {
   // 1. Récupérer les informations du document
   return supabase
     .from('appointment_documents')
     .select('*')
     .eq('id', documentId)
     .single()
-    .then(({ data: document, error: fetchError }) => {
+    .then(({ data: document, error: fetchError }: any) => {
       if (fetchError || !document) {
         return { error: fetchError || new Error('Document not found') };
       }
-      
+
       // 2. Supprimer le fichier du stockage
       return supabase
         .storage
         .from('documents')
         .remove([document.file_path])
-        .then(({ error: storageError }) => {
+        .then(({ error: storageError }: any) => {
           if (storageError) {
             return { error: storageError };
           }
-          
+
           // 3. Supprimer l'enregistrement de la base de données
           return supabase
             .from('appointment_documents')
             .delete()
             .eq('id', documentId);
         });
-    });
+    }) as any;
 };
 
 // Logs de connexion utilisateur

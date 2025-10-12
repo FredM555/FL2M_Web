@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Typography, 
-  Container, 
-  Grid, 
-  Card, 
-  CardContent, 
+import {
+  Typography,
+  Container,
+  Grid,
+  Card,
+  CardContent,
   Button,
   CircularProgress,
   Alert
 } from '@mui/material';
-import GroupIcon from '@mui/icons-material/Group';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import CommunicationIcon from '@mui/icons-material/QuestionAnswer';
 import HandshakeIcon from '@mui/icons-material/Handshake';

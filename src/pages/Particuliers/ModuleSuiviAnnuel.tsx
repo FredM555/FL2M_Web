@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Typography, 
-  Container, 
-  Grid, 
-  Card, 
-  CardContent, 
+import {
+  Typography,
+  Container,
+  Grid,
+  Card,
+  CardContent,
   Button,
   CircularProgress,
   Alert
 } from '@mui/material';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import RecordVoiceOverIcon from '@mui/icons-material/RecordVoiceOver';
 import AssessmentIcon from '@mui/icons-material/Assessment';

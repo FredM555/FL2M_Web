@@ -4,7 +4,6 @@ import {
   Box,
   Button,
   FormControl,
-  FormHelperText,
   Grid,
   InputLabel,
   MenuItem,
@@ -29,7 +28,7 @@ type PaymentMethodOption = {
   value: string;
   label: string;
   icon: React.ReactNode;
-  fields: JSX.Element;
+  fields: React.ReactElement;
 };
 
 /**

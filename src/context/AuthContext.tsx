@@ -1,6 +1,6 @@
 // src/context/AuthContext.tsx - Solution modifiée sans awaits
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
-import { Session, User } from '@supabase/supabase-js';
+import { User } from '@supabase/supabase-js';
 import { supabase, Profile, getProfile } from '../services/supabase';
 
 interface AuthContextType {
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, [user, profile, loading]);
 
   // Fonction sécurisée pour mettre à jour l'état
-  const safeSetState = <T,>(setter: React.Dispatch<React.SetStateAction<T>>, value: T, stateName: string) => {
+  const safeSetState = (setter: any, value: any, stateName: string) => {
     if (isMounted.current) {
       console.log(`[SAFE_STATE] Mise à jour de ${stateName}:`, value);
       setter(value);
@@ -449,22 +449,22 @@ const logUserLogin = (userId: string, isDirectAuth = false) => {
     }
     
     console.log('[UPDATE_PROFILE] Tentative de mise à jour du profil');
-    return supabase.from('profiles').update(profileData).eq('id', user.id)
-      .then(({ error }) => {
+    return (supabase.from('profiles').update(profileData).eq('id', user.id) as any)
+      .then(({ error }: any) => {
         if (error) {
           console.error('[UPDATE_PROFILE] Erreur mise à jour profil:', error.message);
         } else {
           console.log('[UPDATE_PROFILE] Profil mis à jour avec succès');
-          safeSetState(setProfile, prev => {
+          safeSetState(setProfile, (prev: any) => {
             const updated = prev ? { ...prev, ...profileData } : null;
             console.log('[UPDATE_PROFILE] Nouvel état profil:', updated);
             return updated;
           }, 'profile (update)');
         }
-        
+
         return { error: error ? new Error(error.message) : null };
       })
-      .catch(error => {
+      .catch((error: any) => {
         console.error('[UPDATE_PROFILE] Exception lors de la mise à jour du profil:', error);
         return { error: error as Error };
       });

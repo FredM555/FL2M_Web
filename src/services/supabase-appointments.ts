@@ -1,6 +1,6 @@
 // src/services/supabase-appointments.ts
-import { supabase, Service, Practitioner, Appointment, Profile } from './supabase';
-import { startOfWeek, endOfWeek, format, parseISO, addDays } from 'date-fns';
+import { supabase, Appointment } from './supabase';
+import { startOfWeek, endOfWeek, format, parseISO } from 'date-fns';
 
 /**
  * Récupérer les services disponibles, éventuellement filtrés par catégorie

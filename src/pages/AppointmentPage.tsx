@@ -1,20 +1,19 @@
 // src/pages/AppointmentPage.tsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Box, 
-  Button, 
-  Container, 
-  FormControl, 
-  FormHelperText, 
-  Grid, 
-  InputLabel, 
-  MenuItem, 
-  Paper, 
-  Select, 
-  Step, 
-  StepLabel, 
-  Stepper, 
+import {
+  Box,
+  Button,
+  Container,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
+  Paper,
+  Select,
+  Step,
+  StepLabel,
+  Stepper,
   Typography,
   Alert,
   Card,
@@ -37,7 +36,7 @@ import {
   getServices, 
   createAppointment 
 } from '../services/supabase';
-import { format, addMinutes, isPast, isSameDay, parseISO } from 'date-fns';
+import { format, addMinutes } from 'date-fns';
 
 // Étapes de la prise de rendez-vous
 const steps = ['Choisir une prestation', 'Sélectionner un intervenant', 'Choisir une date', 'Confirmer et payer'];

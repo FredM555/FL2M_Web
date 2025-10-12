@@ -109,13 +109,13 @@ const AdminContactMessagesPage: React.FC = () => {
   }, [tabValue, refreshTrigger]);
   
   // Gestion du changement d'onglet
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
     setPage(0); // Réinitialiser la pagination lors du changement d'onglet
   };
-  
+
   // Pagination
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
   
@@ -375,7 +375,7 @@ const AdminContactMessagesPage: React.FC = () => {
                           label={getStatusChipProps(message.status).label}
                           color={getStatusChipProps(message.status).color}
                           size="small"
-                          icon={getStatusChipProps(message.status).icon}
+                          icon={getStatusChipProps(message.status).icon || undefined}
                         />
                       </TableCell>
                       <TableCell align="right">
@@ -499,7 +499,7 @@ const AdminContactMessagesPage: React.FC = () => {
                     <Chip
                       label={getStatusChipProps(selectedMessage.status).label}
                       color={getStatusChipProps(selectedMessage.status).color}
-                      icon={getStatusChipProps(selectedMessage.status).icon}
+                      icon={getStatusChipProps(selectedMessage.status).icon || undefined}
                     />
                   </Box>
                 </Grid>

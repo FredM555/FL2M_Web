@@ -151,12 +151,12 @@ const MainLayout: React.FC = () => {
             }}>
               {/* Logo/Titre */}
               <Box sx={{ textAlign: 'center', flexGrow: 1 }}>
-              <Typography 
-                variant="h4" 
-                component={RouterLink} 
-                to="/" er
-                sx={{ 
-                  textDecoration: 'none', 
+              <Typography
+                variant="h4"
+                component={RouterLink}
+                to="/"
+                sx={{
+                  textDecoration: 'none',
                   color: 'inherit',
                   fontWeight: 'bold',
                 }}

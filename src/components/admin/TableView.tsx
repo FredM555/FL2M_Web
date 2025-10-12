@@ -75,7 +75,6 @@ const TableView: React.FC<TableViewProps> = ({
   const [order, setOrder] = useState<'asc' | 'desc'>(defaultSortDirection);
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(loading);
-  const [error, setError] = useState<string | null>(null);
 
   // Charger les données si elles ne sont pas fournies en prop
   useEffect(() => {
@@ -99,7 +98,6 @@ const TableView: React.FC<TableViewProps> = ({
 
       setRows(data.map(formatRow));
     } catch (err: any) {
-      setError(err.message);
       console.error(`Erreur lors du chargement des données de ${tableName}:`, err);
     } finally {
       setIsLoading(false);
@@ -120,7 +118,7 @@ const TableView: React.FC<TableViewProps> = ({
     setOrderBy(property);
   };
 
-  const handleChangePage = (event: unknown, newPage: number) => {
+  const handleChangePage = (_event: unknown, newPage: number) => {
     setPage(newPage);
   };
 

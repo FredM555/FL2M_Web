@@ -3,7 +3,13 @@
     "allow": [
       "Bash(grep:*)",
       "Bash(awk:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "Bash(npm install:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run build)",
+      "Bash(npx cap sync:*)",
+      "Bash(gradlew.bat assembleDebug:*)",
+      "Bash(./gradlew:*)"
     ],
     "deny": [],
     "ask": []

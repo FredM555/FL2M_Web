@@ -18,7 +18,6 @@ import {
   DialogActions,
   Card,
   CardContent,
-  CardHeader,
   FormControl,
   InputLabel,
   MenuItem,
@@ -41,7 +40,7 @@ import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { fr } from 'date-fns/locale';
-import { format, parseISO, addDays, addMinutes, addWeeks, setHours, setMinutes, isWithinInterval } from 'date-fns';
+import { format, parseISO, addDays, addMinutes, addWeeks } from 'date-fns';
 import { supabase } from '../../services/supabase';
 
 // Types
@@ -91,12 +90,6 @@ interface Appointment {
   service?: Service;
 }
 
-interface WeekInfo {
-  weekStart: string;
-  weekEnd: string;
-  displayRange: string;
-}
-
 interface AdminWeeklyCalendarProps {
   appointments: Appointment[];
   practitioners: Practitioner[];
@@ -129,7 +122,6 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   // États pour le dialogue
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'copy'>('create');
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [currentAppointment, setCurrentAppointment] = useState<Partial<Appointment>>({
     status: 'pending',
     payment_status: 'unpaid'
@@ -619,16 +611,12 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   
   // Filtrer les jours qui ont des rendez-vous
   const getActiveDays = () => {
-    const activeDays = weekDays.filter(day => {
+    weekDays.filter(day => {
       return timeSlots.some(slot => hasCellAppointments(day.dateString, slot.hour));
     });
-    
+
     // Si aucun jour actif, retourner tous les jours
-    if (activeDays.length === 0) {
-      return weekDays;
-    }
-    
-    return activeDays;
+    return weekDays;
   };
   
   // Gérer le début du drag and drop
@@ -697,7 +685,6 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   };
   
   const activeTimeSlots = getActiveTimeSlots();
-  const activeDays = getActiveDays();
   
   return (
     <Box sx={{ mb: 4 }}>
@@ -1164,7 +1151,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                       value={currentAppointment.status || 'pending'}
                       onChange={(e) => setCurrentAppointment({
                         ...currentAppointment,
-                        status: e.target.value
+                        status: e.target.value as 'pending' | 'confirmed' | 'cancelled' | 'completed'
                       })}
                       label="Statut"
                     >
@@ -1175,7 +1162,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                     </Select>
                   </FormControl>
                 </Grid>
-                
+
                 <Grid item xs={12} md={6}>
                   <FormControl fullWidth sx={{ mt: 1 }}>
                     <InputLabel>Statut de paiement</InputLabel>
@@ -1183,7 +1170,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                       value={currentAppointment.payment_status || 'unpaid'}
                       onChange={(e) => setCurrentAppointment({
                         ...currentAppointment,
-                        payment_status: e.target.value
+                        payment_status: e.target.value as 'unpaid' | 'paid' | 'refunded'
                       })}
                       label="Statut de paiement"
                     >

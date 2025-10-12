@@ -1,9 +1,9 @@
 // src/components/admin/RecentEntries.tsx
 import React, { useState, useEffect } from 'react';
-import { 
-  Paper, 
-  Typography, 
-  Box, 
+import {
+  Paper,
+  Typography,
+  Box,
   Table,
   TableBody,
   TableCell,
@@ -11,7 +11,6 @@ import {
   TableHead,
   TableRow,
   Chip,
-  CircularProgress,
   Skeleton,
   Button
 } from '@mui/material';
@@ -68,14 +67,18 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({
             
             if (appointmentsError) throw appointmentsError;
             
-            data = appointments.map(apt => ({
-              id: apt.id,
-              type: 'appointment',
-              title: apt.service?.name || 'Service inconnu',
-              description: `${apt.client?.first_name || ''} ${apt.client?.last_name || ''}`,
-              status: apt.status,
-              date: apt.start_time
-            }));
+            data = appointments.map(apt => {
+              const client = Array.isArray(apt.client) ? apt.client[0] : apt.client;
+              const service = Array.isArray(apt.service) ? apt.service[0] : apt.service;
+              return {
+                id: apt.id,
+                type: 'appointment',
+                title: service?.name || 'Service inconnu',
+                description: `${client?.first_name || ''} ${client?.last_name || ''}`.trim() || 'Client inconnu',
+                status: apt.status,
+                date: apt.start_time
+              };
+            });
             break;
             
           case 'users':

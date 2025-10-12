@@ -1,8 +1,8 @@
 import React from 'react';
-import { 
-  Card, 
-  CardContent, 
-  Typography, 
+import {
+  Card,
+  CardContent,
+  Typography,
   Grid,
   Button
 } from '@mui/material';
@@ -10,7 +10,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import GroupIcon from '@mui/icons-material/Group';
 import ChildCareIcon from '@mui/icons-material/ChildCare';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 
 // Interface pour définir la structure d'un module
 interface ModuleParticulier {
@@ -22,7 +22,7 @@ interface ModuleParticulier {
 }
 
 const ParticuliersPage: React.FC = () => {
-  const router = useRouter();
+  const navigate = useNavigate();
 
   // Liste des modules Particuliers
   const modules: ModuleParticulier[] = [
@@ -57,7 +57,7 @@ const ParticuliersPage: React.FC = () => {
   ];
 
   const handleModuleClick = (lien: string) => {
-    router.push(lien);
+    navigate(lien);
   };
 
   return (

@@ -124,10 +124,10 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
         }
 
         const [appointmentsResponse, usersResponse] = await Promise.all(fetchPromises);
-        
+
         // Vérifier les erreurs
-        if (appointmentsResponse.error) throw appointmentsResponse.error;
-        if (usersResponse.error) throw usersResponse.error;
+        if ('error' in appointmentsResponse && appointmentsResponse.error) throw appointmentsResponse.error;
+        if ('error' in usersResponse && usersResponse.error) throw usersResponse.error;
 
         const appointmentsData = appointmentsResponse.data || [];
         const usersData = usersResponse.data || [];

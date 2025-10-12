@@ -1,5 +1,5 @@
 // src/pages/admin/ServicesPage.tsx
-import React, { useState, useEffect, ReactElement } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Typography,
@@ -230,12 +230,12 @@ const AdminServicesPage: React.FC = () => {
     if (!selectedService.subcategory) {
       errors.subcategory = 'La sous-catégorie est requise';
     }
-    
-    if (selectedService.price < 0) {
+
+    if (selectedService.price !== undefined && selectedService.price < 0) {
       errors.price = 'Le prix ne peut pas être négatif';
     }
-    
-    if (selectedService.duration < 0) {
+
+    if (selectedService.duration !== undefined && selectedService.duration < 0) {
       errors.duration = 'La durée ne peut pas être négative';
     }
     
@@ -300,7 +300,7 @@ const AdminServicesPage: React.FC = () => {
   };
 
   // Gérer la fermeture du message de succès
-  const handleCloseSuccess = (event?: React.SyntheticEvent | Event, reason?: string) => {
+  const handleCloseSuccess = (_event?: React.SyntheticEvent | Event, reason?: string) => {
     if (reason === 'clickaway') {
       return;
     }
