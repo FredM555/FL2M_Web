@@ -91,7 +91,7 @@ const AProposPage: React.FC = () => {
             sx={{
               position: 'relative',
               overflow: 'hidden',
-              mb: 3,
+              mb: 1,
               borderRadius: '16px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
             }}
@@ -121,20 +121,20 @@ const AProposPage: React.FC = () => {
                   component="h1"
                   sx={{
                     fontWeight: 700,
-                    fontSize: { xs: '2rem', md: '3rem' },
+                    fontSize: { xs: '1.5rem', md: '2.5rem' },
                     textAlign: 'center',
                     background: 'linear-gradient(45deg, #FFD700, #FFA500)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3))',
-                    mb: 2,
+                    mb: 1,
                   }}
                 >
                   Notre Philosophie
                 </Typography>
                 <Typography
-                  variant="h6"
+                  variant="h5"
                   sx={{
                     fontWeight: 400,
                     color: 'rgba(255, 255, 255, 0.9)',
@@ -149,17 +149,13 @@ const AProposPage: React.FC = () => {
               </Container>
             </Box>
           </Box>
-        </Container>
-      </Box>
 
-      {/* Contenu principal */}
-      <Box
-        sx={{
-          background: 'linear-gradient(to bottom, rgba(255, 215, 0, 0.03) 0%, rgba(255, 165, 0, 0.02) 100%)',
-          py: 8,
-        }}
-      >
-        <Container maxWidth="lg">
+        <Box
+          sx={{
+            py: 0
+          }}
+        >
+          <Container maxWidth="lg">
 
           <Grid container spacing={6} sx={{ mb: 6 }}>
             {piliers.map((pilier) => (
@@ -482,6 +478,8 @@ const AProposPage: React.FC = () => {
               </Grid>
             ))}
           </Grid>
+          </Container>
+        </Box>
         </Container>
       </Box>
     </Box>

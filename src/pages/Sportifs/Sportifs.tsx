@@ -57,7 +57,7 @@ const Sportifs: React.FC = () => {
             sx={{
               position: 'relative',
               overflow: 'hidden',
-              mb: 3,
+              mb: 1,
               borderRadius: '16px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
             }}
@@ -82,21 +82,21 @@ const Sportifs: React.FC = () => {
               }}
             >
               <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 1 }}>
                   <Tooltip title="Module Team" placement="right">
                     <IconButton
                       onClick={() => navigate('/sportifs/module-team')}
-                      sx={{
-                        color: 'rgba(255, 215, 0, 0.8)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                        backdropFilter: 'blur(10px)',
-                        '&:hover': {
-                          color: '#FFD700',
-                          backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                          transform: 'scale(1.1)',
-                        },
-                        transition: 'all 0.3s ease',
-                      }}
+                sx={{
+                  color: 'rgba(17, 153, 142, 0.8)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(10px)',
+                  '&:hover': {
+                    color: '#38ef7d',
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'scale(1.1)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
                     >
                       <ArrowBackIcon />
                     </IconButton>
@@ -105,16 +105,16 @@ const Sportifs: React.FC = () => {
                   <Typography
                     variant="h2"
                     component="h1"
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: { xs: '1.5rem', md: '2.5rem' },
-                      textAlign: 'center',
-                      background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3))',
-                    }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: '1.5rem', md: '2.5rem' },
+                  textAlign: 'center',
+                  background: 'linear-gradient(45deg, #11998e, #38ef7d)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 2px 8px rgba(17, 153, 142, 0.3))',
+                }}
                   >
                     Modules Sportifs
                   </Typography>
@@ -122,24 +122,24 @@ const Sportifs: React.FC = () => {
                   <Tooltip title="Module Solo" placement="left">
                     <IconButton
                       onClick={() => navigate('/sportifs/module-solo')}
-                      sx={{
-                        color: 'rgba(255, 215, 0, 0.8)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                        backdropFilter: 'blur(10px)',
-                        '&:hover': {
-                          color: '#FFD700',
-                          backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                          transform: 'scale(1.1)',
-                        },
-                        transition: 'all 0.3s ease',
-                      }}
+sx={{
+                    color: 'rgba(17, 153, 142, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    backdropFilter: 'blur(10px)',
+                    '&:hover': {
+                      color: '#38ef7d',
+                      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                      transform: 'scale(1.1)',
+                    },
+                    transition: 'all 0.3s ease',
+                  }}
                     >
                       <ArrowForwardIcon />
                     </IconButton>
                   </Tooltip>
                 </Box>
                 <Typography
-                  variant="h6"
+                  variant="h5"
                   sx={{
                     fontWeight: 400,
                     color: 'rgba(255, 255, 255, 0.9)',
@@ -155,17 +155,12 @@ const Sportifs: React.FC = () => {
               </Container>
             </Box>
           </Box>
-        </Container>
-      </Box>
-
-      <Box
-        sx={{
-          background: 'linear-gradient(to bottom, rgba(17, 153, 142, 0.03) 0%, rgba(56, 239, 125, 0.02) 100%)',
-          py: 8
-        }}
-      >
-        <Container maxWidth="lg">
-          <Grid container spacing={4} justifyContent="center">
+          <Box
+            sx={{
+              py: 0
+            }}
+          >
+            <Grid container spacing={4} justifyContent="center">
             {modules.map((module, index) => (
               <Grid item xs={12} md={6} lg={5} key={index}>
                 <Card
@@ -229,6 +224,7 @@ const Sportifs: React.FC = () => {
               </Grid>
             ))}
           </Grid>
+          </Box>
         </Container>
       </Box>
     </Box>

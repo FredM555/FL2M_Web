@@ -1101,7 +1101,7 @@ const MainLayout: React.FC = () => {
                   mb: 2,
                 }}
               >
-                F L M
+                F L ²M
               </Typography>
               <Typography
                 variant="body2"

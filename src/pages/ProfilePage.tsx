@@ -70,24 +70,25 @@ const ProfilePage = () => {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: 'calc(100vh - 136px)',
-        background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        py: 4,
-      }}
-    >
-      <Container maxWidth="lg">
-        {/* En-tête avec avatar et informations principales */}
-        <Paper
-          elevation={0}
-          sx={{
-            mb: 3,
-            borderRadius: '16px',
-            overflow: 'hidden',
-            boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-          }}
-        >
+    <Box sx={{ width: '100%' }}>
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          py: 4,
+          mt: { xs: '23px', md: '40px' },
+        }}
+      >
+        <Container maxWidth="lg">
+          {/* En-tête avec avatar et informations principales */}
+          <Box
+            sx={{
+              position: 'relative',
+              overflow: 'hidden',
+              mb: 1,
+              borderRadius: '16px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            }}
+          >
           <Box
             sx={{
               background: 'linear-gradient(135deg, #345995 0%, #1D3461 100%)',
@@ -183,7 +184,14 @@ const ProfilePage = () => {
               </Box>
             </Box>
           </Box>
-        </Paper>
+          </Box>
+
+        <Box
+          sx={{
+            py: 0
+          }}
+        >
+          <Container maxWidth="lg">
 
         {error && (
           <Alert
@@ -512,7 +520,10 @@ const ProfilePage = () => {
             </Grid>
           </Grid>
         </form>
-      </Container>
+          </Container>
+        </Box>
+        </Container>
+      </Box>
 
       <Snackbar
         open={success}

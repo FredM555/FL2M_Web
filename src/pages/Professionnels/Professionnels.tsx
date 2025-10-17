@@ -79,7 +79,7 @@ const Professionnels: React.FC = () => {
             sx={{
               position: 'relative',
               overflow: 'hidden',
-              mb: 3,
+              mb: 1,
               borderRadius: '16px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
             }}
@@ -104,21 +104,21 @@ const Professionnels: React.FC = () => {
               }}
             >
               <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 1 }}>
                   <Tooltip title="Module Stratégie" placement="right">
                     <IconButton
                       onClick={() => navigate('/professionnels/module-strategies')}
-                      sx={{
-                        color: 'rgba(255, 215, 0, 0.8)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                        backdropFilter: 'blur(10px)',
-                        '&:hover': {
-                          color: '#FFD700',
-                          backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                          transform: 'scale(1.1)',
-                        },
-                        transition: 'all 0.3s ease',
-                      }}
+                  sx={{
+                  color: 'rgba(100, 149, 237, 0.8)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(10px)',
+                  '&:hover': {
+                    color: '#6495ED',
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'scale(1.1)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
                     >
                       <ArrowBackIcon />
                     </IconButton>
@@ -127,16 +127,16 @@ const Professionnels: React.FC = () => {
                   <Typography
                     variant="h2"
                     component="h1"
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: { xs: '2rem', md: '3rem' },
-                      textAlign: 'center',
-                      background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                      backgroundClip: 'text',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3))',
-                    }}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: '1.5rem', md: '2.5rem' },
+                  textAlign: 'center',
+                  background: 'linear-gradient(45deg, #4169E1, #6495ED)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 2px 8px rgba(100, 149, 237, 0.3))',
+                }}
                   >
                     Modules Professionnels
                   </Typography>
@@ -144,17 +144,17 @@ const Professionnels: React.FC = () => {
                   <Tooltip title="Module Coéquipiers" placement="left">
                     <IconButton
                       onClick={() => navigate('/professionnels/module-coequipiers')}
-                      sx={{
-                        color: 'rgba(255, 215, 0, 0.8)',
-                        backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                        backdropFilter: 'blur(10px)',
-                        '&:hover': {
-                          color: '#FFD700',
-                          backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                          transform: 'scale(1.1)',
-                        },
-                        transition: 'all 0.3s ease',
-                      }}
+            sx={{
+                  color: 'rgba(100, 149, 237, 0.8)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(10px)',
+                  '&:hover': {
+                    color: '#6495ED',
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'scale(1.1)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
                     >
                       <ArrowForwardIcon />
                     </IconButton>
@@ -176,17 +176,14 @@ const Professionnels: React.FC = () => {
               </Container>
             </Box>
           </Box>
-        </Container>
-      </Box>
 
-      {/* Section des modules */}
-      <Box
-        sx={{
-          background: 'linear-gradient(to bottom, rgba(65, 105, 225, 0.03) 0%, rgba(100, 149, 237, 0.02) 100%)',
-          py: 8
-        }}
-      >
-        <Container maxWidth="lg">
+        {/* Section des modules */}
+        <Box
+          sx={{
+            py: 0
+          }}
+        >
+          <Container maxWidth="lg">
           <Grid container spacing={4}>
             {modules.map((module, index) => (
               <Grid item xs={12} sm={6} md={4} key={index}>
@@ -283,6 +280,8 @@ const Professionnels: React.FC = () => {
               </Grid>
             ))}
           </Grid>
+          </Container>
+        </Box>
         </Container>
       </Box>
     </Box>

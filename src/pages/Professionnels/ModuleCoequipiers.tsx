@@ -17,6 +17,7 @@ import GroupWorkIcon from '@mui/icons-material/GroupWork';
 import EmojiPeopleIcon from '@mui/icons-material/EmojiPeople';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import HomeIcon from '@mui/icons-material/Home';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -142,50 +143,44 @@ const ModuleCoequipiers: React.FC = () => {
 
   return (
     <Box sx={{ width: '100%' }}>
-      {/* Section Hero */}
       <Box
         sx={{
-          position: 'relative',
-          minHeight: '162px',
-          display: 'flex',
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-          color: 'white',
-          overflow: 'hidden',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          py: 4,
           mt: { xs: '23px', md: '40px' },
         }}
       >
-        {/* Motifs géométriques subtils */}
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.05,
-            backgroundImage: `
-              repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px),
-              repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px)
-            `,
-          }}
-        />
-
-        {/* Cercles décoratifs */}
-        <Box
-          sx={{
-            position: 'absolute',
-            width: '250px',
-            height: '250px',
-            border: '2px solid rgba(100, 149, 237, 0.1)',
-            borderRadius: '50%',
-            top: '-50px',
-            right: '-50px',
-          }}
-        />
-
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, py: 1.5 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+        <Container maxWidth="lg">
+          <Box
+            sx={{
+              position: 'relative',
+              overflow: 'hidden',
+              mb: 1,
+              borderRadius: '16px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <Box
+              sx={{
+                background: 'linear-gradient(135deg, #345995 0%, #1D3461 100%)',
+                color: 'white',
+                p: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '400px',
+                  height: '400px',
+                  background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
+                  transform: 'translate(30%, -30%)',
+                },
+              }}
+            >
+          <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 1 }}>
             <Tooltip title="Retour à la liste des modules" placement="right">
               <IconButton
                 onClick={() => navigate('/professionnels')}
@@ -201,73 +196,71 @@ const ModuleCoequipiers: React.FC = () => {
                   transition: 'all 0.3s ease',
                 }}
               >
-                <ArrowBackIcon />
+                <HomeIcon />
               </IconButton>
             </Tooltip>
 
-            <Typography
-              variant="h2"
-              component="h1"
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: '1.5rem', md: '2.5rem' },
-                textAlign: 'center',
-                background: 'linear-gradient(45deg, #4169E1, #6495ED)',
-                backgroundClip: 'text',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                filter: 'drop-shadow(0 2px 8px rgba(100, 149, 237, 0.3))',
-              }}
-            >
-              Module Coéquipiers : S'Épanouir
-            </Typography>
-
-            <Tooltip title="Module Équipe" placement="left">
-              <IconButton
-                onClick={() => navigate('/professionnels/module-equipe')}
+              <Typography
+                variant="h2"
+                component="h1"
                 sx={{
-                  color: 'rgba(100, 149, 237, 0.8)',
-                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(10px)',
-                  '&:hover': {
-                    color: '#6495ED',
-                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
-                    transform: 'scale(1.1)',
-                  },
-                  transition: 'all 0.3s ease',
+                  fontWeight: 700,
+                  fontSize: { xs: '1.5rem', md: '2.5rem' },
+                  textAlign: 'center',
+                  background: 'linear-gradient(45deg, #4169E1, #6495ED)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  filter: 'drop-shadow(0 2px 8px rgba(100, 149, 237, 0.3))',
                 }}
               >
-                <ArrowForwardIcon />
-              </IconButton>
-            </Tooltip>
-          </Box>
-          <Typography
-            variant="h6"
-            paragraph
-            sx={{
-              fontWeight: 400,
-              color: 'rgba(255, 255, 255, 0.9)',
-              lineHeight: 1.7,
-              textAlign: 'center',
-              maxWidth: '800px',
-              mx: 'auto',
-            }}
-          >
-            Un accompagnement personnalisé pour développer votre potentiel
-            et contribuer efficacement à la dynamique collective.
-          </Typography>
-        </Container>
-      </Box>
+                Module Coéquipiers : S'Épanouir
+              </Typography>
 
-      <Box
-        sx={{
-          background: 'linear-gradient(to bottom, rgba(65, 105, 225, 0.03) 0%, rgba(100, 149, 237, 0.02) 100%)',
-          py: 6
-        }}
-      >
-        <Container maxWidth="lg">
+              <Tooltip title="Module Équipe" placement="left">
+                <IconButton
+                  onClick={() => navigate('/professionnels/module-equipe')}
+                  sx={{
+                    color: 'rgba(100, 149, 237, 0.8)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                    backdropFilter: 'blur(10px)',
+                    '&:hover': {
+                      color: '#6495ED',
+                      backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                      transform: 'scale(1.1)',
+                    },
+                    transition: 'all 0.3s ease',
+                  }}
+                >
+                  <ArrowForwardIcon />
+                </IconButton>
+              </Tooltip>
+            </Box>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 400,
+                color: 'rgba(255, 255, 255, 0.9)',
+                lineHeight: 1.7,
+                textAlign: 'center',
+                maxWidth: '800px',
+                mx: 'auto',
+              }}
+            >
+              Un accompagnement personnalisé pour développer votre potentiel
+              et contribuer efficacement à la dynamique collective.
+            </Typography>
+          </Container>
+        </Box>
+        </Box>
+
+        <Box
+          sx={{
+            py: 0
+          }}
+        >
           {/* Caractéristiques du Module */}
-          <Grid container spacing={4} sx={{ mb: 4 }}>
+          <Grid container spacing={4} sx={{ mb: 2 }}>
             {caracteristiques.map((caract, index) => (
               <Grid item xs={12} md={4} key={index}>
                 <Card
@@ -317,7 +310,7 @@ const ModuleCoequipiers: React.FC = () => {
           </Grid>
 
           {/* Section Détails */}
-          <Grid container spacing={4} sx={{ mb: 6 }}>
+          <Grid container spacing={4} sx={{ mb: 1 }}>
             <Grid item xs={12} md={6}>
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e', mb: 2 }}>
                 Objectifs du Module
@@ -361,7 +354,7 @@ const ModuleCoequipiers: React.FC = () => {
               onClick={handleReservationClick}
               sx={{
                 px: 6,
-                py: 1.5,
+                py: 2,
                 fontSize: '1.1rem',
                 background: 'linear-gradient(45deg, #4169E1, #6495ED)',
                 color: 'white',
@@ -380,6 +373,7 @@ const ModuleCoequipiers: React.FC = () => {
               Réserver une Session
             </Button>
           </Box>
+        </Box>
         </Container>
       </Box>
     </Box>

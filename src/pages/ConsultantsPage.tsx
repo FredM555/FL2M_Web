@@ -143,7 +143,7 @@ const ConsultantsPage: React.FC = () => {
             sx={{
               position: 'relative',
               overflow: 'hidden',
-              mb: 3,
+              mb: 1,
               borderRadius: '16px',
               boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
             }}
@@ -180,13 +180,13 @@ const ConsultantsPage: React.FC = () => {
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3))',
-                    mb: 2,
+                    mb: 1,
                   }}
                 >
                   Nos Intervenants
                 </Typography>
                 <Typography
-                  variant="h6"
+                  variant="h5"
                   sx={{
                     fontWeight: 400,
                     color: 'rgba(255, 255, 255, 0.9)',
@@ -201,16 +201,13 @@ const ConsultantsPage: React.FC = () => {
               </Container>
             </Box>
           </Box>
-        </Container>
-      </Box>
 
-      <Box
-        sx={{
-          background: 'linear-gradient(to bottom, rgba(255, 215, 0, 0.03) 0%, rgba(255, 165, 0, 0.02) 100%)',
-          py: 6
-        }}
-      >
-        <Container maxWidth="lg">
+        <Box
+          sx={{
+            py: 0
+          }}
+        >
+          <Container maxWidth="lg">
           {error ? (
             <Alert severity="error" sx={{ mb: 4 }}>
               {error}
@@ -432,6 +429,8 @@ const ConsultantsPage: React.FC = () => {
               Contactez-nous
             </Button>
           </Box>
+          </Container>
+        </Box>
         </Container>
       </Box>
     </Box>

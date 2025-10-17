@@ -121,7 +121,7 @@ const Particuliers: React.FC = () => {
                 component="h1"
                 sx={{
                   fontWeight: 700,
-                  fontSize: { xs: '2rem', md: '3rem' },
+                  fontSize: { xs: '2rem', md: '2.5rem' },
                   textAlign: 'center',
                   background: 'linear-gradient(45deg, #FFD700, #FFA500)',
                   backgroundClip: 'text',

@@ -31,6 +31,8 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import PersonIcon from '@mui/icons-material/Person';
 import WorkIcon from '@mui/icons-material/Work';
 import PaymentIcon from '@mui/icons-material/Payment';
+import CakeIcon from '@mui/icons-material/Cake';
+import BadgeIcon from '@mui/icons-material/Badge';
 
 // Interface pour la valeur de l'onglet
 interface TabPanelProps {
@@ -295,15 +297,31 @@ const MyAppointmentsPage = () => {
                   {format(parseISO(appointment.end_time), 'HH:mm', { locale: fr })}
                 </Typography>
               </Box>
+
+              <Box display="flex" alignItems="center" mb={1}>
+                <BadgeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
+                <Typography variant="body2">
+                  Séance avec {appointment.practitioner?.profile?.pseudo}
+                </Typography>
+              </Box>
             </Grid>
 
             <Grid item xs={12} sm={6}>
               <Box display="flex" alignItems="center" mb={1}>
                 <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
                 <Typography variant="body2">
-                  {appointment.practitioner?.profile?.first_name} {appointment.practitioner?.profile?.last_name}
+                  {appointment.client?.first_name} {appointment.client?.last_name}
                 </Typography>
               </Box>
+
+              {appointment.client?.birth_date && (
+                <Box display="flex" alignItems="center" mb={1}>
+                  <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
+                  <Typography variant="body2">
+                    {format(parseISO(appointment.client.birth_date), 'dd/MM/yyyy', { locale: fr })}
+                  </Typography>
+                </Box>
+              )}
 
               <Box display="flex" alignItems="center" mb={1}>
                 <WorkIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
@@ -379,69 +397,81 @@ const MyAppointmentsPage = () => {
     <Box sx={{ width: '100%' }}>
       <Box
         sx={{
-          position: 'relative',
-          minHeight: '80px',
-          display: 'flex',
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
-          color: 'white',
-          overflow: 'hidden',
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          py: 4,
           mt: { xs: '23px', md: '40px' },
         }}
       >
-        <Box
-          sx={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.05,
-            backgroundImage: `
-              repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px),
-              repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px)
-            `,
-          }}
-        />
-        <Box
-          sx={{
-            position: 'absolute',
-            width: '250px',
-            height: '250px',
-            border: '2px solid rgba(255, 215, 0, 0.1)',
-            borderRadius: '50%',
-            top: '-50px',
-            right: '-50px',
-          }}
-        />
-
-        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, py: 1.5 }}>
-          <Typography
-            variant="h2"
-            component="h1"
+        <Container maxWidth="lg">
+          <Box
             sx={{
-              fontWeight: 700,
-              fontSize: { xs: '1.25rem', md: '1.75rem' },
-              textAlign: 'center',
-              background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-              backgroundClip: 'text',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3))',
+              position: 'relative',
+              overflow: 'hidden',
+              mb: 1,
+              borderRadius: '16px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
             }}
           >
-            Mes rendez-vous
-          </Typography>
-        </Container>
-      </Box>
+            <Box
+              sx={{
+                background: 'linear-gradient(135deg, #345995 0%, #1D3461 100%)',
+                color: 'white',
+                p: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '400px',
+                  height: '400px',
+                  background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
+                  transform: 'translate(30%, -30%)',
+                },
+              }}
+            >
+              <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+                <Typography
+                  variant="h2"
+                  component="h1"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: { xs: '1.5rem', md: '2.5rem' },
+                    textAlign: 'center',
+                    background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3))',
+                    mb: 1,
+                  }}
+                >
+                  Mes rendez-vous
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 400,
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    lineHeight: 1.7,
+                    textAlign: 'center',
+                    maxWidth: '800px',
+                    mx: 'auto',
+                  }}
+                >
+                  Gérez vos rendez-vous facilement
+                </Typography>
+              </Container>
+            </Box>
+          </Box>
 
-      <Box
-        sx={{
-          background: 'linear-gradient(to bottom, rgba(255, 215, 0, 0.03) 0%, rgba(255, 165, 0, 0.02) 100%)',
-          py: 3
-        }}
-      >
-        <Container maxWidth="lg">
+        <Box
+          sx={{
+            py: 0
+          }}
+        >
+          <Container maxWidth="lg">
           <Paper
             elevation={0}
             sx={{
@@ -563,6 +593,8 @@ const MyAppointmentsPage = () => {
               )}
             </TabPanel>
           </Paper>
+          </Container>
+        </Box>
         </Container>
       </Box>
 

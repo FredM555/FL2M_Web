@@ -125,13 +125,110 @@ const ContactPage = () => {
   };
   
   return (
-    <Container maxWidth="lg" sx={{ py: 8 }}>
+    <Box sx={{ width: '100%' }}>
+      <Box
+        sx={{
+          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          py: 4,
+          mt: { xs: '23px', md: '40px' },
+        }}
+      >
+        <Container maxWidth="lg">
+          <Box
+            sx={{
+              position: 'relative',
+              overflow: 'hidden',
+              mb: 1,
+              borderRadius: '16px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <Box
+              sx={{
+                background: 'linear-gradient(135deg, #345995 0%, #1D3461 100%)',
+                color: 'white',
+                p: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  right: 0,
+                  width: '400px',
+                  height: '400px',
+                  background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
+                  transform: 'translate(30%, -30%)',
+                },
+              }}
+            >
+              <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
+                <Typography
+                  variant="h2"
+                  component="h1"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: { xs: '1.5rem', md: '2.5rem' },
+                    textAlign: 'center',
+                    background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3))',
+                    mb: 1,
+                  }}
+                >
+                  Contactez-nous
+                </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 400,
+                    color: 'rgba(255, 255, 255, 0.9)',
+                    lineHeight: 1.7,
+                    textAlign: 'center',
+                    maxWidth: '800px',
+                    mx: 'auto',
+                  }}
+                >
+                  Nous sommes à votre écoute
+                </Typography>
+              </Container>
+            </Box>
+          </Box>
+
+        <Box
+          sx={{
+            py: 0
+          }}
+        >
+          <Container maxWidth="lg">
       <Grid container spacing={6}>
         {/* Informations de contact */}
         <Grid item xs={12} md={5}>
-          <Paper sx={{ p: 4, height: '100%' }}>
-            <Typography variant="h4" component="h1" gutterBottom color="primary">
-              Contactez-nous
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              height: '100%',
+              background: 'white',
+              border: '2px solid rgba(255, 215, 0, 0.3)',
+              borderRadius: 3,
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #FFD700, #FFA500)',
+              },
+            }}
+          >
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e' }}>
+              Nos coordonnées
             </Typography>
             
             <Typography paragraph sx={{ mb: 4 }}>
@@ -141,21 +238,21 @@ const ContactPage = () => {
             
             <Box sx={{ my: 4 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <EmailIcon sx={{ mr: 2, color: 'primary.main' }} />
+                <EmailIcon sx={{ mr: 2, color: '#FFA500' }} />
                 <Typography>
                   <strong>Email:</strong> contact@fl2m.com
                 </Typography>
               </Box>
-              
+
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <PhoneIcon sx={{ mr: 2, color: 'primary.main' }} />
+                <PhoneIcon sx={{ mr: 2, color: '#FFA500' }} />
                 <Typography>
                   <strong>Téléphone:</strong> +33 (0)1 23 45 67 89
                 </Typography>
               </Box>
-              
+
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <LocationOnIcon sx={{ mr: 2, color: 'primary.main' }} />
+                <LocationOnIcon sx={{ mr: 2, color: '#FFA500' }} />
                 <Typography>
                   <strong>Adresse:</strong><br />
                   123 Avenue des Essences<br />
@@ -173,8 +270,27 @@ const ContactPage = () => {
         
         {/* Formulaire de contact */}
         <Grid item xs={12} md={7}>
-          <Paper sx={{ p: 4 }}>
-            <Typography variant="h5" component="h2" gutterBottom>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              background: 'white',
+              border: '2px solid rgba(255, 215, 0, 0.3)',
+              borderRadius: 3,
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #FFD700, #FFA500)',
+              },
+            }}
+          >
+            <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e' }}>
               Envoyez-nous un message
             </Typography>
             
@@ -265,11 +381,29 @@ const ContactPage = () => {
                   <Button
                     type="submit"
                     variant="contained"
-                    color="primary"
                     size="large"
                     endIcon={loading ? <CircularProgress size={20} color="inherit" /> : <SendIcon />}
                     disabled={loading}
-                    sx={{ mt: 2 }}
+                    sx={{
+                      mt: 2,
+                      px: 4,
+                      py: 1.5,
+                      background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                      color: '#1a1a2e',
+                      fontWeight: 600,
+                      borderRadius: 50,
+                      boxShadow: '0 8px 25px rgba(255, 215, 0, 0.3)',
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        background: 'linear-gradient(45deg, #FFA500, #FFD700)',
+                        transform: 'translateY(-3px)',
+                        boxShadow: '0 12px 35px rgba(255, 215, 0, 0.4)',
+                      },
+                      '&:disabled': {
+                        background: 'rgba(0, 0, 0, 0.12)',
+                        color: 'rgba(0, 0, 0, 0.26)',
+                      },
+                    }}
                   >
                     {loading ? 'Envoi en cours...' : 'Envoyer le message'}
                   </Button>
@@ -279,7 +413,11 @@ const ContactPage = () => {
           </Paper>
         </Grid>
       </Grid>
-      
+          </Container>
+        </Box>
+        </Container>
+      </Box>
+
       {/* Message de succès */}
       <Snackbar
         open={success}
@@ -296,7 +434,7 @@ const ContactPage = () => {
           Votre message a été envoyé avec succès ! Nous vous répondrons dans les plus brefs délais.
         </Alert>
       </Snackbar>
-    </Container>
+    </Box>
   );
 };
 

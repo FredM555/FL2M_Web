@@ -75,7 +75,7 @@ const HomePage = () => {
                     color: 'rgba(255, 255, 255, 0.9)',
                     lineHeight: 1.7,
                     textAlign: 'center',
-                    maxWidth: '800px',
+                    maxWidth: '900px',
                     mx: 'auto',
                     mb: 3,
                   }}
@@ -132,14 +132,8 @@ const HomePage = () => {
             </Box>
           </Box>
 
-        <Box
-          sx={{
-            py: 0
-          }}
-        >
       {/* Section Valeurs clés */}
-      <Container maxWidth="lg" sx={{ py: 0 }}>
-        <Grid container spacing={4}>
+        <Grid container spacing={4} sx={{ mt: 2 }}>
           <Grid item xs={12} md={4}>
             <Card
               elevation={0}
@@ -254,10 +248,8 @@ const HomePage = () => {
             </Card>
           </Grid>
         </Grid>
-      </Container>
 
       {/* Section Services */}
-      <Container maxWidth="lg">
           <Typography
             variant="h3"
             component="h2"
@@ -433,10 +425,9 @@ const HomePage = () => {
               </Card>
             </Grid>
           </Grid>
-      </Container>
 
       {/* Section CTA finale */}
-        <Container maxWidth="md" sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
+        <Box sx={{ textAlign: 'center', mt: 2 }}>
           <Typography
             variant="h3"
             gutterBottom
@@ -484,7 +475,6 @@ const HomePage = () => {
           >
             Réserver une consultation
           </Button>
-        </Container>
         </Box>
         </Container>
       </Box>
