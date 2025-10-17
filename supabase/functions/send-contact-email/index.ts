@@ -44,7 +44,7 @@ serve(async (req) => {
     // Créer le contenu de l'email
     const emailContent = {
       to: adminEmails,
-      from: 'noreply@flm-essences.com', // Remplacer par votre email vérifié sur SendGrid
+      from: 'noreply@fl2m.com', // Remplacer par votre email vérifié sur SendGrid
       subject: `Nouveau message de contact: ${message.subject}`,
       html: `
         <h2>Nouveau message de contact reçu</h2>
@@ -56,7 +56,7 @@ serve(async (req) => {
           ${message.message.replace(/\n/g, '<br>')}
         </div>
         <hr>
-        <p>Vous recevez ce message car vous êtes administrateur du site FLM Services.</p>
+        <p>Vous recevez ce message car vous êtes administrateur du site FL²M Services.</p>
         <p>Veuillez vous connecter à <a href="https://flm-services.com/admin/messages">l'interface d'administration</a> pour répondre à ce message.</p>
       `
     };

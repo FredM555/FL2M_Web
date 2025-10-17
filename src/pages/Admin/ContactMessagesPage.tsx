@@ -259,7 +259,7 @@ const AdminContactMessagesPage: React.FC = () => {
           Messages de contact
         </Typography>
         <Typography variant="body1" color="text.secondary">
-          Gérez les messages reçus via le formulaire de contact de FLM Services.
+          Gérez les messages reçus via le formulaire de contact de FL²M Services.
         </Typography>
       </Box>
       

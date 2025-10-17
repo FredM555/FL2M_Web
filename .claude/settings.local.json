@@ -9,7 +9,19 @@
       "Bash(npm run build)",
       "Bash(npx cap sync:*)",
       "Bash(gradlew.bat assembleDebug:*)",
-      "Bash(./gradlew:*)"
+      "Bash(./gradlew:*)",
+      "Bash(git checkout:*)",
+      "Bash(for file in Professionnels/*.tsx Sportifs/*.tsx)",
+      "Bash(do if grep -q \"py: 6\" \"$file\")",
+      "Bash(then echo \"$file has py: 6\")",
+      "Bash(fi)",
+      "Bash(done)",
+      "Bash(for file in ProfilePage.tsx Particuliers/*.tsx Professionnels/*.tsx Sportifs/*.tsx ConsultantsPage.tsx AppointmentBookingPage.tsx AproposPage.tsx)",
+      "Bash(do sed -i \"s/mt: { xs: ''23px'', md: ''53px'' }/mt: { xs: ''23px'', md: ''40px'' }/g\" \"$file\")",
+      "Bash(echo:*)",
+      "Bash(for file in ModuleAdultes.tsx ModuleCouples.tsx ModuleEnfants.tsx ModuleSuiviAnnuel.tsx)",
+      "Bash(do echo \"=== $file ===\")",
+      "Bash(do sed -i \"s/minHeight: ''calc(100vh - 136px)'',/width: ''100%'' }}\\n    >\\n      <Box\\n        sx={{/g\" \"$file\")"
     ],
     "deny": [],
     "ask": []

@@ -143,7 +143,7 @@ const ContactPage = () => {
               <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
                 <EmailIcon sx={{ mr: 2, color: 'primary.main' }} />
                 <Typography>
-                  <strong>Email:</strong> contact@flm-essences.com
+                  <strong>Email:</strong> contact@fl2m.com
                 </Typography>
               </Box>
               

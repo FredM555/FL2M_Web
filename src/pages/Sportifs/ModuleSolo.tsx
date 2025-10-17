@@ -1,17 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Typography, 
-  Container, 
-  Grid, 
-  Card, 
-  CardContent, 
+import {
+  Typography,
+  Container,
+  Grid,
+  Card,
+  CardContent,
   Button,
   CircularProgress,
-  Alert
+  Alert,
+  Box,
+  IconButton,
+  Tooltip
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
 import PsychologyIcon from '@mui/icons-material/Psychology';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
@@ -139,124 +144,232 @@ const ModuleSolo: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography 
-        variant="h3" 
-        component="h1" 
-        gutterBottom 
-        align="center" 
-        fontWeight="bold"
-      >
-        Module Solo : Se Performer
-      </Typography>
-
-      {/* Section Introduction */}
-      <Typography 
-        variant="body1" 
-        align="center" 
-        sx={{ 
-          maxWidth: '800px', 
-          margin: '0 auto', 
-          mb: 4, 
-          color: 'text.secondary' 
+    <Box sx={{ width: '100%' }}>
+      <Box
+        sx={{
+          position: 'relative',
+          minHeight: '162px',
+          display: 'flex',
+          alignItems: 'center',
+          background: 'linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+          color: 'white',
+          overflow: 'hidden',
+          mt: { xs: '23px', md: '40px' },
         }}
       >
-        Un accompagnement personnalisé pour développer votre performance 
-        individuelle et repousser vos limites personnelles.
-      </Typography>
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            opacity: 0.05,
+            backgroundImage: `
+              repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px),
+              repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,255,255,0.03) 50px, rgba(255,255,255,0.03) 51px)
+            `,
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            width: '250px',
+            height: '250px',
+            border: '2px solid rgba(17, 153, 142, 0.1)',
+            borderRadius: '50%',
+            top: '-50px',
+            right: '-50px',
+          }}
+        />
 
-      {/* Caractéristiques du Module */}
-      <Grid container spacing={4} sx={{ mb: 4 }}>
-        {caracteristiques.map((caract, index) => (
-          <Grid item xs={12} md={4} key={index}>
-            <Card 
-              sx={{ 
-                height: '100%',
-                transition: 'box-shadow 0.3s, transform 0.3s',
-                '&:hover': {
-                  boxShadow: 3,
-                  transform: 'translateY(-5px)'
-                }
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2, py: 1.5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 2 }}>
+            <Tooltip title="Modules Sportifs" placement="right">
+              <IconButton
+                onClick={() => navigate('/sportifs')}
+                sx={{
+                  color: 'rgba(17, 153, 142, 0.8)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(10px)',
+                  '&:hover': {
+                    color: '#38ef7d',
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'scale(1.1)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <ArrowBackIcon />
+              </IconButton>
+            </Tooltip>
+
+            <Typography
+              variant="h2"
+              component="h1"
+              sx={{
+                fontWeight: 700,
+                fontSize: { xs: '1.5rem', md: '2.5rem' },
+                textAlign: 'center',
+                background: 'linear-gradient(45deg, #11998e, #38ef7d)',
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                filter: 'drop-shadow(0 2px 8px rgba(17, 153, 142, 0.3))',
               }}
             >
-              <CardContent sx={{ textAlign: 'center' }}>
-                <caract.icone 
-                  sx={{ 
-                    fontSize: 48, 
-                    color: 'primary.main', 
-                    mb: 2 
-                  }} 
-                />
-                <Typography variant="h5" component="h2" gutterBottom>
-                  {caract.titre}
-                </Typography>
-                <Typography variant="body2">
-                  {caract.description}
-                </Typography>
-              </CardContent>
-            </Card>
+              Module Solo : Se Performer
+            </Typography>
+
+            <Tooltip title="Module Team" placement="left">
+              <IconButton
+                onClick={() => navigate('/sportifs/module-team')}
+                sx={{
+                  color: 'rgba(17, 153, 142, 0.8)',
+                  backgroundColor: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(10px)',
+                  '&:hover': {
+                    color: '#38ef7d',
+                    backgroundColor: 'rgba(255, 255, 255, 0.25)',
+                    transform: 'scale(1.1)',
+                  },
+                  transition: 'all 0.3s ease',
+                }}
+              >
+                <ArrowForwardIcon />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Typography
+            variant="h6"
+            paragraph
+            sx={{
+              fontWeight: 400,
+              color: 'rgba(255, 255, 255, 0.9)',
+              lineHeight: 1.7,
+              textAlign: 'center',
+              maxWidth: '800px',
+              mx: 'auto',
+            }}
+          >
+            Un accompagnement personnalisé pour développer votre performance
+            individuelle et repousser vos limites personnelles.
+          </Typography>
+        </Container>
+      </Box>
+
+      <Box
+        sx={{
+          background: 'linear-gradient(to bottom, rgba(17, 153, 142, 0.03) 0%, rgba(56, 239, 125, 0.02) 100%)',
+          py: 6
+        }}
+      >
+        <Container maxWidth="lg">
+          <Grid container spacing={4} sx={{ mb: 4 }}>
+            {caracteristiques.map((caract, index) => (
+              <Grid item xs={12} md={4} key={index}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    height: '100%',
+                    background: 'white',
+                    border: '2px solid rgba(17, 153, 142, 0.3)',
+                    borderRadius: 3,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s ease',
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: '4px',
+                      background: 'linear-gradient(90deg, #11998e, #38ef7d)',
+                    },
+                    '&:hover': {
+                      borderColor: '#38ef7d',
+                      boxShadow: '0 12px 40px rgba(17, 153, 142, 0.25)',
+                      transform: 'translateY(-8px)',
+                    }
+                  }}
+                >
+                  <CardContent sx={{ textAlign: 'center', p: 3 }}>
+                    <caract.icone sx={{ fontSize: 60, color: '#11998e', mb: 2 }} />
+                    <Typography variant="h5" component="h2" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e' }}>
+                      {caract.titre}
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary" sx={{ lineHeight: 1.7 }}>
+                      {caract.description}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            ))}
           </Grid>
-        ))}
-      </Grid>
 
-      {/* Section Détails */}
-      <Grid container spacing={4} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={6}>
-          <Typography variant="h5" gutterBottom>
-            Objectifs du Module
-          </Typography>
-          <Typography variant="body1" paragraph>
-            - Améliorer la performance individuelle
-            - Renforcer la préparation mentale
-            - Développer la résilience
-            - Optimiser les stratégies personnelles
-            - Atteindre ses objectifs sportifs
-          </Typography>
-        </Grid>
-        <Grid item xs={12} md={6}>
-          <Typography variant="h5" gutterBottom>
-            Méthodes d'Accompagnement
-          </Typography>
-          <Typography variant="body1" paragraph>
-            - Coaching de performance individuelle
-            - Techniques de préparation mentale
-            - Analyse biomécanique personnalisée
-            - Suivi et ajustement des objectifs
-            - Stratégies de dépassement de soi
-          </Typography>
-        </Grid>
-      </Grid>
+          <Grid container spacing={4} sx={{ mb: 6 }}>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e', mb: 2 }}>
+                Objectifs du Module
+              </Typography>
+              <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
+                - Améliorer la performance individuelle<br />
+                - Renforcer la préparation mentale<br />
+                - Développer la résilience<br />
+                - Optimiser les stratégies personnelles<br />
+                - Atteindre ses objectifs sportifs
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e', mb: 2 }}>
+                Méthodes d'Accompagnement
+              </Typography>
+              <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
+                - Coaching de performance individuelle<br />
+                - Techniques de préparation mentale<br />
+                - Analyse biomécanique personnalisée<br />
+                - Suivi et ajustement des objectifs<br />
+                - Stratégies de dépassement de soi
+              </Typography>
+            </Grid>
+          </Grid>
 
-      {/* Informations prix et durée */}
-      {service && (
-        <Typography 
-          variant="h6" 
-          align="center" 
-          sx={{ mb: 3 }}
-        >
-          Durée: {service.duration} minutes | Prix: {service.price} €
-        </Typography>
-      )}
+          {service && (
+            <Typography variant="h6" align="center" sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}>
+              Durée: {service.duration} minutes | Prix: {service.price} €
+            </Typography>
+          )}
 
-      {/* Bouton de Réservation */}
-      <Container maxWidth="sm" sx={{ textAlign: 'center' }}>
-        <Button 
-          variant="contained" 
-          color="primary" 
-          size="large"
-          onClick={handleReservationClick}
-          sx={{ 
-            mt: 2, 
-            px: 4, 
-            py: 1.5, 
-            fontSize: '1rem' 
-          }}
-          disabled={!service}
-        >
-          Réserver une Session
-        </Button>
-      </Container>
-    </Container>
+          <Box sx={{ textAlign: 'center' }}>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleReservationClick}
+              sx={{
+                px: 6,
+                py: 1.5,
+                fontSize: '1.1rem',
+                background: 'linear-gradient(45deg, #11998e, #38ef7d)',
+                color: 'white',
+                fontWeight: 600,
+                borderRadius: 50,
+                boxShadow: '0 8px 25px rgba(17, 153, 142, 0.3)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #38ef7d, #11998e)',
+                  transform: 'translateY(-3px)',
+                  boxShadow: '0 12px 35px rgba(17, 153, 142, 0.4)',
+                },
+              }}
+              disabled={!service}
+            >
+              Réserver une Session
+            </Button>
+          </Box>
+        </Container>
+      </Box>
+    </Box>
   );
 };
 

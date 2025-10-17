@@ -1,6 +1,6 @@
 # Guide de Configuration OAuth Google pour FLM Services
 
-Ce guide vous accompagne étape par étape pour configurer l'authentification Google OAuth dans votre application FLM Services.
+Ce guide vous accompagne étape par étape pour configurer l'authentification Google OAuth dans votre application FL²M Services.
 
 ## Prérequis
 

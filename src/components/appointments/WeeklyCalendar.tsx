@@ -59,6 +59,7 @@ interface WeeklyCalendarProps {
   selectedSlot: AppointmentSlot | null;
   onSlotSelect: (slot: AppointmentSlot) => void;
   loading: boolean;
+  category?: string;
 }
 
 // Créer un tableau des heures de 8h à 20h
@@ -74,13 +75,54 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
   appointmentSlots,
   selectedSlot,
   onSlotSelect,
-  loading
+  loading,
+  category = 'particuliers'
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   // État pour stocker le détail du rendez-vous sélectionné
   const [selectedAppointmentDetails, setSelectedAppointmentDetails] = useState<AppointmentSlot | null>(null);
+
+  // Fonction pour obtenir les couleurs selon la catégorie
+  const getCategoryColors = () => {
+    switch (category) {
+      case 'particuliers':
+        return {
+          primary: '#FFD700',
+          secondary: '#FFA500',
+          light: 'rgba(255, 215, 0, 0.1)',
+          border: 'rgba(255, 215, 0, 0.3)',
+          gradient: 'linear-gradient(90deg, #FFD700, #FFA500)',
+        };
+      case 'professionnels':
+        return {
+          primary: '#4169E1',
+          secondary: '#6495ED',
+          light: 'rgba(65, 105, 225, 0.1)',
+          border: 'rgba(100, 149, 237, 0.3)',
+          gradient: 'linear-gradient(90deg, #4169E1, #6495ED)',
+        };
+      case 'sportifs':
+        return {
+          primary: '#11998e',
+          secondary: '#38ef7d',
+          light: 'rgba(17, 153, 142, 0.1)',
+          border: 'rgba(17, 153, 142, 0.3)',
+          gradient: 'linear-gradient(90deg, #11998e, #38ef7d)',
+        };
+      default:
+        return {
+          primary: '#FFD700',
+          secondary: '#FFA500',
+          light: 'rgba(255, 215, 0, 0.1)',
+          border: 'rgba(255, 215, 0, 0.3)',
+          gradient: 'linear-gradient(90deg, #FFD700, #FFA500)',
+        };
+    }
+  };
+
+  const colors = getCategoryColors();
   
   // Effet pour mettre à jour le détail quand on sélectionne un créneau
   useEffect(() => {
@@ -151,27 +193,68 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
   const hasAnyAppointments = appointmentSlots.length > 0;
   
   return (
-    <Box sx={{ mb: 4 }}>
+    <Box sx={{ mb: 2 }}>
       {/* Navigation entre les semaines */}
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <IconButton 
-          onClick={() => handleWeekChange('prev')} 
+      <Paper
+        elevation={0}
+        sx={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          mb: 2,
+          p: 1.5,
+          background: 'white',
+          border: `2px solid ${colors.border}`,
+          borderRadius: 3,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: colors.gradient,
+          },
+        }}
+      >
+        <IconButton
+          onClick={() => handleWeekChange('prev')}
           disabled={availableWeeks.indexOf(selectedWeek) === 0 || loading}
+          sx={{
+            color: colors.secondary,
+            '&:hover': {
+              backgroundColor: colors.light,
+            },
+            '&:disabled': {
+              color: 'rgba(0, 0, 0, 0.26)',
+            },
+          }}
         >
           <ArrowBackIcon />
         </IconButton>
-        
-        <Typography variant="h6" sx={{ textAlign: 'center', flex: 1 }}>
+
+        <Typography variant="subtitle1" sx={{ textAlign: 'center', flex: 1, fontWeight: 600, color: '#1a1a2e' }}>
           {selectedWeek.displayRange}
         </Typography>
-        
-        <IconButton 
+
+        <IconButton
           onClick={() => handleWeekChange('next')}
           disabled={availableWeeks.indexOf(selectedWeek) === availableWeeks.length - 1 || loading}
+          sx={{
+            color: colors.secondary,
+            '&:hover': {
+              backgroundColor: colors.light,
+            },
+            '&:disabled': {
+              color: 'rgba(0, 0, 0, 0.26)',
+            },
+          }}
         >
           <ArrowForwardIcon />
         </IconButton>
-      </Box>
+      </Paper>
       
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
@@ -181,40 +264,60 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
         <>
           {/* Grille de calendrier */}
           {hasAnyAppointments ? (
-            <Paper variant="outlined" sx={{ mb: 3, overflow: 'auto' }}>
+            <Paper
+              elevation={0}
+              sx={{
+                mb: 2,
+                overflow: 'auto',
+                background: 'white',
+                border: `2px solid ${colors.border}`,
+                borderRadius: 3,
+                position: 'relative',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  background: colors.gradient,
+                },
+              }}
+            >
               <Box sx={{ minWidth: isMobile ? 600 : 'auto' }}>
                 {/* En-têtes des jours */}
-                <Grid container sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Grid container sx={{ borderBottom: 2, borderColor: colors.border, mt: '4px' }}>
                   {/* Cellule vide pour l'en-tête des heures */}
-                  <Grid item xs={1} sx={{ 
-                    py: 2, 
-                    borderRight: 1, 
-                    borderColor: 'divider',
-                    textAlign: 'center' 
+                  <Grid item xs={1} sx={{
+                    py: 1.5,
+                    borderRight: 1,
+                    borderColor: colors.border,
+                    textAlign: 'center',
+                    fontWeight: 600,
                   }}>
-                    <Typography variant="subtitle2">Heure</Typography>
+                    <Typography variant="caption" fontWeight={600}>Heure</Typography>
                   </Grid>
-                  
+
                   {/* En-têtes des jours */}
                   {weekDays.map((day) => (
-                    <Grid item xs key={day.dateString} sx={{ 
-                      py: 2, 
-                      borderRight: 1, 
-                      borderColor: 'divider',
+                    <Grid item xs key={day.dateString} sx={{
+                      py: 1.5,
+                      borderRight: 1,
+                      borderColor: colors.border,
                       textAlign: 'center',
-                      backgroundColor: hasDayAppointments(day.dateString) ? 'rgba(25, 118, 210, 0.08)' : 'inherit'
+                      backgroundColor: hasDayAppointments(day.dateString) ? colors.light : 'rgba(0, 0, 0, 0.02)',
                     }}>
-                      <Typography variant="subtitle1" sx={{ textTransform: 'capitalize' }}>
+                      <Typography variant="subtitle2" sx={{ textTransform: 'capitalize', fontWeight: 600, color: '#1a1a2e' }}>
                         {day.dayName}
                       </Typography>
-                      <Typography variant="h6">
+                      <Typography variant="h6" sx={{ color: '#1a1a2e', fontSize: '1.1rem' }}>
                         {day.dayNumber}
                       </Typography>
-                      <Typography variant="body2" sx={{ textTransform: 'capitalize' }}>
+                      <Typography variant="caption" sx={{ textTransform: 'capitalize', color: 'text.secondary' }}>
                         {day.month}
                       </Typography>
                       {hasDayAppointments(day.dateString) && (
-                        <Typography variant="caption" sx={{ display: 'block', color: 'primary.main', mt: 0.5 }}>
+                        <Typography variant="caption" sx={{ display: 'block', color: colors.secondary, mt: 0.3, fontWeight: 600 }}>
                           Disponible
                         </Typography>
                       )}
@@ -232,62 +335,70 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                     }
                   }}>
                     {/* Cellule d'heure */}
-                    <Grid item xs={1} sx={{ 
-                      py: 1.5, 
-                      px: 1,
-                      borderRight: 1, 
-                      borderColor: 'divider',
+                    <Grid item xs={1} sx={{
+                      py: 1,
+                      px: 0.5,
+                      borderRight: 1,
+                      borderColor: colors.border,
                       display: 'flex',
                       alignItems: 'center',
-                      justifyContent: 'center'
+                      justifyContent: 'center',
+                      backgroundColor: 'rgba(0, 0, 0, 0.03)',
                     }}>
-                      <Typography variant="body2">{timeSlot.label}</Typography>
+                      <Typography variant="caption" fontWeight={600} sx={{ color: '#1a1a2e' }}>{timeSlot.label}</Typography>
                     </Grid>
-                    
+
                     {/* Cellules pour chaque jour */}
                     {weekDays.map((day) => {
                       const appointmentsInSlot = getAppointmentsInTimeSlot(day.dateString, timeSlot.hour);
-                      
+
                       return (
-                        <Grid item xs key={`${day.dateString}-${timeSlot.hour}`} sx={{ 
-                          py: 1.5, 
-                          borderRight: 1, 
-                          borderColor: 'divider',
-                          minHeight: '50px',
+                        <Grid item xs key={`${day.dateString}-${timeSlot.hour}`} sx={{
+                          py: 1,
+                          borderRight: 1,
+                          borderColor: colors.border,
+                          minHeight: '45px',
                           position: 'relative',
-                          backgroundColor: hasDayAppointments(day.dateString) ? 'transparent' : 'rgba(0, 0, 0, 0.03)'
+                          backgroundColor: hasDayAppointments(day.dateString) ? 'transparent' : 'rgba(0, 0, 0, 0.02)'
                         }}>
                           {appointmentsInSlot.length > 0 ? (
-                            <Box sx={{ 
-                              display: 'flex', 
-                              flexDirection: 'column', 
+                            <Box sx={{
+                              display: 'flex',
+                              flexDirection: 'column',
                               height: '100%',
                               px: 1
                             }}>
                               {appointmentsInSlot.map((slot) => {
                                 const startTime = parseISO(slot.start_time);
                                 const formattedStartTime = format(startTime, 'HH:mm');
-                                const consultantName = slot.practitioner.display_name || 
+                                const consultantName = slot.practitioner.display_name ||
                                   `${slot.practitioner.profile.first_name} ${slot.practitioner.profile.last_name}`;
-                                
+
                                 return (
                                   <Button
                                     key={slot.id}
                                     variant={selectedSlot?.id === slot.id ? "contained" : "outlined"}
-                                    color="primary"
                                     size="small"
                                     onClick={() => {
                                       onSlotSelect(slot);
                                       setSelectedAppointmentDetails(slot);
                                     }}
-                                    sx={{ 
+                                    sx={{
                                       mb: 0.5,
                                       textTransform: 'none',
                                       justifyContent: 'flex-start',
                                       overflow: 'hidden',
                                       textOverflow: 'ellipsis',
                                       whiteSpace: 'nowrap',
-                                      minHeight: '28px'
+                                      minHeight: '32px',
+                                      background: selectedSlot?.id === slot.id ? colors.gradient : 'transparent',
+                                      color: selectedSlot?.id === slot.id ? 'white' : colors.secondary,
+                                      borderColor: colors.border,
+                                      fontWeight: 600,
+                                      '&:hover': {
+                                        borderColor: colors.secondary,
+                                        backgroundColor: selectedSlot?.id === slot.id ? colors.secondary : colors.light,
+                                      },
                                     }}
                                   >
                                     {formattedStartTime} - {consultantName}
@@ -311,9 +422,28 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
           
           {/* Détails du rendez-vous sélectionné */}
           {selectedAppointmentDetails && (
-            <Card sx={{ mt: 3 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
+            <Card
+              elevation={0}
+              sx={{
+                mt: 2,
+                background: 'white',
+                border: `2px solid ${colors.border}`,
+                borderRadius: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  background: colors.gradient,
+                },
+              }}
+            >
+              <CardContent sx={{ pt: 2, pb: 2 }}>
+                <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e', mb: 1.5 }}>
                   Détails du rendez-vous
                 </Typography>
                 
