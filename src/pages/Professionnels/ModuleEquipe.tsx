@@ -10,14 +10,15 @@ import {
   Alert,
   Box,
   IconButton,
-  Tooltip
+  Tooltip,
+  Link
 } from '@mui/material';
 import PeopleIcon from '@mui/icons-material/People';
 import WorkTogetherIcon from '@mui/icons-material/Groups';
 import LeadershipIcon from '@mui/icons-material/EmojiPeople';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -132,7 +133,7 @@ const ModuleEquipe: React.FC = () => {
         sx={{
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
           py: 4,
-          mt: { xs: '23px', md: '40px' },
+          mt: { xs: '23px', md: '10px' },
         }}
       >
         <Container maxWidth="lg">
@@ -301,49 +302,77 @@ const ModuleEquipe: React.FC = () => {
             </Grid>
             <Grid item xs={12} md={6}>
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e', mb: 2 }}>
-                Méthodes d'Accompagnement
+                Approches et outils
               </Typography>
               <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-                - Séminaires de team building<br />
-                - Ateliers de communication<br />
-                - Coaching d'équipe<br />
-                - Techniques de résolution collaborative<br />
-                - Diagnostic de dynamique collective
+                - Cartographie numérologique de l’équipe et analyse des complémentarités<br />
+                - Séances de découverte de soi et des autres<br />
+                - Techniques de résolution et de décision collaborative<br />
+                - Étude numérologique collective et décryptage des dynamiques d’équipe<br />
+                - Expériences de team building basées sur la confiance et la coopération
               </Typography>
             </Grid>
           </Grid>
 
           {service && (
             <Typography variant="h6" align="center" sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}>
-              Durée: {service.duration} minutes | Prix: {service.price} €
+              Durée: {service.duration} minutes/séance
+              {service.price !== 9999 && ` | Prix: ${service.price} €`}
             </Typography>
           )}
 
           <Box sx={{ textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleReservationClick}
-              sx={{
-                px: 6,
-                py: 2,
-                fontSize: '1.1rem',
-                background: 'linear-gradient(45deg, #4169E1, #6495ED)',
-                color: 'white',
-                fontWeight: 600,
-                borderRadius: 50,
-                boxShadow: '0 8px 25px rgba(65, 105, 225, 0.3)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #6495ED, #4169E1)',
-                  transform: 'translateY(-3px)',
-                  boxShadow: '0 12px 35px rgba(65, 105, 225, 0.4)',
-                },
-              }}
-              disabled={!service}
-            >
-              Réserver une Session
-            </Button>
+            {service && service.price === 9999 ? (
+              <Button
+                variant="contained"
+                size="large"
+                component={RouterLink}
+                to="/contact?subject=Informations sur une prestation&module=Module Équipe"
+                sx={{
+                  px: 6,
+                  py: 2,
+                  fontSize: '1.1rem',
+                  background: 'linear-gradient(45deg, #4169E1, #6495ED)',
+                  color: 'white',
+                  fontWeight: 600,
+                  borderRadius: 50,
+                  boxShadow: '0 8px 25px rgba(65, 105, 225, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #6495ED, #4169E1)',
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 35px rgba(65, 105, 225, 0.4)',
+                  },
+                }}
+              >
+                Nous Consulter
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleReservationClick}
+                sx={{
+                  px: 6,
+                  py: 2,
+                  fontSize: '1.1rem',
+                  background: 'linear-gradient(45deg, #4169E1, #6495ED)',
+                  color: 'white',
+                  fontWeight: 600,
+                  borderRadius: 50,
+                  boxShadow: '0 8px 25px rgba(65, 105, 225, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #6495ED, #4169E1)',
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 35px rgba(65, 105, 225, 0.4)',
+                  },
+                }}
+                disabled={!service}
+              >
+                Réserver une Session
+              </Button>
+            )}
           </Box>
         </Box>
         </Container>

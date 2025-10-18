@@ -10,7 +10,8 @@ import {
   Alert,
   Box,
   IconButton,
-  Tooltip
+  Tooltip,
+  Link
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun';
@@ -18,7 +19,7 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import HomeIcon from '@mui/icons-material/Home';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -50,17 +51,17 @@ const ModuleSolo: React.FC = () => {
   const caracteristiques = [
     {
       titre: 'Performance Individuelle',
-      description: 'Optimisation de vos capacités physiques et mentales.',
+      description: 'Optimisez vos capacités physiques, mentales et émotionnelles en accord avec vos rythmes personnels.',
       icone: DirectionsRunIcon
     },
     {
       titre: 'Préparation Mentale',
-      description: 'Développement de la résilience et de la concentration.',
+      description: 'enforcez votre résilience, votre concentration et votre confiance à travers une meilleure compréhension de votre fonctionnement intérieur.',
       icone: PsychologyIcon
     },
     {
       titre: 'Potentiel Personnel',
-      description: 'Identification et activation de vos ressources internes.',
+      description: 'Identifiez vos leviers de réussite, vos cycles de progression et vos ressources internes pour performer en conscience.',
       icone: PersonIcon
     }
   ];
@@ -150,7 +151,7 @@ const ModuleSolo: React.FC = () => {
         sx={{
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
           py: 4,
-          mt: { xs: '23px', md: '40px' },
+          mt: { xs: '23px', md: '10px' },
         }}
       >
         <Container maxWidth="lg">
@@ -311,58 +312,80 @@ const ModuleSolo: React.FC = () => {
                 Objectifs du Module
               </Typography>
               <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-                - Améliorer la performance individuelle<br />
-                - Renforcer la préparation mentale<br />
-                - Développer la résilience<br />
-                - Optimiser les stratégies personnelles<br />
-                - Atteindre ses objectifs sportifs
+                - Renforcer la confiance et la résilience<br />
+                - Comprendre ses cycles pour performer au bon moment
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e', mb: 2 }}>
-                Méthodes d'Accompagnement
+                Approches et outils
               </Typography>
               <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-                - Coaching de performance individuelle<br />
-                - Techniques de préparation mentale<br />
-                - Analyse biomécanique personnalisée<br />
-                - Suivi et ajustement des objectifs<br />
-                - Stratégies de dépassement de soi
+                - Lecture numérologique des cycles de performance<br />
+                - Suivi et ajustement stratégique selon vos rythmes
               </Typography>
             </Grid>
           </Grid>
 
           {service && (
             <Typography variant="h6" align="center" sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}>
-              Durée: {service.duration} minutes | Prix: {service.price} €
+              Durée: {service.duration} minutes/séance
+              {service.price !== 9999 && ` | Prix: ${service.price} €`}
             </Typography>
           )}
 
           <Box sx={{ textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleReservationClick}
-              sx={{
-                px: 6,
-                py: 2,
-                fontSize: '1.1rem',
-                background: 'linear-gradient(45deg, #11998e, #38ef7d)',
-                color: 'white',
-                fontWeight: 600,
-                borderRadius: 50,
-                boxShadow: '0 8px 25px rgba(17, 153, 142, 0.3)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #38ef7d, #11998e)',
-                  transform: 'translateY(-3px)',
-                  boxShadow: '0 12px 35px rgba(17, 153, 142, 0.4)',
-                },
-              }}
-              disabled={!service}
-            >
-              Réserver une Session
-            </Button>
+            {service && service.price === 9999 ? (
+              <Button
+                variant="contained"
+                size="large"
+                component={RouterLink}
+                to="/contact?subject=Informations sur une prestation&module=Module Solo"
+                sx={{
+                  px: 6,
+                  py: 2,
+                  fontSize: '1.1rem',
+                  background: 'linear-gradient(45deg, #11998e, #38ef7d)',
+                  color: 'white',
+                  fontWeight: 600,
+                  borderRadius: 50,
+                  boxShadow: '0 8px 25px rgba(17, 153, 142, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #38ef7d, #11998e)',
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 35px rgba(17, 153, 142, 0.4)',
+                  },
+                }}
+              >
+                Nous Consulter
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleReservationClick}
+                sx={{
+                  px: 6,
+                  py: 2,
+                  fontSize: '1.1rem',
+                  background: 'linear-gradient(45deg, #11998e, #38ef7d)',
+                  color: 'white',
+                  fontWeight: 600,
+                  borderRadius: 50,
+                  boxShadow: '0 8px 25px rgba(17, 153, 142, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #38ef7d, #11998e)',
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 35px rgba(17, 153, 142, 0.4)',
+                  },
+                }}
+                disabled={!service}
+              >
+                Réserver une Session
+              </Button>
+            )}
           </Box>
         </Box>
         </Container>

@@ -75,7 +75,7 @@ const ProfilePage = () => {
         sx={{
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
           py: 4,
-          mt: { xs: '23px', md: '40px' },
+          mt: { xs: '23px', md: '0px' },
         }}
       >
         <Container maxWidth="lg">

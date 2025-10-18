@@ -10,14 +10,15 @@ import {
   Alert,
   Box,
   IconButton,
-  Tooltip
+  Tooltip,
+  Link
 } from '@mui/material';
 import PersonSearchIcon from '@mui/icons-material/PersonSearch';
 import StarIcon from '@mui/icons-material/Star';
 import GrowthIcon from '@mui/icons-material/TrendingUp';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -45,7 +46,7 @@ const ModuleCandidats: React.FC = () => {
   const caracteristiques = [
     {
       titre: 'Détection de Talents',
-      description: 'Identification précise des potentiels et compétences émergentes.',
+      description: 'Identification des potentiels et compétences émergentes.',
       icone: PersonSearchIcon
     },
     {
@@ -131,7 +132,7 @@ const ModuleCandidats: React.FC = () => {
         sx={{
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
           py: 4,
-          mt: { xs: '23px', md: '40px' },
+          mt: { xs: '23px', md: '10px' },
         }}
       >
         <Container maxWidth="lg">
@@ -293,56 +294,82 @@ const ModuleCandidats: React.FC = () => {
               </Typography>
               <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
                 - Identifier les potentiels cachés<br />
-                - Évaluer les compétences et talents émergents<br />
-                - Construire des parcours de développement personnalisés<br />
-                - Préparer l'intégration et la montée en compétences
+                - Comprendre les dynamiques personnelles et professionnelles<br />
+                - Construire des trajectoires de développement alignées<br />
+                - Préparer une intégration durable et épanouissante
               </Typography>
             </Grid>
             <Grid item xs={12} md={6}>
               <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e', mb: 2 }}>
-                Méthodes d'Accompagnement
+                Approches et outils
               </Typography>
               <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-                - Évaluations de potentiel avancées<br />
-                - Entretiens de détection de talents<br />
-                - Coaching de développement<br />
-                - Mise en place de plans de progression<br />
-                - Simulation de situations professionnelles
+                - Profil numérologique individuel et lecture des axes de développement<br />
+                - Entretiens de connaissance de soi et de positionnement professionnel<br />
+                - Outils d’aide à la projection et à la prise de décision
               </Typography>
             </Grid>
           </Grid>
 
           {service && (
             <Typography variant="h6" align="center" sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}>
-              Durée: {service.duration} minutes | Prix: {service.price} €
+              Durée: {service.duration} minutes/séance
+              {service.price !== 9999 && ` | Prix: ${service.price} €`}
             </Typography>
           )}
 
           <Box sx={{ textAlign: 'center' }}>
-            <Button
-              variant="contained"
-              size="large"
-              onClick={handleReservationClick}
-              sx={{
-                px: 6,
-                py: 2,
-                fontSize: '1.1rem',
-                background: 'linear-gradient(45deg, #4169E1, #6495ED)',
-                color: 'white',
-                fontWeight: 600,
-                borderRadius: 50,
-                boxShadow: '0 8px 25px rgba(65, 105, 225, 0.3)',
-                transition: 'all 0.3s ease',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #6495ED, #4169E1)',
-                  transform: 'translateY(-3px)',
-                  boxShadow: '0 12px 35px rgba(65, 105, 225, 0.4)',
-                },
-              }}
-              disabled={!service}
-            >
-              Réserver une Session
-            </Button>
+            {service && service.price === 9999 ? (
+              <Button
+                variant="contained"
+                size="large"
+                component={RouterLink}
+                to="/contact?subject=Informations sur une prestation&module=Module Candidats"
+                sx={{
+                  px: 6,
+                  py: 2,
+                  fontSize: '1.1rem',
+                  background: 'linear-gradient(45deg, #4169E1, #6495ED)',
+                  color: 'white',
+                  fontWeight: 600,
+                  borderRadius: 50,
+                  boxShadow: '0 8px 25px rgba(65, 105, 225, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #6495ED, #4169E1)',
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 35px rgba(65, 105, 225, 0.4)',
+                  },
+                }}
+              >
+                Nous Consulter
+              </Button>
+            ) : (
+              <Button
+                variant="contained"
+                size="large"
+                onClick={handleReservationClick}
+                sx={{
+                  px: 6,
+                  py: 2,
+                  fontSize: '1.1rem',
+                  background: 'linear-gradient(45deg, #4169E1, #6495ED)',
+                  color: 'white',
+                  fontWeight: 600,
+                  borderRadius: 50,
+                  boxShadow: '0 8px 25px rgba(65, 105, 225, 0.3)',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #6495ED, #4169E1)',
+                    transform: 'translateY(-3px)',
+                    boxShadow: '0 12px 35px rgba(65, 105, 225, 0.4)',
+                  },
+                }}
+                disabled={!service}
+              >
+                Réserver une Session
+              </Button>
+            )}
           </Box>
         </Box>
         </Container>

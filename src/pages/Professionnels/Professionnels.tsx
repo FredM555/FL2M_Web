@@ -71,7 +71,7 @@ const Professionnels: React.FC = () => {
         sx={{
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
           py: 4,
-          mt: { xs: '23px', md: '40px' },
+          mt: { xs: '23px', md: '10px' },
         }}
       >
         <Container maxWidth="lg">
@@ -184,9 +184,24 @@ const Professionnels: React.FC = () => {
           }}
         >
           <Container maxWidth="lg">
-          <Grid container spacing={4}>
+          <Grid container spacing={4} sx={{ justifyContent: 'center' }}>
             {modules.map((module, index) => (
-              <Grid item xs={12} sm={6} md={4} key={index}>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+                md={4}
+                key={index}
+                sx={{
+                  // Centrer les 2 derniers modules (index 3 et 4)
+                  ...(index >= 3 && {
+                    '@media (min-width: 900px)': {
+                      maxWidth: '33.333333%',
+                      flexBasis: '33.333333%',
+                    }
+                  })
+                }}
+              >
                 <Card
                   elevation={0}
                   sx={{

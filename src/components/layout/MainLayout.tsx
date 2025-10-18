@@ -41,13 +41,52 @@ const MainLayout: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  
+
   // États pour les menus
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Slogans en défilement
+  const slogans = React.useMemo(() => [
+    'Se connaître mieux par la numérologie.',
+    '« Découvre ta vraie nature grâce à la numérologie. »',
+    '« La numérologie, un miroir de ton potentiel. »',
+    '« Derrière chaque nombre, une vérité sur toi. »',
+    '« Comprends-toi mieux pour avancer plus loin. »',
+    '« Explore tes nombres, révèle ton essence. »',
+    '« La clé de ta transformation est dans tes nombres. »',
+    '« La numérologie au service de ta réussite. »',
+    '« Des nombres pour éclairer tes choix. »',
+    '« Comprends-toi. Aligne-toi. Rayonne. »',
+    '« Les nombres ne mentent pas, ils te guident. »',
+    '« La numérologie, une boussole pour ta transformation. »',
+    '« Ton potentiel a une signature : la tienne. »',
+    '« Aligne tes décisions sur ton identité. »',
+    '« Donne du sens à ta stratégie grâce à la numérologie. »',
+    '« Entre chiffres et conscience, découvre ton équilibre. »',
+    '« Décode-toi grâce à la numérologie. »',
+    '« Tes nombres parlent, écoute-les. »',
+    '« Découvre le code caché derrière ton parcours. »',
+    '« La connaissance de soi commence par un chiffre. »'
+  ], []);
+  const [currentSloganIndex, setCurrentSloganIndex] = useState(0);
+  const [fade, setFade] = useState(true);
+
+  // Rotation des slogans toutes les 5 secondes
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      setFade(false);
+      setTimeout(() => {
+        setCurrentSloganIndex((prevIndex) => (prevIndex + 1) % slogans.length);
+        setFade(true);
+      }, 500);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [slogans.length]);
+
   // Hauteur totale du bandeau pour décaler le contenu principal
-  const headerHeight = isMobile ? '56px' : '136px'; // Ajustez selon la hauteur réelle de votre header
+  const headerHeight = isMobile ? '56px' : '108px'; // Hauteur réduite du header
 
   // Fonctions de gestion des menus
   const handleMenuOpen = (setter: React.Dispatch<React.SetStateAction<HTMLElement | null>>) => 
@@ -108,12 +147,11 @@ const MainLayout: React.FC = () => {
           sx={{
             bgcolor: theme.palette.primary.main,
             color: 'white',
-            py: 3,
+            py: { xs: 1.5, md: 2 },
             width: '100vw',
             maxWidth: '100%',
             boxSizing: 'border-box',
             margin: 0,
-            padding: '1.5rem 0',
           }}
         >
           <Container maxWidth={false} disableGutters sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 } }}>
@@ -123,139 +161,78 @@ const MainLayout: React.FC = () => {
               alignItems: 'center',
               width: '100%',
             }}>
-              {/* Section F L²M avec grandes lettres */}
-              <Box sx={{ flexGrow: 1 }}>
-                <Box
+              {/* Logo FL²M à gauche */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', minWidth: { xs: '80px', md: '120px' } }}>
+                <Typography
+                  component={RouterLink}
+                  to="/"
                   sx={{
-                    display: 'flex',
-                    flexDirection: { xs: 'column', md: 'row' },
-                    gap: { xs: 2, md: 4 },
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    mb: 2,
+                    fontSize: { xs: '2rem', md: '2.5rem' },
+                    fontWeight: 700,
+                    background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    lineHeight: 1,
+                    fontFamily: '"Playfair Display", serif',
+                    filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.15))',
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      filter: 'drop-shadow(0 4px 12px rgba(255, 215, 0, 0.3))',
+                      transform: 'scale(1.05)',
+                    },
                   }}
                 >
-                  {/* F - Force */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      gap: 1.5,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '4rem', md: '5rem' },
-                        fontWeight: 700,
-                        background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                        backgroundClip: 'text',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        lineHeight: 1,
-                        fontFamily: '"Playfair Display", serif',
-                        filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.15))',
-                      }}
-                    >
-                      F
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '0.9rem', md: '1rem' },
-                        fontWeight: 400,
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        lineHeight: 1,
-                        pb: 0.5,
-                      }}
-                    >
-                      Force
-                    </Typography>
-                  </Box>
+                  FL²M
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: { xs: '0.5rem', md: '0.6rem' },
+                    fontWeight: 400,
+                    color: 'rgba(255, 255, 255, 0.7)',
+                    lineHeight: 1.2,
+                    mt: 0.5,
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  Force • Légitimité • Mouvement • Métamorphose
+                </Typography>
+              </Box>
 
-                  {/* L - Légitimité */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      gap: 1.5,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '4rem', md: '5rem' },
-                        fontWeight: 700,
-                        background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                        backgroundClip: 'text',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        lineHeight: 1,
-                        fontFamily: '"Playfair Display", serif',
-                        filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.15))',
-                      }}
-                    >
-                      L
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '0.9rem', md: '1rem' },
-                        fontWeight: 400,
-                        color: 'rgba(255, 255, 255, 0.8)',
-                        lineHeight: 1,
-                        pb: 0.5,
-                      }}
-                    >
-                      Légitimité
-                    </Typography>
-                  </Box>
-
-                  {/* ²M - Mouvement Métamorphose */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'flex-end',
-                      gap: 1.5,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '4rem', md: '5rem' },
-                        fontWeight: 700,
-                        background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                        backgroundClip: 'text',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        lineHeight: 1,
-                        fontFamily: '"Playfair Display", serif',
-                        filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.15))',
-                      }}
-                    >
-                      ²M
-                    </Typography>
-                    <Box sx={{ pb: 0.5 }}>
-                      <Typography
-                        sx={{
-                          fontSize: { xs: '0.9rem', md: '1rem' },
-                          fontWeight: 400,
-                          color: 'rgba(255, 255, 255, 0.8)',
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        Mouvement
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: { xs: '0.9rem', md: '1rem' },
-                          fontWeight: 400,
-                          color: 'rgba(255, 255, 255, 0.8)',
-                          lineHeight: 1.2,
-                        }}
-                      >
-                        Métamorphose
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-
-             </Box>
+              {/* Slogan central avec défilement */}
+              <Box sx={{
+                flexGrow: 1,
+                display: { xs: 'none', md: 'flex' },
+                justifyContent: 'center',
+                px: 3,
+                overflow: 'hidden',
+              }}>
+                <Typography
+                  sx={{
+                    fontSize: currentSloganIndex === 0 ? { xs: '1.1rem', md: '1.8rem' } : { xs: '0.9rem', md: '1.5rem' },
+                    fontWeight: currentSloganIndex === 0 ? 700 : 500,
+                    ...(currentSloganIndex === 0 ? {
+                      background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      filter: 'drop-shadow(0 2px 4px rgba(255, 215, 0, 0.2))',
+                    } : {
+                      color: 'rgba(255, 255, 255, 0.95)',
+                    }),
+                    fontStyle: 'italic',
+                    textAlign: 'center',
+                    letterSpacing: '0.5px',
+                    opacity: fade ? 1 : 0,
+                    transform: fade ? 'translateY(0)' : 'translateY(-10px)',
+                    transition: 'opacity 0.5s ease-in-out, transform 0.5s ease-in-out',
+                  }}
+                >
+                  {slogans[currentSloganIndex]}
+                </Typography>
+              </Box>
                            
 
               {/* Boutons de connexion/inscription ou menu utilisateur */}
@@ -652,21 +629,36 @@ const MainLayout: React.FC = () => {
                   color="inherit"
                   component={RouterLink}
                   to="/"
+                  startIcon={<HomeIcon />}
                   sx={{
-                    mx: 1,
-                    fontSize: '1.1rem',
-                    backgroundColor: location.pathname === '/' ? 'rgba(255, 215, 0, 0.15)' : 'transparent',
-                    borderBottom: location.pathname === '/' ? '2px solid #FFD700' : 'none',
-                    '& span:first-of-type': {
+                    mx: 0.5,
+                    px: 2,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    background: location.pathname === '/' ? 'linear-gradient(45deg, #FFD700, #FFA500)' : 'transparent',
+                    backgroundClip: location.pathname === '/' ? 'text' : 'unset',
+                    WebkitBackgroundClip: location.pathname === '/' ? 'text' : 'unset',
+                    WebkitTextFillColor: location.pathname === '/' ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    color: location.pathname === '/' ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    borderBottom: location.pathname === '/' ? '3px solid #FFD700' : '3px solid transparent',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                      transform: 'translateY(-2px)',
                       background: 'linear-gradient(45deg, #FFD700, #FFA500)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
-                      fontWeight: 700,
+                      color: 'transparent',
+                    },
+                    '& .MuiButton-startIcon': {
+                      color: location.pathname === '/' ? '#FFD700' : 'rgba(255, 255, 255, 0.8)',
                     },
                   }}
                 >
-                  <span>A</span>ccueil
+                  Accueil
                 </Button>
 
                 {/* Bouton Particuliers */}
@@ -674,22 +666,36 @@ const MainLayout: React.FC = () => {
                   color="inherit"
                   component={RouterLink}
                   to="/particuliers"
+                  startIcon={<PersonIcon />}
                   sx={{
-                    mx: 1,
-                    fontSize: '1.1rem',
-                    backgroundColor: location.pathname.startsWith('/particuliers') ? 'rgba(255, 215, 0, 0.15)' : 'transparent',
-                    borderBottom: location.pathname.startsWith('/particuliers') ? '2px solid #FFD700' : 'none',
-                    '& span:first-of-type': {
+                    mx: 0.5,
+                    px: 2,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    background: location.pathname.startsWith('/particuliers') ? 'linear-gradient(45deg, #FFD700, #FFA500)' : 'transparent',
+                    backgroundClip: location.pathname.startsWith('/particuliers') ? 'text' : 'unset',
+                    WebkitBackgroundClip: location.pathname.startsWith('/particuliers') ? 'text' : 'unset',
+                    WebkitTextFillColor: location.pathname.startsWith('/particuliers') ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    color: location.pathname.startsWith('/particuliers') ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    borderBottom: location.pathname.startsWith('/particuliers') ? '3px solid #FFD700' : '3px solid transparent',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                      transform: 'translateY(-2px)',
                       background: 'linear-gradient(45deg, #FFD700, #FFA500)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
-                      fontWeight: 700,
-                      fontSize: '1.2rem',
+                      color: 'transparent',
+                    },
+                    '& .MuiButton-startIcon': {
+                      color: location.pathname.startsWith('/particuliers') ? '#FFD700' : 'rgba(255, 255, 255, 0.8)',
                     },
                   }}
                 >
-                  <span>P</span>articuliers
+                  Particuliers
                 </Button>
 
                 {/* Bouton Professionnels */}
@@ -697,19 +703,36 @@ const MainLayout: React.FC = () => {
                   color="inherit"
                   component={RouterLink}
                   to="/professionnels"
+                  startIcon={<BusinessIcon />}
                   sx={{
-                    mx: 1,
-                    fontSize: '1.1rem',
-                    backgroundColor: location.pathname.startsWith('/professionnels') ? 'rgba(100, 149, 237, 0.15)' : 'transparent',
-                    borderBottom: location.pathname.startsWith('/professionnels') ? '2px solid #6495ED' : 'none',
-                    '& span:first-of-type': {
-                      color: '#6495ED',
-                      fontWeight: 700,
-                      fontSize: '1.2rem',
+                    mx: 0.5,
+                    px: 2,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    background: location.pathname.startsWith('/professionnels') ? 'linear-gradient(45deg, #6495ED, #4169E1)' : 'transparent',
+                    backgroundClip: location.pathname.startsWith('/professionnels') ? 'text' : 'unset',
+                    WebkitBackgroundClip: location.pathname.startsWith('/professionnels') ? 'text' : 'unset',
+                    WebkitTextFillColor: location.pathname.startsWith('/professionnels') ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    color: location.pathname.startsWith('/professionnels') ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    borderBottom: location.pathname.startsWith('/professionnels') ? '3px solid #6495ED' : '3px solid transparent',
+                    '&:hover': {
+                      backgroundColor: 'rgba(100, 149, 237, 0.1)',
+                      transform: 'translateY(-2px)',
+                      background: 'linear-gradient(45deg, #6495ED, #4169E1)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      color: 'transparent',
+                    },
+                    '& .MuiButton-startIcon': {
+                      color: location.pathname.startsWith('/professionnels') ? '#6495ED' : 'rgba(255, 255, 255, 0.8)',
                     },
                   }}
                 >
-                  <span>P</span>rofessionnels
+                  Professionnels
                 </Button>
 
                 {/* Bouton Sportifs */}
@@ -717,104 +740,184 @@ const MainLayout: React.FC = () => {
                   color="inherit"
                   component={RouterLink}
                   to="/sportifs"
+                  startIcon={<SportsSoccerIcon />}
                   sx={{
-                    mx: 1,
-                    fontSize: '1.1rem',
-                    backgroundColor: location.pathname.startsWith('/sportifs') ? 'rgba(17, 153, 142, 0.15)' : 'transparent',
-                    borderBottom: location.pathname.startsWith('/sportifs') ? '2px solid #11998e' : 'none',
-                    '& span:first-of-type': {
-                      color: '#11998e',
-                      fontWeight: 700,
-                      fontSize: '1.2rem',
+                    mx: 0.5,
+                    px: 2,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    background: location.pathname.startsWith('/sportifs') ? 'linear-gradient(45deg, #11998e, #0d7a6f)' : 'transparent',
+                    backgroundClip: location.pathname.startsWith('/sportifs') ? 'text' : 'unset',
+                    WebkitBackgroundClip: location.pathname.startsWith('/sportifs') ? 'text' : 'unset',
+                    WebkitTextFillColor: location.pathname.startsWith('/sportifs') ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    color: location.pathname.startsWith('/sportifs') ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    borderBottom: location.pathname.startsWith('/sportifs') ? '3px solid #11998e' : '3px solid transparent',
+                    '&:hover': {
+                      backgroundColor: 'rgba(17, 153, 142, 0.1)',
+                      transform: 'translateY(-2px)',
+                      background: 'linear-gradient(45deg, #11998e, #0d7a6f)',
+                      backgroundClip: 'text',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      color: 'transparent',
+                    },
+                    '& .MuiButton-startIcon': {
+                      color: location.pathname.startsWith('/sportifs') ? '#11998e' : 'rgba(255, 255, 255, 0.8)',
                     },
                   }}
                 >
-                  <span>S</span>portifs
+                  Sportifs
                 </Button>
+
                 {/* Bouton Intervenants */}
                 <Button
                   color="inherit"
                   component={RouterLink}
                   to="/consultants"
+                  startIcon={<PersonIcon />}
                   sx={{
-                    mx: 1,
-                    fontSize: '1.1rem',
-                    backgroundColor: location.pathname.startsWith('/consultants') ? 'rgba(255, 215, 0, 0.15)' : 'transparent',
-                    borderBottom: location.pathname.startsWith('/consultants') ? '2px solid #FFD700' : 'none',
-                    '& span:first-of-type': {
+                    mx: 0.5,
+                    px: 2,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    background: location.pathname.startsWith('/consultants') ? 'linear-gradient(45deg, #FFD700, #FFA500)' : 'transparent',
+                    backgroundClip: location.pathname.startsWith('/consultants') ? 'text' : 'unset',
+                    WebkitBackgroundClip: location.pathname.startsWith('/consultants') ? 'text' : 'unset',
+                    WebkitTextFillColor: location.pathname.startsWith('/consultants') ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    color: location.pathname.startsWith('/consultants') ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    borderBottom: location.pathname.startsWith('/consultants') ? '3px solid #FFD700' : '3px solid transparent',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                      transform: 'translateY(-2px)',
                       background: 'linear-gradient(45deg, #FFD700, #FFA500)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
-                      fontWeight: 700,
-                      fontSize: '1.2rem',
+                      color: 'transparent',
+                    },
+                    '& .MuiButton-startIcon': {
+                      color: location.pathname.startsWith('/consultants') ? '#FFD700' : 'rgba(255, 255, 255, 0.8)',
                     },
                   }}
                 >
-                  <span>I</span>ntervenants
+                  Intervenants
                 </Button>
-                {/* Autres boutons de navigation */}
+
+                {/* Bouton Prendre RDV */}
                 <Button
                   color="inherit"
                   component={RouterLink}
                   to="/prendre-rendez-vous"
+                  startIcon={<EventIcon />}
                   sx={{
-                    mx: 1,
-                    fontSize: '1.1rem',
-                    backgroundColor: location.pathname === '/prendre-rendez-vous' ? 'rgba(255, 215, 0, 0.15)' : 'transparent',
-                    borderBottom: location.pathname === '/prendre-rendez-vous' ? '2px solid #FFD700' : 'none',
-                    '& span:first-of-type': {
+                    mx: 0.5,
+                    px: 2,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    background: location.pathname === '/prendre-rendez-vous' ? 'linear-gradient(45deg, #FFD700, #FFA500)' : 'transparent',
+                    backgroundClip: location.pathname === '/prendre-rendez-vous' ? 'text' : 'unset',
+                    WebkitBackgroundClip: location.pathname === '/prendre-rendez-vous' ? 'text' : 'unset',
+                    WebkitTextFillColor: location.pathname === '/prendre-rendez-vous' ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    color: location.pathname === '/prendre-rendez-vous' ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    borderBottom: location.pathname === '/prendre-rendez-vous' ? '3px solid #FFD700' : '3px solid transparent',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                      transform: 'translateY(-2px)',
                       background: 'linear-gradient(45deg, #FFD700, #FFA500)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
-                      fontWeight: 700,
+                      color: 'transparent',
+                    },
+                    '& .MuiButton-startIcon': {
+                      color: location.pathname === '/prendre-rendez-vous' ? '#FFD700' : 'rgba(255, 255, 255, 0.8)',
                     },
                   }}
                 >
-                  <span>P</span>rendre RDV
+                  Prendre RDV
                 </Button>
 
+                {/* Bouton Contact */}
                 <Button
                   color="inherit"
                   component={RouterLink}
                   to="/contact"
+                  startIcon={<PhoneIcon />}
                   sx={{
-                    mx: 1,
-                    fontSize: '1.1rem',
-                    backgroundColor: location.pathname === '/contact' ? 'rgba(255, 215, 0, 0.15)' : 'transparent',
-                    borderBottom: location.pathname === '/contact' ? '2px solid #FFD700' : 'none',
-                    '& span:first-of-type': {
+                    mx: 0.5,
+                    px: 2,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    background: location.pathname === '/contact' ? 'linear-gradient(45deg, #FFD700, #FFA500)' : 'transparent',
+                    backgroundClip: location.pathname === '/contact' ? 'text' : 'unset',
+                    WebkitBackgroundClip: location.pathname === '/contact' ? 'text' : 'unset',
+                    WebkitTextFillColor: location.pathname === '/contact' ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    color: location.pathname === '/contact' ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    borderBottom: location.pathname === '/contact' ? '3px solid #FFD700' : '3px solid transparent',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                      transform: 'translateY(-2px)',
                       background: 'linear-gradient(45deg, #FFD700, #FFA500)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
-                      fontWeight: 700,
+                      color: 'transparent',
+                    },
+                    '& .MuiButton-startIcon': {
+                      color: location.pathname === '/contact' ? '#FFD700' : 'rgba(255, 255, 255, 0.8)',
                     },
                   }}
                 >
-                  <span>C</span>ontact
+                  Contact
                 </Button>
 
+                {/* Bouton À propos */}
                 <Button
                   color="inherit"
                   component={RouterLink}
                   to="/apropos"
+                  startIcon={<InfoIcon />}
                   sx={{
-                    mx: 1,
-                    fontSize: '1.1rem',
-                    backgroundColor: location.pathname === '/apropos' ? 'rgba(255, 215, 0, 0.15)' : 'transparent',
-                    borderBottom: location.pathname === '/apropos' ? '2px solid #FFD700' : 'none',
-                    '& span:first-of-type': {
+                    mx: 0.5,
+                    px: 2,
+                    fontSize: '0.95rem',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    borderRadius: '8px',
+                    transition: 'all 0.3s ease',
+                    background: location.pathname === '/apropos' ? 'linear-gradient(45deg, #FFD700, #FFA500)' : 'transparent',
+                    backgroundClip: location.pathname === '/apropos' ? 'text' : 'unset',
+                    WebkitBackgroundClip: location.pathname === '/apropos' ? 'text' : 'unset',
+                    WebkitTextFillColor: location.pathname === '/apropos' ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    color: location.pathname === '/apropos' ? 'transparent' : 'rgba(255, 255, 255, 0.9)',
+                    borderBottom: location.pathname === '/apropos' ? '3px solid #FFD700' : '3px solid transparent',
+                    '&:hover': {
+                      backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                      transform: 'translateY(-2px)',
                       background: 'linear-gradient(45deg, #FFD700, #FFA500)',
                       backgroundClip: 'text',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
-                      fontWeight: 700,
+                      color: 'transparent',
+                    },
+                    '& .MuiButton-startIcon': {
+                      color: location.pathname === '/apropos' ? '#FFD700' : 'rgba(255, 255, 255, 0.8)',
                     },
                   }}
                 >
-                  <span>À</span> propos
+                  À propos
                 </Button>
               </Toolbar>
             </Container>
@@ -1097,7 +1200,10 @@ const MainLayout: React.FC = () => {
                 gutterBottom
                 sx={{
                   fontWeight: 600,
-                  color: '#FFD700',
+                  background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
                   mb: 2,
                 }}
               >
@@ -1111,7 +1217,7 @@ const MainLayout: React.FC = () => {
                   mb: 2,
                 }}
               >
-                Force, Légitimité, Mouvement & Métamorphose. <br></br>On vous accompagne, grâce à la Numérologie Stratégique®, à mieux vous connaître, à trouver votre équilibre, à déployer votre potentiel et à passer à l’action avec clarté et confiance.
+                Force, Légitimité, Mouvement & Métamorphose. <br></br>On vous accompagne, grâce à la Numérologie, à mieux vous connaître, à trouver votre équilibre, à déployer votre potentiel et à passer à l’action avec clarté et confiance.
               </Typography>
               <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
                 {/* Icônes réseaux sociaux - placeholder */}
@@ -1163,7 +1269,10 @@ const MainLayout: React.FC = () => {
                 gutterBottom
                 sx={{
                   fontWeight: 600,
-                  color: '#FFD700',
+                  background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
                   mb: 2,
                   fontSize: '1rem',
                 }}
@@ -1256,7 +1365,10 @@ const MainLayout: React.FC = () => {
                 gutterBottom
                 sx={{
                   fontWeight: 600,
-                  color: '#FFD700',
+                  background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
                   mb: 2,
                   fontSize: '1rem',
                 }}
@@ -1319,7 +1431,10 @@ const MainLayout: React.FC = () => {
                 gutterBottom
                 sx={{
                   fontWeight: 600,
-                  color: '#FFD700',
+                  background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
                   mb: 2,
                   fontSize: '1rem',
                 }}

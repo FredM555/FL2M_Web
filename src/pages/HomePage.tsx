@@ -17,7 +17,7 @@ const HomePage = () => {
         sx={{
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
           py: 4,
-          mt: { xs: '23px', md: '40px' },
+          mt: { xs: '23px', md: '10px' },
         }}
       >
         <Container maxWidth="lg">
@@ -80,7 +80,7 @@ const HomePage = () => {
                     mb: 3,
                   }}
                 >
-                  On vous accompagne, grâce à la Numérologie Stratégique®, à mieux vous connaître, à trouver votre équilibre, à déployer votre potentiel et à passer à l'action avec clarté et confiance.
+                  On vous accompagne, grâce à la Numérologie, à mieux vous connaître, à trouver votre équilibre, à déployer votre potentiel et à passer à l'action avec clarté et confiance.
                 </Typography>
                 <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
                   <Button
@@ -352,7 +352,7 @@ const HomePage = () => {
                     Professionnels
                   </Typography>
                   <Typography variant="body1" paragraph textAlign="center" sx={{ lineHeight: 1.7, mb: 3 }}>
-                    Solutions RH pour optimiser vos équipes, recruter efficacement et développer votre stratégie d'entreprise.
+                    Des outils pour révéler le potentiel humain au cœur de votre entreprise.
                   </Typography>
                   <Box sx={{ textAlign: 'center', mt: 'auto' }}>
                     <Button
@@ -448,7 +448,7 @@ const HomePage = () => {
               lineHeight: 1.7,
             }}
           >
-            La numérologie stratégique® vous offre une boîte à outils unique pour révéler vos dons, développer vos talents et libérer votre véritable potentiel.
+            La numérologie vous offre une boîte à outils unique pour révéler vos dons, développer vos talents et libérer votre véritable potentiel.
           </Typography>
           <Button
             variant="contained"

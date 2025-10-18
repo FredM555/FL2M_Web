@@ -223,7 +223,7 @@ const ConsultantDetailPage: React.FC = () => {
           background: 'linear-gradient(to bottom, rgba(255, 215, 0, 0.03) 0%, rgba(255, 165, 0, 0.02) 100%)',
           minHeight: '100vh',
           py: 6,
-          mt: { xs: '23px', md: '40px' },
+          mt: { xs: '23px', md: '10px' },
         }}
       >
         <Container maxWidth="lg">

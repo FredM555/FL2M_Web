@@ -1,15 +1,16 @@
 // src/pages/ContactPage.tsx
-import { useState } from 'react';
-import { 
-  Box, 
-  Container, 
-  Typography, 
-  TextField, 
-  Button, 
-  Grid, 
-  Paper, 
-  Snackbar, 
-  Alert, 
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import {
+  Box,
+  Container,
+  Typography,
+  TextField,
+  Button,
+  Grid,
+  Paper,
+  Snackbar,
+  Alert,
   CircularProgress,
   MenuItem
 } from '@mui/material';
@@ -27,6 +28,7 @@ interface ContactFormData {
   email: string;
   phone?: string;
   subject: string;
+  module?: string;
   message: string;
 }
 
@@ -38,10 +40,11 @@ interface ContactMessage extends ContactFormData {
 
 const ContactPage = () => {
   const { user, profile } = useAuth();
+  const [searchParams] = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // État initial du formulaire
   const initialFormState: ContactFormData = {
     first_name: profile?.first_name || '',
@@ -49,18 +52,49 @@ const ContactPage = () => {
     email: profile?.email || user?.email || '',
     phone: profile?.phone || '',
     subject: '',
+    module: '',
     message: ''
   };
-  
+
   const [formData, setFormData] = useState<ContactFormData>(initialFormState);
-  
+
+  // Pré-remplir le formulaire à partir des paramètres URL
+  useEffect(() => {
+    const subjectParam = searchParams.get('subject');
+    const moduleParam = searchParams.get('module');
+
+    if (subjectParam || moduleParam) {
+      setFormData(prev => ({
+        ...prev,
+        subject: subjectParam || prev.subject,
+        module: moduleParam || prev.module
+      }));
+    }
+  }, [searchParams]);
+
   // Sujets prédéfinis
   const subjects = [
     'Question générale',
     'Prise de rendez-vous',
-    'Informations sur les prestations',
+    'Informations sur une prestation',
     'Partenariat',
     'Autre'
+  ];
+
+  // Modules disponibles
+  const modules = [
+    'Tous',
+    'Module Adultes',
+    'Module Couples',
+    'Module Enfants',
+    'Module Suivi Annuel',
+    'Module Coéquipiers',
+    'Module Équipe',
+    'Module Candidats',
+    'Module Associés',
+    'Module Stratégies',
+    'Module Solo',
+    'Module Team'
   ];
   
   // Gestion des changements dans le formulaire
@@ -130,7 +164,7 @@ const ContactPage = () => {
         sx={{
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
           py: 4,
-          mt: { xs: '23px', md: '40px' },
+          mt: { xs: '23px', md: '10px' },
         }}
       >
         <Container maxWidth="lg">
@@ -364,6 +398,29 @@ const ContactPage = () => {
                     ))}
                   </TextField>
                 </Grid>
+
+                {/* Champ Module - affiché uniquement si le sujet est "Informations sur les prestations" */}
+                {formData.subject === 'Informations sur une prestation' && (
+                  <Grid item xs={12}>
+                    <TextField
+                      name="module"
+                      label="Module concerné"
+                      select
+                      value={formData.module}
+                      onChange={handleChange}
+                      fullWidth
+                      margin="normal"
+                      helperText="Sélectionnez le module pour lequel vous souhaitez des informations"
+                    >
+                      {modules.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          {option}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                )}
+
                 <Grid item xs={12}>
                   <TextField
                     name="message"

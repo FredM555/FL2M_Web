@@ -4,6 +4,7 @@ import { useAuth } from './context/AuthContext';
 import { Box, CircularProgress } from '@mui/material';
 import './index.css'
 import ErrorBoundary from './components/ErrorBoundary';
+import ScrollToTop from './components/ScrollToTop';
 import { useEffect, useState } from 'react';
 
 // Layouts
@@ -24,6 +25,9 @@ import ConsultantsPage from './pages/ConsultantsPage';
 import ConsultantDetailPage from './pages/ConsultantDetailPage';
 import AuthCallbackPage from './pages/AuthCallbackPage';
 import ProfileCompletionPage from './pages/ProfileCompletionPage';
+import MentionsLegalesPage from './pages/MentionsLegalesPage';
+import PolitiqueConfidentialitePage from './pages/PolitiqueConfidentialitePage';
+import CGUPage from './pages/CGUPage';
 
 // Composants Particuliers
 import Particuliers from './pages/Particuliers/Particuliers';
@@ -195,12 +199,13 @@ function App() {
   
   return (
     <ErrorBoundary>
-      <Box sx={{ 
-        width: '100%', 
-        maxWidth: '100vw', 
-        margin: 0, 
-        padding: 0, 
-        overflow: 'hidden' 
+      <ScrollToTop />
+      <Box sx={{
+        width: '100%',
+        maxWidth: '100vw',
+        margin: 0,
+        padding: 0,
+        overflow: 'hidden'
       }}>
         <Routes>
           {/* Routes publiques */}
@@ -214,7 +219,13 @@ function App() {
             <Route path="contact" element={<ContactPage />} />
             <Route path="apropos" element={<AProposPage />} />
             <Route path="consultants" element={<ConsultantsPage />} />
-            <Route path="consultants/:id" element={<ConsultantDetailPage />} />            
+            <Route path="consultants/:id" element={<ConsultantDetailPage />} />
+
+            {/* Pages légales */}
+            <Route path="mentions-legales" element={<MentionsLegalesPage />} />
+            <Route path="politique-confidentialite" element={<PolitiqueConfidentialitePage />} />
+            <Route path="cgu" element={<CGUPage />} />
+
             {/* Routes Particuliers */}
             <Route path="particuliers" element={<Particuliers />} />
             <Route path="particuliers/module-adultes" element={<ModuleAdultes />} />

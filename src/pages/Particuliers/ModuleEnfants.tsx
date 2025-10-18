@@ -10,14 +10,15 @@ import {
   Alert,
   Box,
   IconButton,
-  Tooltip
+  Tooltip,
+  Link
 } from '@mui/material';
 import SchoolIcon from '@mui/icons-material/School';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import SportsIcon from '@mui/icons-material/SportsScore';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -146,7 +147,7 @@ const ModuleEnfants: React.FC = () => {
         sx={{
           background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
           py: 4,
-          mt: { xs: '23px', md: '40px' },
+          mt: { xs: '23px', md: '10px' },
         }}
       >
         <Container maxWidth="lg">
@@ -323,7 +324,7 @@ const ModuleEnfants: React.FC = () => {
           </Grid>
           <Grid item xs={12} md={6}>
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e', mb: 2 }}>
-              Méthodes d'Accompagnement
+              Approches et outils
             </Typography>
             <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
               - Séances ludiques d'apprentissage
@@ -341,36 +342,64 @@ const ModuleEnfants: React.FC = () => {
             align="center"
             sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}
           >
-            Durée: {service.duration} minutes | Prix: {service.price} €
+            Durée: {service.duration} minutes
+            {service.price !== 9999 && ` | Prix: ${service.price} €`}
           </Typography>
         )}
 
-        {/* Bouton de Réservation */}
+        {/* Bouton de Réservation ou Nous Consulter */}
         <Box sx={{ textAlign: 'center' }}>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={handleReservationClick}
-            sx={{
-              px: 6,
-              py: 2,
-              fontSize: '1.1rem',
-              background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-              color: '#1a1a2e',
-              fontWeight: 600,
-              borderRadius: 50,
-              boxShadow: '0 8px 25px rgba(255, 215, 0, 0.3)',
-              transition: 'all 0.3s ease',
-              '&:hover': {
-                background: 'linear-gradient(45deg, #FFA500, #FFD700)',
-                transform: 'translateY(-3px)',
-                boxShadow: '0 12px 35px rgba(255, 215, 0, 0.4)',
-              },
-            }}
-            disabled={!service}
-          >
-            Réserver une Session
-          </Button>
+          {service && service.price === 9999 ? (
+            <Button
+              variant="contained"
+              size="large"
+              component={RouterLink}
+              to="/contact?subject=Informations sur une prestation&module=Module Enfants"
+              sx={{
+                px: 6,
+                py: 2,
+                fontSize: '1.1rem',
+                background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                color: '#1a1a2e',
+                fontWeight: 600,
+                borderRadius: 50,
+                boxShadow: '0 8px 25px rgba(255, 215, 0, 0.3)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #FFA500, #FFD700)',
+                  transform: 'translateY(-3px)',
+                  boxShadow: '0 12px 35px rgba(255, 215, 0, 0.4)',
+                },
+              }}
+            >
+              Nous Consulter
+            </Button>
+          ) : (
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleReservationClick}
+              sx={{
+                px: 6,
+                py: 2,
+                fontSize: '1.1rem',
+                background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                color: '#1a1a2e',
+                fontWeight: 600,
+                borderRadius: 50,
+                boxShadow: '0 8px 25px rgba(255, 215, 0, 0.3)',
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #FFA500, #FFD700)',
+                  transform: 'translateY(-3px)',
+                  boxShadow: '0 12px 35px rgba(255, 215, 0, 0.4)',
+                },
+              }}
+              disabled={!service}
+            >
+              Réserver une Session
+            </Button>
+          )}
         </Box>
         </Box>
         </Container>
