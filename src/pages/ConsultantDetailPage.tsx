@@ -171,6 +171,17 @@ const ConsultantDetailPage: React.FC = () => {
     return 'I';
   };
 
+  // Obtenir la photo de profil si elle existe
+  const getProfilePhoto = () => {
+    if (!consultant) return null;
+    const name = getConsultantName().toLowerCase();
+    // Vérifier si c'est Frédéric (ou Frederic)
+    if (name.includes('frédéric') || name.includes('frederic')) {
+      return '/images/Frederic.png';
+    }
+    return null;
+  };
+
   // Formatage du texte avec des paragraphes
   const formatBio = (bio: string) => {
     if (!bio) return null;
@@ -303,15 +314,49 @@ const ConsultantDetailPage: React.FC = () => {
   }
 
   return (
-    <Box
-      sx={{
-        width: '100%',
-        background: 'linear-gradient(to bottom, rgba(255, 215, 0, 0.03) 0%, rgba(255, 165, 0, 0.02) 100%)',
-        minHeight: '100vh',
-        py: 4,
-        mt: { xs: '23px', md: '40px' },
-      }}
-    >
+    <Box sx={{ width: '100%', position: 'relative', minHeight: '100vh' }}>
+      {/* Image de fond - détail intervenant */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          backgroundImage: 'url(/images/IntervenantDetail.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.7,
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Overlay pour adoucir l'image */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.35) 50%, rgba(222, 226, 230, 0.4) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        sx={{
+          width: '100%',
+          background: 'rgba(245, 247, 250, 0.6)',
+          backdropFilter: 'blur(2px)',
+          minHeight: '100vh',
+          py: 4,
+          mt: { xs: '23px', md: '40px' },
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
       <Container maxWidth="lg">
         <Grid container spacing={4}>
           {/* Profil et informations de contact */}
@@ -348,17 +393,18 @@ const ConsultantDetailPage: React.FC = () => {
                 }}
               >
                 <Avatar
+                  src={getProfilePhoto() || undefined}
                   sx={{
                     width: 150,
                     height: 150,
                     fontSize: '3.5rem',
-                    background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                    background: getProfilePhoto() ? 'transparent' : 'linear-gradient(135deg, #FFD700, #FFA500)',
                     mb: 2,
                     border: '4px solid white',
                     boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)',
                   }}
                 >
-                  {getInitials()}
+                  {!getProfilePhoto() && getInitials()}
                 </Avatar>
                 <Typography variant="h4" align="center" sx={{ color: '#1a1a2e', fontWeight: 600 }}>
                   {getConsultantName()}
@@ -620,6 +666,7 @@ const ConsultantDetailPage: React.FC = () => {
           </Grid>
         </Grid>
       </Container>
+      </Box>
     </Box>
   );
 };

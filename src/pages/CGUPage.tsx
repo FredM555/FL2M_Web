@@ -4,13 +4,47 @@ import { Box, Container, Typography, Divider, Paper } from '@mui/material';
 
 const CGUPage: React.FC = () => {
   return (
-    <Box
-      sx={{
-        minHeight: 'calc(100vh - 136px)',
-        bgcolor: '#f5f5f5',
-        py: { xs: 4, md: 6 },
-      }}
-    >
+    <Box sx={{ width: '100%', position: 'relative', minHeight: '100vh' }}>
+      {/* Image de fond - CGU */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          backgroundImage: 'url(/images/CGU.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.7,
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Overlay pour adoucir l'image */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.35) 50%, rgba(222, 226, 230, 0.4) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        sx={{
+          minHeight: 'calc(100vh - 136px)',
+          background: 'rgba(245, 247, 250, 0.6)',
+          backdropFilter: 'blur(2px)',
+          py: { xs: 4, md: 6 },
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
       <Container maxWidth="lg">
         <Paper
           elevation={0}
@@ -597,6 +631,7 @@ const CGUPage: React.FC = () => {
           </Box>
         </Paper>
       </Container>
+      </Box>
     </Box>
   );
 };

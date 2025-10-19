@@ -12,7 +12,8 @@ import {
   Chip,
   CircularProgress,
   Alert,
-  Paper
+  Paper,
+  IconButton
 } from '@mui/material';
 import { supabase } from '../services/supabase';
 import { Link as RouterLink } from 'react-router-dom';
@@ -88,6 +89,16 @@ const ConsultantsPage: React.FC = () => {
       return consultant.profile.first_name.charAt(0);
     }
     return 'I';
+  };
+
+  // Obtenir la photo de profil si elle existe
+  const getProfilePhoto = (consultant: Consultant) => {
+    const name = getConsultantName(consultant).toLowerCase();
+    // Vérifier si c'est Frédéric (ou Frederic)
+    if (name.includes('frédéric') || name.includes('frederic')) {
+      return '/images/Frederic.png';
+    }
+    return null;
   };
 
   // Fonction pour tronquer le texte
@@ -309,19 +320,32 @@ const ConsultantsPage: React.FC = () => {
                         borderBottom: '1px solid rgba(255, 215, 0, 0.2)',
                       }}
                     >
-                      <Avatar
+                      <IconButton
+                        component={RouterLink}
+                        to={`/consultants/${consultant.id}`}
                         sx={{
-                          width: 100,
-                          height: 100,
-                          fontSize: '2.5rem',
-                          background: 'linear-gradient(135deg, #FFD700, #FFA500)',
                           mb: 2,
-                          border: '4px solid white',
-                          boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)',
+                          p: 0,
+                          '&:hover': {
+                            transform: 'scale(1.05)',
+                          },
+                          transition: 'transform 0.3s ease',
                         }}
                       >
-                        {getInitials(consultant)}
-                      </Avatar>
+                        <Avatar
+                          src={getProfilePhoto(consultant) || undefined}
+                          sx={{
+                            width: 100,
+                            height: 100,
+                            fontSize: '2.5rem',
+                            background: getProfilePhoto(consultant) ? 'transparent' : 'linear-gradient(135deg, #FFD700, #FFA500)',
+                            border: '4px solid white',
+                            boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)',
+                          }}
+                        >
+                          {!getProfilePhoto(consultant) && getInitials(consultant)}
+                        </Avatar>
+                      </IconButton>
                       <Typography variant="h5" component="h2" align="center" sx={{ color: '#1a1a2e', fontWeight: 600 }}>
                         {getConsultantName(consultant)}
                       </Typography>

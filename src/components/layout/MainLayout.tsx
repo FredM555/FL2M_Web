@@ -35,6 +35,7 @@ import EventIcon from '@mui/icons-material/Event';
 import PhoneIcon from '@mui/icons-material/Phone';
 import InfoIcon from '@mui/icons-material/Info';
 import SacredGeometryBackground from '../SacredGeometryBackground';
+import MobileBottomNav from './MobileBottomNav';
 
 const MainLayout: React.FC = () => {
   const { user, profile, signOut } = useAuth();
@@ -1172,14 +1173,15 @@ const MainLayout: React.FC = () => {
       <Box sx={{ height: headerHeight }}></Box>
 
       {/* Contenu principal */}
-      <Box 
-        component="main" 
-        sx={{ 
-          flexGrow: 1, 
-          display: 'flex', 
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          display: 'flex',
           flexDirection: 'column',
           width: '100%',
-          maxWidth: '100%'
+          maxWidth: '100%',
+          pb: { xs: '80px', md: 0 } // Padding-bottom pour éviter que le contenu soit caché par le bandeau mobile
         }}
       >
         <Outlet />
@@ -1532,6 +1534,9 @@ const MainLayout: React.FC = () => {
           </Box>
         </Container>
       </Box>
+
+      {/* Bandeau de navigation mobile fixe en bas */}
+      <MobileBottomNav />
     </Box>
   );
 };

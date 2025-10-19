@@ -192,6 +192,116 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
   // Vérifier s'il y a au moins un rendez-vous disponible dans la semaine
   const hasAnyAppointments = appointmentSlots.length > 0;
   
+  // Version mobile - Vue en liste groupée par jour
+  const renderMobileView = () => {
+    // Grouper les créneaux par jour
+    const slotsByDay = weekDays.reduce((acc, day) => {
+      const daySlots = appointmentSlots.filter(slot => {
+        const startDate = parseISO(slot.start_time);
+        return format(startDate, 'yyyy-MM-dd') === day.dateString;
+      }).sort((a, b) => {
+        return parseISO(a.start_time).getTime() - parseISO(b.start_time).getTime();
+      });
+
+      if (daySlots.length > 0) {
+        acc.push({
+          day,
+          slots: daySlots
+        });
+      }
+      return acc;
+    }, [] as Array<{ day: typeof weekDays[0], slots: AppointmentSlot[] }>);
+
+    return (
+      <Box>
+        {slotsByDay.length > 0 ? (
+          slotsByDay.map(({ day, slots }) => (
+            <Paper
+              key={day.dateString}
+              elevation={0}
+              sx={{
+                mb: 2,
+                background: 'white',
+                border: `2px solid ${colors.border}`,
+                borderRadius: 3,
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  background: colors.gradient,
+                },
+              }}
+            >
+              {/* En-tête du jour */}
+              <Box sx={{ p: 2, backgroundColor: colors.light, borderBottom: `1px solid ${colors.border}` }}>
+                <Typography variant="h6" sx={{ textTransform: 'capitalize', fontWeight: 600, color: '#1a1a2e' }}>
+                  {day.dayName} {day.dayNumber} {day.month}
+                </Typography>
+              </Box>
+
+              {/* Liste des créneaux */}
+              <Box sx={{ p: 1 }}>
+                {slots.map((slot) => {
+                  const startTime = parseISO(slot.start_time);
+                  const endTime = parseISO(slot.end_time);
+                  const consultantName = slot.practitioner.display_name ||
+                    `${slot.practitioner.profile.first_name} ${slot.practitioner.profile.last_name}`;
+
+                  return (
+                    <Button
+                      key={slot.id}
+                      fullWidth
+                      variant={selectedSlot?.id === slot.id ? "contained" : "outlined"}
+                      onClick={() => {
+                        onSlotSelect(slot);
+                        setSelectedAppointmentDetails(slot);
+                      }}
+                      sx={{
+                        mb: 1,
+                        p: 2,
+                        textTransform: 'none',
+                        justifyContent: 'flex-start',
+                        textAlign: 'left',
+                        background: selectedSlot?.id === slot.id ? colors.gradient : 'transparent',
+                        color: selectedSlot?.id === slot.id ? 'white' : '#1a1a2e',
+                        borderColor: selectedSlot?.id === slot.id ? colors.secondary : colors.border,
+                        '&:hover': {
+                          borderColor: colors.secondary,
+                          backgroundColor: selectedSlot?.id === slot.id ? colors.secondary : colors.light,
+                        },
+                      }}
+                    >
+                      <Box sx={{ width: '100%' }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
+                        </Typography>
+                        <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                          {consultantName}
+                        </Typography>
+                        <Typography variant="caption" sx={{ opacity: 0.8, display: 'block', mt: 0.5 }}>
+                          {slot.service.name} ({slot.service.duration} min)
+                        </Typography>
+                      </Box>
+                    </Button>
+                  );
+                })}
+              </Box>
+            </Paper>
+          ))
+        ) : (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            Aucun créneau disponible pour cette semaine.
+          </Alert>
+        )}
+      </Box>
+    );
+  };
+
   return (
     <Box sx={{ mb: 2 }}>
       {/* Navigation entre les semaines */}
@@ -235,7 +345,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
           <ArrowBackIcon />
         </IconButton>
 
-        <Typography variant="subtitle1" sx={{ textAlign: 'center', flex: 1, fontWeight: 600, color: '#1a1a2e' }}>
+        <Typography variant="subtitle1" sx={{ textAlign: 'center', flex: 1, fontWeight: 600, color: '#1a1a2e', fontSize: { xs: '0.9rem', md: '1rem' } }}>
           {selectedWeek.displayRange}
         </Typography>
 
@@ -255,15 +365,20 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
           <ArrowForwardIcon />
         </IconButton>
       </Paper>
-      
+
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
           <CircularProgress />
         </Box>
       ) : (
         <>
-          {/* Grille de calendrier */}
-          {hasAnyAppointments ? (
+          {/* Affichage conditionnel : Vue mobile ou vue desktop */}
+          {isMobile ? (
+            renderMobileView()
+          ) : (
+            <>
+              {/* Grille de calendrier (desktop) */}
+              {hasAnyAppointments ? (
             <Paper
               elevation={0}
               sx={{
@@ -414,12 +529,14 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                 ))}
               </Box>
             </Paper>
-          ) : (
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Aucun créneau disponible pour cette semaine. Veuillez sélectionner une autre semaine.
-            </Alert>
+              ) : (
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  Aucun créneau disponible pour cette semaine. Veuillez sélectionner une autre semaine.
+                </Alert>
+              )}
+            </>
           )}
-          
+
           {/* Détails du rendez-vous sélectionné */}
           {selectedAppointmentDetails && (
             <Card
@@ -469,7 +586,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                       Prix:
                     </Typography>
                     <Typography variant="body1" gutterBottom>
-                      {selectedAppointmentDetails.service.price} €
+                      {selectedAppointmentDetails.service.price === 9999 ? 'Nous consulter' : `${selectedAppointmentDetails.service.price} €`}
                     </Typography>
                   </Grid>
                   
