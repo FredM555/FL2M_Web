@@ -8,19 +8,61 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import GroupsIcon from '@mui/icons-material/Groups';
+import SacredGeometryBackground from '../components/SacredGeometryBackground';
 
 const HomePage = () => {
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box
+      sx={{
+        width: '100%',
+        position: 'relative',
+        minHeight: '100vh',
+        background: 'linear-gradient(180deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%)',
+      }}
+    >
+      {/* Image de fond professionnelle */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          backgroundImage: 'url(/images/duy-pham-Cecb0_8Hx-o-unsplash.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.7,
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Overlay pour adoucir l'image */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.35) 50%, rgba(222, 226, 230, 0.4) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
       {/* Section Hero moderne */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          background: 'rgba(245, 247, 250, 0.6)',
+          backdropFilter: 'blur(2px)',
           py: 4,
           mt: { xs: '23px', md: '10px' },
+          position: 'relative',
+          overflow: 'hidden',
+          zIndex: 1,
         }}
       >
-        <Container maxWidth="lg">
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Box
             sx={{
               position: 'relative',
@@ -37,18 +79,9 @@ const HomePage = () => {
                 p: 3,
                 position: 'relative',
                 overflow: 'hidden',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '400px',
-                  height: '400px',
-                  background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
-                  transform: 'translate(30%, -30%)',
-                },
               }}
             >
+              <SacredGeometryBackground theme="particuliers" />
               <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
                 <Typography
                   variant="h2"
@@ -115,14 +148,18 @@ const HomePage = () => {
                     sx={{
                       px: 4,
                       py: 1.5,
-                      color: '#FFD700',
+                      color: 'white',
                       borderColor: '#FFD700',
+                      background: 'linear-gradient(45deg, #345995, #1D3461)',
                       fontSize: '1.1rem',
                       borderRadius: 50,
                       '&:hover': {
                         borderColor: '#FFA500',
-                        backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                        background: 'linear-gradient(45deg, #1D3461, #345995)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: '0 8px 20px rgba(52, 89, 149, 0.4)',
                       },
+                      transition: 'all 0.3s ease',
                     }}
                   >
                     En savoir plus

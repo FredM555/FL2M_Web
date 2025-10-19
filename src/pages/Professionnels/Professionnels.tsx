@@ -18,6 +18,8 @@ import BarChartIcon from '@mui/icons-material/BarChart';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useNavigate } from 'react-router-dom';
+import SacredGeometryBackground from '../../components/SacredGeometryBackground';
+import { useState, useEffect } from 'react';
 
 // Interface pour les modules
 interface ModuleInfo {
@@ -29,6 +31,23 @@ interface ModuleInfo {
 
 const Professionnels: React.FC = () => {
   const navigate = useNavigate();
+
+  // Diaporama d'images de fond
+  const backgroundImages = [
+    '/images/ModulePro1.jpg',
+    '/images/ModulePro2.jpg'
+  ];
+
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  // Alterner les images toutes les 5 secondes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % backgroundImages.length);
+    }, 5000); // 5000ms = 5 secondes
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Configuration des modules
   const modules: ModuleInfo[] = [
@@ -65,13 +84,50 @@ const Professionnels: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', position: 'relative', minHeight: '100vh' }}>
+      {/* Diaporama d'images de fond */}
+      {backgroundImages.map((image, index) => (
+        <Box
+          key={index}
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: 0,
+            backgroundImage: `url(${image})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            opacity: currentImageIndex === index ? 0.7 : 0,
+            transition: 'opacity 1s ease-in-out',
+            pointerEvents: 'none',
+          }}
+        />
+      ))}
+      {/* Overlay pour adoucir l'image */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.35) 50%, rgba(222, 226, 230, 0.4) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
       {/* Section Hero avec design harmonisé */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          background: 'rgba(245, 247, 250, 0.6)',
+          backdropFilter: 'blur(2px)',
           py: 4,
           mt: { xs: '23px', md: '10px' },
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         <Container maxWidth="lg">
@@ -91,18 +147,9 @@ const Professionnels: React.FC = () => {
                 p: 3,
                 position: 'relative',
                 overflow: 'hidden',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '400px',
-                  height: '400px',
-                  background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
-                  transform: 'translate(30%, -30%)',
-                },
               }}
             >
+              <SacredGeometryBackground theme="professionnels" />
               <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 2, mb: 1 }}>
                   <Tooltip title="Module Stratégie" placement="right">
@@ -180,7 +227,7 @@ const Professionnels: React.FC = () => {
         {/* Section des modules */}
         <Box
           sx={{
-            py: 0
+            py: 3
           }}
         >
           <Container maxWidth="lg">

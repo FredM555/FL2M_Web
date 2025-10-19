@@ -21,7 +21,9 @@
       "Bash(echo:*)",
       "Bash(for file in ModuleAdultes.tsx ModuleCouples.tsx ModuleEnfants.tsx ModuleSuiviAnnuel.tsx)",
       "Bash(do echo \"=== $file ===\")",
-      "Bash(do sed -i \"s/minHeight: ''calc(100vh - 136px)'',/width: ''100%'' }}\\n    >\\n      <Box\\n        sx={{/g\" \"$file\")"
+      "Bash(do sed -i \"s/minHeight: ''calc(100vh - 136px)'',/width: ''100%'' }}\\n    >\\n      <Box\\n        sx={{/g\" \"$file\")",
+      "Bash(cat \"C:\\FLM\\flm-services-new\\index.html\")",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

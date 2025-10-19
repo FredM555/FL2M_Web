@@ -37,6 +37,7 @@ import {
   getAvailableAppointmentsByWeek,
   bookAppointment
 } from '../services/supabase-appointments';
+import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { Service, Practitioner, Appointment } from '../services/supabase';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -477,7 +478,7 @@ const AppointmentBookingPage: React.FC = () => {
                         Durée: {service.duration} min
                       </Typography>
                       <Typography variant="body1" fontWeight="bold" sx={{ color: colors.secondary }}>
-                        {service.price} €
+                        {service.price === 9999 ? 'Nous consulter' : `${service.price} €`}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -672,12 +673,14 @@ const AppointmentBookingPage: React.FC = () => {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                {selectedService.price} €
+                {selectedService.price === 9999 ? 'Nous consulter' : `${selectedService.price} €`}
               </Typography>
-              
+
               <Box sx={{ mt: 2 }}>
                 <Alert severity="info">
-                  Le paiement sera à effectuer sur place.
+                  {selectedService.price === 9999
+                    ? 'Veuillez nous contacter pour obtenir un devis personnalisé.'
+                    : 'Le paiement sera à effectuer sur place.'}
                 </Alert>
               </Box>
             </Grid>
@@ -812,12 +815,45 @@ const AppointmentBookingPage: React.FC = () => {
   }
   
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', position: 'relative', minHeight: '100vh' }}>
+      {/* Image de fond - prendre rdv */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          backgroundImage: 'url(/images/PrendreRDV.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.7,
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Overlay pour adoucir l'image */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.35) 50%, rgba(222, 226, 230, 0.4) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        sx={{
+          background: 'rgba(245, 247, 250, 0.6)',
+          backdropFilter: 'blur(2px)',
           py: 4,
           mt: { xs: '23px', md: '10px' },
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         <Container maxWidth="lg">
@@ -837,18 +873,9 @@ const AppointmentBookingPage: React.FC = () => {
                 p: 3,
                 position: 'relative',
                 overflow: 'hidden',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '400px',
-                  height: '400px',
-                  background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
-                  transform: 'translate(30%, -30%)',
-                },
               }}
             >
+              <SacredGeometryBackground theme="particuliers" />
               <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
                 <Typography
                   variant="h2"

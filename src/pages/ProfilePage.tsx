@@ -26,6 +26,7 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import PersonIcon from '@mui/icons-material/Person';
 import CakeIcon from '@mui/icons-material/Cake';
 import SaveIcon from '@mui/icons-material/Save';
+import SacredGeometryBackground from '../components/SacredGeometryBackground';
 
 const ProfilePage = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -96,25 +97,16 @@ const ProfilePage = () => {
               p: 3,
               position: 'relative',
               overflow: 'hidden',
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                width: '300px',
-                height: '300px',
-                background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
-                transform: 'translate(30%, -30%)',
-              },
             }}
           >
+            <SacredGeometryBackground theme="particuliers" />
             <Box
               sx={{
                 display: 'flex',
+                position: 'relative',
+                zIndex: 2,
                 alignItems: 'center',
                 gap: 2.5,
-                position: 'relative',
-                zIndex: 1,
               }}
             >
               <Avatar

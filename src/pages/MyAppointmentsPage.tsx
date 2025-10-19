@@ -33,6 +33,7 @@ import WorkIcon from '@mui/icons-material/Work';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CakeIcon from '@mui/icons-material/Cake';
 import BadgeIcon from '@mui/icons-material/Badge';
+import SacredGeometryBackground from '../components/SacredGeometryBackground';
 
 // Interface pour la valeur de l'onglet
 interface TabPanelProps {
@@ -330,12 +331,14 @@ const MyAppointmentsPage = () => {
                 </Typography>
               </Box>
 
-              <Box display="flex" alignItems="center">
-                <PaymentIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
-                <Typography variant="body2" sx={{ fontWeight: 600, color: '#FFA500' }}>
-                  {appointment.service?.price} €
-                </Typography>
-              </Box>
+              {appointment.service?.price !== 9999 && (
+                <Box display="flex" alignItems="center">
+                  <PaymentIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
+                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#FFA500' }}>
+                    {appointment.service?.price} €
+                  </Typography>
+                </Box>
+              )}
             </Grid>
           </Grid>
 
@@ -419,18 +422,9 @@ const MyAppointmentsPage = () => {
                 p: 3,
                 position: 'relative',
                 overflow: 'hidden',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '400px',
-                  height: '400px',
-                  background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
-                  transform: 'translate(30%, -30%)',
-                },
               }}
             >
+              <SacredGeometryBackground theme="particuliers" />
               <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
                 <Typography
                   variant="h2"

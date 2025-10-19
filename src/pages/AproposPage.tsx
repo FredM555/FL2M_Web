@@ -14,6 +14,7 @@ import TransformIcon from '@mui/icons-material/Transform'; // Icône pour Métam
 import DirectionsRunIcon from '@mui/icons-material/DirectionsRun'; // Icône pour Mouvement
 import AccountTreeIcon from '@mui/icons-material/AccountTree'; // Icône pour l'arbre
 import PsychologyIcon from '@mui/icons-material/Psychology'; // Icône pour la numérologie
+import SacredGeometryBackground from '../components/SacredGeometryBackground';
 
 // Interface pour définir la structure d'un pilier
 interface Pilier {
@@ -77,13 +78,46 @@ const AProposPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ width: '100%' }}>
+    <Box sx={{ width: '100%', position: 'relative', minHeight: '100vh' }}>
+      {/* Image de fond - à propos */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          backgroundImage: 'url(/images/Apropos.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.7,
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Overlay pour adoucir l'image */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.35) 50%, rgba(222, 226, 230, 0.4) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
       {/* Bandeau Notre Philosophie */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
+          background: 'rgba(245, 247, 250, 0.6)',
+          backdropFilter: 'blur(2px)',
           py: 4,
           mt: { xs: '23px', md: '10px' },
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         <Container maxWidth="lg">
@@ -103,18 +137,9 @@ const AProposPage: React.FC = () => {
                 p: 3,
                 position: 'relative',
                 overflow: 'hidden',
-                '&::after': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '400px',
-                  height: '400px',
-                  background: 'radial-gradient(circle, rgba(255, 215, 0, 0.15) 0%, transparent 70%)',
-                  transform: 'translate(30%, -30%)',
-                },
               }}
             >
+              <SacredGeometryBackground theme="particuliers" />
               <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 2 }}>
                 <Typography
                   variant="h2"

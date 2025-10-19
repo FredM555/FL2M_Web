@@ -34,6 +34,7 @@ import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import EventIcon from '@mui/icons-material/Event';
 import PhoneIcon from '@mui/icons-material/Phone';
 import InfoIcon from '@mui/icons-material/Info';
+import SacredGeometryBackground from '../SacredGeometryBackground';
 
 const MainLayout: React.FC = () => {
   const { user, profile, signOut } = useAuth();
@@ -63,11 +64,11 @@ const MainLayout: React.FC = () => {
     '« Ton potentiel a une signature : la tienne. »',
     '« Aligne tes décisions sur ton identité. »',
     '« Donne du sens à ta stratégie grâce à la numérologie. »',
-    '« Entre chiffres et conscience, découvre ton équilibre. »',
+    '« Entre nombres et conscience, découvre ton équilibre. »',
     '« Décode-toi grâce à la numérologie. »',
     '« Tes nombres parlent, écoute-les. »',
     '« Découvre le code caché derrière ton parcours. »',
-    '« La connaissance de soi commence par un chiffre. »'
+    '« La connaissance de soi commence par un nombre. »'
   ], []);
   const [currentSloganIndex, setCurrentSloganIndex] = useState(0);
   const [fade, setFade] = useState(true);
@@ -152,9 +153,13 @@ const MainLayout: React.FC = () => {
             maxWidth: '100%',
             boxSizing: 'border-box',
             margin: 0,
+            position: 'relative',
+            overflow: 'hidden',
           }}
         >
-          <Container maxWidth={false} disableGutters sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 } }}>
+          {/* Fond avec géométrie sacrée - thème par défaut (particuliers) pour l'en-tête */}
+          <SacredGeometryBackground theme="particuliers" />
+          <Container maxWidth={false} disableGutters sx={{ width: '100%', px: { xs: 2, sm: 3, md: 4 }, position: 'relative', zIndex: 1 }}>
             <Box sx={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -1189,9 +1194,12 @@ const MainLayout: React.FC = () => {
           mt: 'auto',
           width: '100%',
           borderTop: '3px solid #FFD700',
+          position: 'relative',
+          overflow: 'hidden',
         }}
       >
-        <Container maxWidth="lg">
+        <SacredGeometryBackground theme="particuliers" />
+        <Container maxWidth="lg" sx={{ position: 'relative', zIndex: 1 }}>
           <Grid container spacing={4} sx={{ py: 6 }}>
             {/* Section À propos */}
             <Grid item xs={12} md={4}>
