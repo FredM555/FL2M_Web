@@ -258,6 +258,7 @@ const MainLayout: React.FC = () => {
                   user ? (
                     <>
                       <Box
+                        component="button"
                         onClick={handleMenuOpen(setUserMenuAnchor)}
                         sx={{
                           display: 'flex',

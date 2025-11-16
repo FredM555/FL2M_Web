@@ -15,6 +15,8 @@ import AdminLayout from './components/layout/AdminLayout';
 import HomePage from './pages/HomePage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import ResetPasswordPage from './pages/ResetPasswordPage';
 import ProfessionnelsPage from './pages/ProfessionnelsPage';
 import SportifsPage from './pages/SportifsPage';
 import AppointmentPage from './pages/AppointmentPage';
@@ -51,6 +53,7 @@ import ModuleTeam from './pages/Sportifs/ModuleTeam';
 
 // Pages protégées (nécessitent une connexion)
 import ProfilePage from './pages/ProfilePage';
+import PractitionerProfilePage from './pages/PractitionerProfilePage';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 
 
@@ -64,6 +67,7 @@ import AdminAppointmentsPage from './pages/Admin/AppointmentsPage';
 
 // Import du nouveau composant
 import AdminContactMessagesPage from './pages/Admin/ContactMessagesPage';
+import AdminPractitionerRequestsPage from './pages/Admin/PractitionerRequestsPage';
 
 // Composant pour les routes protégées
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -158,7 +162,7 @@ function App() {
   // Vérifier si l'utilisateur tente d'accéder à une route protégée sans être connecté
   if (!user) {
     // Liste des chemins qui nécessitent une authentification
-    const requiresAuth = ['/profile', '/mes-rendez-vous', '/admin'].some(
+    const requiresAuth = ['/profile', '/practitioner-profile', '/mes-rendez-vous', '/admin'].some(
       path => location.pathname.startsWith(path)
     );
     
@@ -213,6 +217,8 @@ function App() {
             <Route index element={<HomePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignupPage />} />
+            <Route path="forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="reset-password" element={<ResetPasswordPage />} />
             <Route path="auth/callback" element={<AuthCallbackPage />} />
             <Route path="complete-profile" element={<ProfileCompletionPage />} />
             <Route path="prendre-rendez-vous" element={<AppointmentBookingPage />} />
@@ -254,6 +260,11 @@ function App() {
                 <ProfilePage />
               </ProtectedRoute>
             } />
+            <Route path="practitioner-profile" element={
+              <ProtectedRoute>
+                <PractitionerProfilePage />
+              </ProtectedRoute>
+            } />
             <Route path="mes-rendez-vous" element={
               <ProtectedRoute>
                 <MyAppointmentsPage />
@@ -273,6 +284,7 @@ function App() {
             <Route index element={<AdminDashboardPage />} />
             <Route path="utilisateurs" element={<AdminUsersPage />} />
             <Route path="intervenants" element={<AdminPractitionersPage />} />
+            <Route path="demandes-intervenant" element={<AdminPractitionerRequestsPage />} />
             <Route path="prestations" element={<AdminServicesPage />} />
             <Route path="rendez-vous" element={<AdminAppointmentsPage />} />
             <Route path="messages" element={<AdminContactMessagesPage />} />

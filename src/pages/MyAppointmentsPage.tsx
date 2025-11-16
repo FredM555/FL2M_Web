@@ -33,7 +33,10 @@ import WorkIcon from '@mui/icons-material/Work';
 import PaymentIcon from '@mui/icons-material/Payment';
 import CakeIcon from '@mui/icons-material/Cake';
 import BadgeIcon from '@mui/icons-material/Badge';
+import InfoIcon from '@mui/icons-material/Info';
+import VideoCallIcon from '@mui/icons-material/VideoCall';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
+import { AppointmentDetailsDialog } from '../components/appointments/AppointmentDetailsDialog';
 
 // Interface pour la valeur de l'onglet
 interface TabPanelProps {
@@ -73,6 +76,8 @@ const MyAppointmentsPage = () => {
   const [appointmentToCancel, setAppointmentToCancel] = useState<Appointment | null>(null);
   const [tabValue, setTabValue] = useState(0);
   const [cancelLoading, setCancelLoading] = useState(false);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   // Chargement des rendez-vous
   const loadAppointments = async () => {
@@ -166,6 +171,31 @@ const MyAppointmentsPage = () => {
   // Changement d'onglet
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+  };
+
+  // Ouverture du dialogue de détails
+  const handleOpenDetailsDialog = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setDetailsDialogOpen(true);
+  };
+
+  // Fermeture du dialogue de détails
+  const handleCloseDetailsDialog = () => {
+    setDetailsDialogOpen(false);
+    setSelectedAppointment(null);
+  };
+
+  // Mise à jour du rendez-vous depuis le dialog
+  const handleAppointmentUpdate = (updatedAppointment: Appointment) => {
+    // Mettre à jour le rendez-vous sélectionné
+    setSelectedAppointment(updatedAppointment);
+
+    // Mettre à jour le rendez-vous dans la liste
+    setAppointments(prevAppointments =>
+      prevAppointments.map(appointment =>
+        appointment.id === updatedAppointment.id ? updatedAppointment : appointment
+      )
+    );
   };
 
   // Obtention de la couleur de la puce d'état
@@ -302,7 +332,8 @@ const MyAppointmentsPage = () => {
               <Box display="flex" alignItems="center" mb={1}>
                 <BadgeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
                 <Typography variant="body2">
-                  Séance avec {appointment.practitioner?.profile?.pseudo}
+                  Séance avec {appointment.practitioner?.profile?.pseudo ||
+                    `${appointment.practitioner?.profile?.first_name} ${appointment.practitioner?.profile?.last_name}`}
                 </Typography>
               </Box>
             </Grid>
@@ -311,15 +342,16 @@ const MyAppointmentsPage = () => {
               <Box display="flex" alignItems="center" mb={1}>
                 <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
                 <Typography variant="body2">
-                  {appointment.client?.first_name} {appointment.client?.last_name}
+                  {appointment.beneficiary_first_name || appointment.client?.first_name}{' '}
+                  {appointment.beneficiary_last_name || appointment.client?.last_name}
                 </Typography>
               </Box>
 
-              {appointment.client?.birth_date && (
+              {(appointment.beneficiary_birth_date || appointment.client?.birth_date) && (
                 <Box display="flex" alignItems="center" mb={1}>
                   <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
                   <Typography variant="body2">
-                    {format(parseISO(appointment.client.birth_date), 'dd/MM/yyyy', { locale: fr })}
+                    {format(parseISO(appointment.beneficiary_birth_date || appointment.client!.birth_date!), 'dd/MM/yyyy', { locale: fr })}
                   </Typography>
                 </Box>
               )}
@@ -331,19 +363,58 @@ const MyAppointmentsPage = () => {
                 </Typography>
               </Box>
 
-              {appointment.service?.price !== 9999 && (
-                <Box display="flex" alignItems="center">
-                  <PaymentIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
-                  <Typography variant="body2" sx={{ fontWeight: 600, color: '#FFA500' }}>
-                    {appointment.service?.price} €
-                  </Typography>
-                </Box>
-              )}
+              {(() => {
+                const price = appointment.custom_price ?? appointment.service?.price;
+                return price !== 9999 && (
+                  <Box display="flex" alignItems="center">
+                    <PaymentIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: appointment.custom_price ? 'primary.main' : '#FFA500' }}>
+                      {price} €{appointment.custom_price ? ' (personnalisé)' : ''}
+                    </Typography>
+                  </Box>
+                );
+              })()}
             </Grid>
           </Grid>
 
-          {showCancelButton && appointment.status !== 'cancelled' && !isPast(parseISO(appointment.start_time)) && (
-            <Box mt={2}>
+          <Box mt={2} display="flex" gap={2}>
+            {appointment.meeting_link && (
+              <Button
+                variant="contained"
+                startIcon={<VideoCallIcon />}
+                onClick={() => window.open(appointment.meeting_link, '_blank', 'noopener,noreferrer')}
+                fullWidth
+                sx={{
+                  borderRadius: 2,
+                  fontWeight: 600,
+                  background: 'linear-gradient(45deg, #4CAF50, #45a049)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #45a049, #4CAF50)',
+                  },
+                }}
+              >
+                Rejoindre
+              </Button>
+            )}
+            <Button
+              variant="outlined"
+              startIcon={<InfoIcon />}
+              onClick={() => handleOpenDetailsDialog(appointment)}
+              fullWidth
+              sx={{
+                borderRadius: 2,
+                fontWeight: 600,
+                borderColor: '#FFA500',
+                color: '#FFA500',
+                '&:hover': {
+                  borderColor: '#FF8C00',
+                  backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                },
+              }}
+            >
+              Détails
+            </Button>
+            {showCancelButton && appointment.status !== 'cancelled' && !isPast(parseISO(appointment.start_time)) && (
               <Button
                 variant="outlined"
                 color="error"
@@ -354,10 +425,10 @@ const MyAppointmentsPage = () => {
                   fontWeight: 600,
                 }}
               >
-                Annuler ce rendez-vous
+                Annuler
               </Button>
-            </Box>
-          )}
+            )}
+          </Box>
         </CardContent>
       </Card>
     </Grid>
@@ -659,6 +730,16 @@ const MyAppointmentsPage = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Boîte de dialogue des détails du rendez-vous */}
+      {selectedAppointment && (
+        <AppointmentDetailsDialog
+          open={detailsDialogOpen}
+          onClose={handleCloseDetailsDialog}
+          appointment={selectedAppointment}
+          onAppointmentUpdate={handleAppointmentUpdate}
+        />
+      )}
     </Box>
   );
 };

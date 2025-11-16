@@ -18,6 +18,7 @@ import {
   CardContent,
   Chip
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -26,21 +27,25 @@ import PhoneIcon from '@mui/icons-material/Phone';
 import PersonIcon from '@mui/icons-material/Person';
 import CakeIcon from '@mui/icons-material/Cake';
 import SaveIcon from '@mui/icons-material/Save';
+import WorkIcon from '@mui/icons-material/Work';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
+import { UserRoleBadge } from '../components/profile/UserRoleBadge';
+import BecomePractitionerCard from '../components/practitioner/BecomePractitionerCard';
 
 const ProfilePage = () => {
   const { user, profile, updateProfile } = useAuth();
-  
+  const navigate = useNavigate();
+
   // Informations de base
   const [email, setEmail] = useState(profile?.email || user?.email || '');
   const [pseudo, setPseudo] = useState(profile?.pseudo || '');
   const [phone, setPhone] = useState(profile?.phone || '');
-  
+
   // Information pour la préparation des séances
   const [firstName, setFirstName] = useState(profile?.first_name || '');
   const [lastName, setLastName] = useState(profile?.last_name || '');
   const [birthDate, setBirthDate] = useState(profile?.birth_date || '');
-  
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -180,23 +185,31 @@ const ProfilePage = () => {
                       @{pseudo}
                     </Typography>
                   )}
-                  <Chip
-                    label={
-                      profile?.user_type === 'admin' ? 'Administrateur' :
-                      profile?.user_type === 'intervenant' ? 'Intervenant' : 'Client'
-                    }
-                    sx={{
-                      background: profile?.user_type === 'admin'
-                        ? 'linear-gradient(135deg, #FFD700, #FFA500)'
-                        : 'rgba(255, 255, 255, 0.2)',
-                      color: profile?.user_type === 'admin' ? '#1D3461' : 'white',
-                      fontWeight: 600,
-                      border: profile?.user_type === 'admin'
-                        ? 'none'
-                        : '1px solid rgba(255, 255, 255, 0.3)',
-                    }}
-                  />
+                  {profile && <UserRoleBadge userType={profile.user_type} size="medium" />}
                 </Box>
+              </Box>
+              {profile?.user_type === 'intervenant' && (
+                <Button
+                  variant="contained"
+                  startIcon={<WorkIcon />}
+                  onClick={() => navigate('/practitioner-profile')}
+                  sx={{
+                    background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                    color: '#1D3461',
+                    fontWeight: 600,
+                    '&:hover': {
+                      background: 'linear-gradient(45deg, #FFA500, #FFD700)',
+                    },
+                  }}
+                >
+                  Gérer ma Fiche Intervenant
+                </Button>
+              )}
+            </Box>
+            <Box sx={{ position: 'relative', zIndex: 2 }}>
+              {/* Bouton caché pour équilibrer le layout */}
+              <Box sx={{ opacity: 0, pointerEvents: 'none' }}>
+                <Button>Hidden</Button>
                 <Typography
                   variant="body1"
                   sx={{
@@ -543,6 +556,13 @@ const ProfilePage = () => {
                 </Button>
               </Box>
             </Grid>
+
+            {/* Card pour devenir intervenant (uniquement pour les clients) */}
+            {profile?.user_type === 'client' && (
+              <Grid item xs={12} md={6}>
+                <BecomePractitionerCard />
+              </Grid>
+            )}
           </Grid>
         </form>
           </Container>

@@ -1,0 +1,328 @@
+// src/components/appointments/AppointmentPractitioner.tsx
+import React, { useState, useEffect } from 'react';
+import {
+  Box,
+  TextField,
+  Button,
+  Alert,
+  Typography,
+  Paper,
+  Grid,
+  CircularProgress,
+  Snackbar,
+  Autocomplete,
+  Avatar
+} from '@mui/material';
+import SaveIcon from '@mui/icons-material/Save';
+import PersonIcon from '@mui/icons-material/Person';
+import EditIcon from '@mui/icons-material/Edit';
+import CancelIcon from '@mui/icons-material/Cancel';
+import BadgeIcon from '@mui/icons-material/Badge';
+import { Appointment, Practitioner, getPractitioners, supabase } from '../../services/supabase';
+import { useAuth } from '../../context/AuthContext';
+
+interface AppointmentPractitionerProps {
+  appointment: Appointment;
+  onUpdate?: (updatedAppointment: Appointment) => void;
+}
+
+export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = ({
+  appointment,
+  onUpdate
+}) => {
+  const { profile } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [loadingPractitioners, setLoadingPractitioners] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // Liste des intervenants
+  const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
+  const [selectedPractitioner, setSelectedPractitioner] = useState<Practitioner | null>(
+    appointment.practitioner || null
+  );
+
+  // Déterminer si l'utilisateur peut modifier (admin seulement)
+  const canEdit = React.useMemo(() => {
+    if (!profile) return false;
+    return profile.user_type === 'admin';
+  }, [profile]);
+
+  // Charger la liste des intervenants
+  useEffect(() => {
+    const loadPractitioners = async () => {
+      setLoadingPractitioners(true);
+      try {
+        const { data, error } = await getPractitioners();
+        if (error) throw error;
+        setPractitioners(data || []);
+      } catch (err: any) {
+        console.error('Erreur lors du chargement des intervenants:', err);
+        setError('Impossible de charger la liste des intervenants');
+      } finally {
+        setLoadingPractitioners(false);
+      }
+    };
+
+    if (isEditing) {
+      loadPractitioners();
+    }
+  }, [isEditing]);
+
+  // Initialiser l'intervenant sélectionné
+  useEffect(() => {
+    setSelectedPractitioner(appointment.practitioner || null);
+  }, [appointment]);
+
+  const handleSave = async () => {
+    setError(null);
+    setLoading(true);
+
+    try {
+      // Validation
+      if (!selectedPractitioner) {
+        throw new Error('Veuillez sélectionner un intervenant');
+      }
+
+      console.log('🔵 Changement intervenant:', {
+        ancien: appointment.practitioner?.id,
+        nouveau: selectedPractitioner.id
+      });
+
+      // Mise à jour
+      const { error: updateError } = await supabase
+        .from('appointments')
+        .update({ practitioner_id: selectedPractitioner.id })
+        .eq('id', appointment.id);
+
+      if (updateError) {
+        console.error('❌ Erreur lors de la mise à jour:', updateError);
+        throw updateError;
+      }
+
+      // Récupérer l'appointment mis à jour avec toutes les relations
+      const { data, error: fetchError } = await supabase
+        .from('appointments')
+        .select(`
+          *,
+          client:profiles!client_id(id, first_name, last_name, email, phone),
+          practitioner:practitioners!practitioner_id(
+            id,
+            user_id,
+            bio,
+            priority,
+            profile:profiles!user_id(id, first_name, last_name, email, phone, pseudo)
+          ),
+          service:services(id, code, name, category, subcategory, price, duration, description)
+        `)
+        .eq('id', appointment.id)
+        .single();
+
+      if (fetchError) {
+        console.error('❌ Erreur lors de la récupération:', fetchError);
+        throw fetchError;
+      }
+
+      if (data) {
+        console.log('✅ Intervenant changé avec succès:', {
+          ancien: appointment.practitioner?.profile?.pseudo,
+          nouveau: data.practitioner?.profile?.pseudo
+        });
+      }
+
+      setSuccess(true);
+      setIsEditing(false);
+
+      // Callback pour mettre à jour l'appointment dans le composant parent
+      if (onUpdate && data) {
+        onUpdate(data);
+      }
+    } catch (err: any) {
+      console.error('❌ Erreur lors de la mise à jour:', err);
+      setError(err.message || 'Erreur lors du changement d\'intervenant');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancel = () => {
+    // Réinitialiser l'intervenant sélectionné
+    setSelectedPractitioner(appointment.practitioner || null);
+    setIsEditing(false);
+    setError(null);
+  };
+
+  return (
+    <Box>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+          Intervenant du rendez-vous
+        </Typography>
+        {canEdit && !isEditing && (
+          <Button
+            variant="outlined"
+            startIcon={<EditIcon />}
+            onClick={() => setIsEditing(true)}
+            size="small"
+          >
+            Modifier
+          </Button>
+        )}
+      </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      )}
+
+      <Paper
+        elevation={0}
+        sx={{
+          p: 3,
+          bgcolor: 'grey.50',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2
+        }}
+      >
+        <Grid container spacing={3}>
+          <Grid item xs={12}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <BadgeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+              <Typography variant="subtitle2" color="text.secondary">
+                Intervenant
+              </Typography>
+            </Box>
+            {isEditing ? (
+              <Autocomplete
+                value={selectedPractitioner}
+                onChange={(event, newValue) => {
+                  setSelectedPractitioner(newValue);
+                }}
+                options={practitioners}
+                getOptionLabel={(option) => option.profile?.pseudo || option.profile?.first_name || ''}
+                loading={loadingPractitioners}
+                disabled={loading}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    placeholder="Sélectionner un intervenant"
+                    required
+                    size="small"
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {loadingPractitioners ? <CircularProgress color="inherit" size={20} /> : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
+                    }}
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
+                      {(option.profile?.pseudo || option.profile?.first_name || '?')[0].toUpperCase()}
+                    </Avatar>
+                    <Box>
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        {option.profile?.pseudo || `${option.profile?.first_name} ${option.profile?.last_name}`}
+                      </Typography>
+                      {option.profile?.pseudo && (
+                        <Typography variant="caption" color="text.secondary">
+                          {option.profile?.first_name} {option.profile?.last_name}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                )}
+              />
+            ) : (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
+                  {(appointment.practitioner?.profile?.pseudo || appointment.practitioner?.profile?.first_name || '?')[0].toUpperCase()}
+                </Avatar>
+                <Box>
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    {appointment.practitioner?.profile?.pseudo ||
+                     `${appointment.practitioner?.profile?.first_name} ${appointment.practitioner?.profile?.last_name}` ||
+                     '-'}
+                  </Typography>
+                  {appointment.practitioner?.profile?.pseudo && (
+                    <Typography variant="caption" color="text.secondary">
+                      {appointment.practitioner?.profile?.first_name} {appointment.practitioner?.profile?.last_name}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            )}
+          </Grid>
+        </Grid>
+
+        {!canEdit && (
+          <Alert severity="info" sx={{ mt: 3 }}>
+            <Typography variant="body2">
+              <strong>Note :</strong> Seuls les administrateurs peuvent modifier l'intervenant du rendez-vous.
+            </Typography>
+          </Alert>
+        )}
+
+        {isEditing && (
+          <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+            <Button
+              variant="outlined"
+              startIcon={<CancelIcon />}
+              onClick={handleCancel}
+              disabled={loading}
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+              onClick={handleSave}
+              disabled={loading || !selectedPractitioner}
+              sx={{
+                background: 'linear-gradient(45deg, #345995, #1D3461)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1D3461, #345995)',
+                },
+              }}
+            >
+              {loading ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </Box>
+        )}
+      </Paper>
+
+      <Alert severity="warning" sx={{ mt: 3 }}>
+        <Typography variant="body2" gutterBottom>
+          <strong>Attention :</strong>
+        </Typography>
+        <Typography variant="body2">
+          Le changement d'intervenant modifiera l'intervenant assigné à ce rendez-vous.
+          Assurez-vous que le nouvel intervenant est disponible à cette date et heure.
+        </Typography>
+      </Alert>
+
+      {/* Snackbar de succès */}
+      <Snackbar
+        open={success}
+        autoHideDuration={3000}
+        onClose={() => setSuccess(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSuccess(false)}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          Intervenant modifié avec succès
+        </Alert>
+      </Snackbar>
+    </Box>
+  );
+};

@@ -1,19 +1,39 @@
 -- WARNING: This schema is for context only and is not meant to be run.
 -- Table order and constraints may not be valid for execution.
 
+CREATE TABLE public.appointment_comments (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  appointment_id uuid NOT NULL,
+  author_id uuid NOT NULL,
+  content text NOT NULL,
+  is_private boolean DEFAULT false,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  CONSTRAINT appointment_comments_pkey PRIMARY KEY (id),
+  CONSTRAINT appointment_comments_appointment_id_fkey FOREIGN KEY (appointment_id) REFERENCES public.appointments(id),
+  CONSTRAINT appointment_comments_author_id_fkey FOREIGN KEY (author_id) REFERENCES public.profiles(id)
+);
 CREATE TABLE public.appointment_documents (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
   appointment_id uuid,
-  file_name character varying NOT NULL,
+  file_name text NOT NULL,
   file_path text NOT NULL,
   file_size integer,
-  file_type character varying,
+  file_type text NOT NULL CHECK (file_type = ANY (ARRAY['pdf'::text, 'mp3'::text, 'mp4'::text])),
   uploaded_at timestamp with time zone DEFAULT CURRENT_TIMESTAMP,
   uploaded_by uuid,
   description text,
+  visible_to_client boolean DEFAULT true,
+  visible_to_consultant boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  created_by uuid,
+  updated_by uuid,
   CONSTRAINT appointment_documents_pkey PRIMARY KEY (id),
   CONSTRAINT appointment_documents_appointment_id_fkey FOREIGN KEY (appointment_id) REFERENCES public.appointments(id),
-  CONSTRAINT appointment_documents_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES auth.users(id)
+  CONSTRAINT appointment_documents_uploaded_by_fkey FOREIGN KEY (uploaded_by) REFERENCES public.profiles(id),
+  CONSTRAINT appointment_documents_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),
+  CONSTRAINT appointment_documents_updated_by_fkey FOREIGN KEY (updated_by) REFERENCES auth.users(id)
 );
 CREATE TABLE public.appointments (
   id uuid NOT NULL DEFAULT uuid_generate_v4(),
@@ -35,6 +55,8 @@ CREATE TABLE public.appointments (
   updated_by uuid,
   rating smallint CHECK (rating >= 1 AND rating <= 5),
   review text,
+  meeting_link text,
+  custom_price numeric,
   CONSTRAINT appointments_pkey PRIMARY KEY (id),
   CONSTRAINT appointments_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.profiles(id),
   CONSTRAINT appointments_created_by_fkey FOREIGN KEY (created_by) REFERENCES auth.users(id),

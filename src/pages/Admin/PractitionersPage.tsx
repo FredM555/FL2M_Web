@@ -39,12 +39,8 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import { useAuth } from '../../context/AuthContext';
 
-// Type étendu pour inclure les nouveaux champs
+// Type étendu pour inclure le profil complet
 interface EnhancedPractitioner extends Practitioner {
-  display_name?: string;
-  title?: string;
-  summary?: string;
-  is_active?: boolean;
   profile?: Profile;
 }
 

@@ -35,6 +35,7 @@ import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RestoreIcon from '@mui/icons-material/Restore';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import PaidIcon from '@mui/icons-material/Paid';
+import VideoCallIcon from '@mui/icons-material/VideoCall';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -85,6 +86,7 @@ interface Appointment {
   beneficiary_first_name?: string;
   beneficiary_last_name?: string;
   beneficiary_birth_date?: string;
+  meeting_link?: string;
   client?: Profile;
   practitioner?: Practitioner;
   service?: Service;
@@ -859,6 +861,11 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                                     cursor: 'pointer'
                                   }}
                                   onClick={() => handleAppointmentClick(appointment)}
+                                  onDoubleClick={() => {
+                                    if (appointment.meeting_link) {
+                                      window.open(appointment.meeting_link, '_blank', 'noopener,noreferrer');
+                                    }
+                                  }}
                                   draggable
                                   onDragStart={(e) => handleDragStart(appointment, e)}
                                 >
@@ -866,12 +873,19 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                                     <Typography variant="body2" fontWeight="bold">
                                       {formattedStartTime}
                                     </Typography>
-                                    
-                                    {isPaid && (
-                                      <Tooltip title="Payé">
-                                        <PaidIcon fontSize="small" color="success" />
-                                      </Tooltip>
-                                    )}
+
+                                    <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+                                      {appointment.meeting_link && (
+                                        <Tooltip title="Lien visio disponible (double-clic pour ouvrir)">
+                                          <VideoCallIcon fontSize="small" color="primary" />
+                                        </Tooltip>
+                                      )}
+                                      {isPaid && (
+                                        <Tooltip title="Payé">
+                                          <PaidIcon fontSize="small" color="success" />
+                                        </Tooltip>
+                                      )}
+                                    </Box>
                                   </Box>
                                   
                                   <Typography 

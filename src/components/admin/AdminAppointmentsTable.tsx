@@ -31,18 +31,20 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import RestoreIcon from '@mui/icons-material/Restore';
+import InfoIcon from '@mui/icons-material/Info';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { fr } from 'date-fns/locale';
 import { format, parseISO, addMinutes, addDays, addWeeks } from 'date-fns';
-import { 
+import {
   Appointment,
   Service,
-  Practitioner 
+  Practitioner
 } from '../../services/supabase';
 import { supabase } from '../../services/supabase';
+import { AppointmentDetailsDialog } from '../appointments/AppointmentDetailsDialog';
 
 interface AdminAppointmentsTableProps {
   appointments: Appointment[];
@@ -78,6 +80,31 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
   const [copyInterval, setCopyInterval] = useState<number>(1);
   const [copyIntervalUnit, setCopyIntervalUnit] = useState<'days' | 'weeks'>('days');
   const [showCopyOptions, setShowCopyOptions] = useState<boolean>(false);
+
+  // États pour le dialogue de détails
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+
+  // Ouvrir le dialogue de détails
+  const handleOpenDetailsDialog = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+    setDetailsDialogOpen(true);
+  };
+
+  // Fermeture du dialogue de détails
+  const handleCloseDetailsDialog = () => {
+    setDetailsDialogOpen(false);
+    setSelectedAppointment(null);
+  };
+
+  // Mise à jour du rendez-vous depuis le dialog
+  const handleAppointmentUpdate = (updatedAppointment: Appointment) => {
+    // Mettre à jour le rendez-vous sélectionné
+    setSelectedAppointment(updatedAppointment);
+
+    // Notifier le parent pour recharger la liste
+    onAppointmentChange();
+  };
 
   // Ouvrir le dialogue pour modifier un rendez-vous
   const handleEditAppointment = (appointment: Appointment) => {
@@ -419,19 +446,29 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                   </TableCell>
                   <TableCell align="right">
                     <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                      <Tooltip title="Détails">
+                        <IconButton
+                          color="secondary"
+                          size="small"
+                          onClick={() => handleOpenDetailsDialog(appointment)}
+                        >
+                          <InfoIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+
                       <Tooltip title="Modifier">
-                        <IconButton 
-                          color="primary" 
+                        <IconButton
+                          color="primary"
                           size="small"
                           onClick={() => handleEditAppointment(appointment)}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
                       </Tooltip>
-                      
+
                       <Tooltip title="Copier">
-                        <IconButton 
-                          color="info" 
+                        <IconButton
+                          color="info"
                           size="small"
                           onClick={() => handleCopyAppointment(appointment)}
                         >
@@ -700,6 +737,16 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Dialogue de détails du rendez-vous */}
+      {selectedAppointment && (
+        <AppointmentDetailsDialog
+          open={detailsDialogOpen}
+          onClose={handleCloseDetailsDialog}
+          appointment={selectedAppointment}
+          onAppointmentUpdate={handleAppointmentUpdate}
+        />
+      )}
     </>
   );
 };

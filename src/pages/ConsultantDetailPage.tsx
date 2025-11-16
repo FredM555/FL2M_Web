@@ -88,12 +88,29 @@ const ConsultantDetailPage: React.FC = () => {
     try {
       const { data, error } = await supabase
         .from('practitioners')
-        .select('id, display_name, profile:profiles(first_name, last_name)')
+        .select(`
+          id,
+          user_id,
+          bio,
+          priority,
+          display_name,
+          title,
+          summary,
+          is_active,
+          profile:profiles!user_id(first_name, last_name, email, phone)
+        `)
         .eq('is_active', true)
         .order('priority', { ascending: false });
 
       if (error) throw error;
-      setAllConsultants(data || []);
+
+      // Transform data to match Consultant type (profile is returned as array by Supabase)
+      const transformedData = (data || []).map(item => ({
+        ...item,
+        profile: Array.isArray(item.profile) && item.profile.length > 0 ? item.profile[0] : item.profile
+      })) as Consultant[];
+
+      setAllConsultants(transformedData);
     } catch (err: any) {
       console.error('Erreur lors du chargement des intervenants:', err);
     }
