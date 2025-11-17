@@ -292,7 +292,7 @@ const BecomePractitionerCard: React.FC<BecomePractitionerCardProps> = ({ onReque
           ) : (
             <>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Vous êtes thérapeute, coach ou consultant ? Rejoignez notre équipe d'intervenants professionnels.
+                Vous êtes consultant ? Rejoignez notre équipe d'intervenants.
               </Typography>
               <Button
                 variant="contained"
@@ -449,15 +449,14 @@ const BecomePractitionerCard: React.FC<BecomePractitionerCardProps> = ({ onReque
               />
 
               <TextField
-                label="Résumé (pitch court)"
+                label="Résumé (pitch)"
                 multiline
                 rows={2}
                 fullWidth
                 value={summary}
                 onChange={(e) => setSummary(e.target.value)}
-                placeholder="Une phrase d'accroche pour votre profil..."
-                inputProps={{ maxLength: 250 }}
-                helperText={`${summary.length}/250 caractères`}
+                placeholder="Un résumé de votre profil..."
+                helperText="Décrivez brièvement votre expertise"
                 sx={{ mb: 2 }}
               />
 

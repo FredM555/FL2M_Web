@@ -951,15 +951,25 @@ const AppointmentBookingPage: React.FC = () => {
             {renderStepContent()}
 
             {/* Boutons de navigation */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: { xs: 'column-reverse', sm: 'row' },
+                justifyContent: 'space-between',
+                gap: { xs: 2, sm: 0 },
+                mt: 4
+              }}
+            >
               <Button
                 variant="outlined"
                 onClick={handleBack}
                 startIcon={<ArrowBackIcon />}
                 disabled={activeStep === 0 || loading || success}
+                fullWidth={false}
                 sx={{
                   borderColor: 'rgba(255, 215, 0, 0.5)',
                   color: '#FFA500',
+                  minWidth: { xs: '100%', sm: 'auto' },
                   '&:hover': {
                     borderColor: '#FFA500',
                     backgroundColor: 'rgba(255, 215, 0, 0.1)',
@@ -981,8 +991,9 @@ const AppointmentBookingPage: React.FC = () => {
                   success
                 }
                 sx={{
-                  px: 4,
+                  px: { xs: 2, sm: 4 },
                   py: 1.5,
+                  minWidth: { xs: '100%', sm: 'auto' },
                   background: 'linear-gradient(45deg, #FFD700, #FFA500)',
                   color: '#1a1a2e',
                   fontWeight: 600,

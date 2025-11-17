@@ -5,6 +5,23 @@ Ces migrations doivent être exécutées **dans cet ordre** sur une base de donn
 
 ## 📋 Ordre recommandé
 
+### 0. Triggers et RLS de base (CRITIQUE - À EXÉCUTER EN PREMIER !)
+```sql
+-- 0a. Trigger de création automatique du profil lors de l'inscription OAuth/Email + RLS profiles
+supabase/migrations/20250116_create_profile_trigger.sql
+
+-- 0b. Corriger les politiques RLS de practitioners (éviter récursion)
+supabase/migrations/20250116_fix_practitioners_rls.sql
+
+-- 0c. Trigger pour créer un profil practitioner pour les admins
+supabase/migrations/20250116_create_practitioner_for_admins.sql
+```
+
+⚠️ **ESSENTIEL** : Ces migrations doivent être exécutées DANS CET ORDRE et AVANT toute connexion utilisateur.
+- 0a crée la fonction `get_my_user_type()` nécessaire pour 0b
+- 0b corrige les RLS de practitioners pour éviter les récursions infinies
+- 0c permet aux admins d'avoir une page de présentation comme les intervenants
+
 ### 1. Système d'intervenants
 ```sql
 -- 1. Demandes pour devenir intervenant
@@ -31,7 +48,7 @@ supabase/migrations/20250115_update_appointment_documents.sql
 -- 6. Configuration Storage bucket
 supabase/migrations/20250115_setup_storage_documents.sql
 
--- 7. Ajout colonnes audit (CRITIQUE - doit être exécuté en dernier)
+-- 7. Ajout colonnes audit
 supabase/migrations/20250116_add_audit_columns_to_appointment_documents.sql
 ```
 
@@ -40,6 +57,14 @@ supabase/migrations/20250116_add_audit_columns_to_appointment_documents.sql
 Après avoir exécuté toutes les migrations :
 
 ```sql
+-- Vérifier que le trigger de profil existe
+SELECT trigger_name, event_manipulation, event_object_table
+FROM information_schema.triggers
+WHERE trigger_name = 'on_auth_user_created';
+
+-- Résultat attendu:
+-- on_auth_user_created | INSERT | users
+
 -- Vérifier que created_by et updated_by existent
 SELECT column_name FROM information_schema.columns
 WHERE table_name = 'appointment_documents'
@@ -65,8 +90,19 @@ Ces migrations supposent que les tables suivantes existent déjà :
 - `appointments`
 - `services`
 
-### Migration critique
-⚠️ **20250116_add_audit_columns_to_appointment_documents.sql** est **CRITIQUE** !
+### Migrations critiques
+
+⚠️ **20250116_create_profile_trigger.sql** est **ULTRA CRITIQUE** !
+
+Cette migration crée le trigger qui génère automatiquement un profil dans la table `profiles`
+lors de l'inscription d'un nouvel utilisateur (Email ou OAuth Google/Apple).
+
+**Sans ce trigger**, les utilisateurs se connectant avec Google/Apple seront authentifiés
+mais n'auront PAS de profil FL2M, ce qui bloquera l'application.
+
+---
+
+⚠️ **20250116_add_audit_columns_to_appointment_documents.sql** est également **CRITIQUE** !
 
 Cette migration ajoute les colonnes `created_by` et `updated_by` à la table `appointment_documents`.
 Sans ces colonnes, le trigger `update_audit_columns()` échouera avec l'erreur :
@@ -96,5 +132,5 @@ DROP POLICY IF EXISTS "nom_de_la_politique" ON nom_table;
 
 ---
 
-**Total migrations** : 7 fichiers
+**Total migrations** : 10 fichiers
 **Dernière mise à jour** : 16 novembre 2025

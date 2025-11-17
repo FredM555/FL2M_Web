@@ -202,7 +202,7 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
                   setSelectedPractitioner(newValue);
                 }}
                 options={practitioners}
-                getOptionLabel={(option) => option.profile?.pseudo || option.profile?.first_name || ''}
+                getOptionLabel={(option) => option.profile?.pseudo || ''}
                 loading={loadingPractitioners}
                 disabled={loading}
                 renderInput={(params) => (
@@ -225,15 +225,15 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
                 renderOption={(props, option) => (
                   <Box component="li" {...props} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Avatar sx={{ width: 32, height: 32, bgcolor: 'primary.main' }}>
-                      {(option.profile?.pseudo || option.profile?.first_name || '?')[0].toUpperCase()}
+                      {(option.profile?.pseudo || '?')[0].toUpperCase()}
                     </Avatar>
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                        {option.profile?.pseudo || `${option.profile?.first_name} ${option.profile?.last_name}`}
+                        {option.profile?.pseudo || '-'}
                       </Typography>
-                      {option.profile?.pseudo && (
+                      {option.title && (
                         <Typography variant="caption" color="text.secondary">
-                          {option.profile?.first_name} {option.profile?.last_name}
+                          {option.title}
                         </Typography>
                       )}
                     </Box>
@@ -243,17 +243,15 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
             ) : (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Avatar sx={{ width: 40, height: 40, bgcolor: 'primary.main' }}>
-                  {(appointment.practitioner?.profile?.pseudo || appointment.practitioner?.profile?.first_name || '?')[0].toUpperCase()}
+                  {(appointment.practitioner?.profile?.pseudo || '?')[0].toUpperCase()}
                 </Avatar>
                 <Box>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                    {appointment.practitioner?.profile?.pseudo ||
-                     `${appointment.practitioner?.profile?.first_name} ${appointment.practitioner?.profile?.last_name}` ||
-                     '-'}
+                    {appointment.practitioner?.profile?.pseudo || '-'}
                   </Typography>
-                  {appointment.practitioner?.profile?.pseudo && (
+                  {appointment.practitioner?.title && (
                     <Typography variant="caption" color="text.secondary">
-                      {appointment.practitioner?.profile?.first_name} {appointment.practitioner?.profile?.last_name}
+                      {appointment.practitioner.title}
                     </Typography>
                   )}
                 </Box>

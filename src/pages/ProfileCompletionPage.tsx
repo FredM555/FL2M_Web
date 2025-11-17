@@ -10,16 +10,12 @@ import {
   Paper,
   Alert,
   CircularProgress,
-  Stepper,
-  Step,
-  StepLabel,
   Grid,
   IconButton,
   Tooltip,
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../services/supabase';
 
 /**
  * Page de complétion de profil OAuth
@@ -27,7 +23,7 @@ import { supabase } from '../services/supabase';
  */
 const ProfileCompletionPage = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
+  const { user, profile, updateProfile } = useAuth();
 
   // Informations de base - obligatoires
   const [pseudo, setPseudo] = useState('');
@@ -40,10 +36,8 @@ const ProfileCompletionPage = () => {
 
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [activeStep, setActiveStep] = useState(0);
 
-  const steps = ['Informations de base', 'Informations complémentaires'];
-
+  // Vérification initiale - une seule fois au chargement
   useEffect(() => {
     // Rediriger si l'utilisateur n'est pas connecté
     if (!user) {
@@ -52,14 +46,7 @@ const ProfileCompletionPage = () => {
       return;
     }
 
-    // Vérifier si le profil existe déjà et est complet
-    if (profile && profile.pseudo) {
-      console.log('[PROFILE_COMPLETION] Profil déjà complet, redirection vers accueil');
-      navigate('/', { replace: true });
-      return;
-    }
-
-    // Pré-remplir les champs si des données existent déjà
+    // Pré-remplir les champs avec les données existantes
     if (profile) {
       setPseudo(profile.pseudo || '');
       setFirstName(profile.first_name || '');
@@ -68,10 +55,8 @@ const ProfileCompletionPage = () => {
       setPhone(profile.phone || '');
     }
 
-    // Récupérer les métadonnées OAuth si disponibles
+    // Pré-remplir avec les métadonnées OAuth si disponibles
     if (user.user_metadata) {
-      // Google fournit : full_name, avatar_url, email
-      // Apple fournit : full_name (si autorisé), email
       const { full_name, name } = user.user_metadata;
 
       if (full_name) {
@@ -83,7 +68,6 @@ const ProfileCompletionPage = () => {
           setLastName(nameParts.slice(1).join(' '));
         }
       } else if (name) {
-        // Format alternatif (Apple peut utiliser ce format)
         if (name.givenName && !firstName) {
           setFirstName(name.givenName);
         }
@@ -92,31 +76,13 @@ const ProfileCompletionPage = () => {
         }
       }
     }
-  }, [user, profile, navigate]);
-
-  const handleNext = () => {
-    // Validation de l'étape courante
-    if (activeStep === 0) {
-      if (!pseudo.trim()) {
-        setError('Le pseudo est obligatoire pour continuer.');
-        return;
-      }
-    }
-
-    setError(null);
-    setActiveStep((prevStep) => prevStep + 1);
-  };
-
-  const handleBack = () => {
-    setError(null);
-    setActiveStep((prevStep) => prevStep - 1);
-  };
+  }, []); // Dépendances vides = une seule fois
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validation finale
+    // Validation
     if (!pseudo.trim()) {
       setError('Le pseudo est obligatoire.');
       return;
@@ -131,19 +97,21 @@ const ProfileCompletionPage = () => {
 
       console.log('[PROFILE_COMPLETION] Mise à jour du profil pour:', user.id);
 
-      // Mettre à jour le profil dans la base de données
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          pseudo: pseudo.trim(),
-          first_name: firstName.trim() || null,
-          last_name: lastName.trim() || null,
-          birth_date: birthDate || null,
-          phone: phone.trim() || null,
-          user_type: 'client', // Par défaut, les utilisateurs OAuth sont des clients
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
+      // Mettre à jour le profil via le contexte AuthContext
+      // Cela met à jour la BDD ET synchronise le contexte React
+      const profileData: any = {
+        pseudo: pseudo.trim(),
+        user_type: 'client', // Par défaut, les utilisateurs OAuth sont des clients
+        updated_at: new Date().toISOString(),
+      };
+
+      // Ajouter les champs optionnels seulement s'ils sont renseignés
+      if (firstName.trim()) profileData.first_name = firstName.trim();
+      if (lastName.trim()) profileData.last_name = lastName.trim();
+      if (birthDate) profileData.birth_date = birthDate;
+      if (phone.trim()) profileData.phone = phone.trim();
+
+      const { error: updateError } = await updateProfile(profileData);
 
       if (updateError) {
         console.error('[PROFILE_COMPLETION] Erreur mise à jour profil:', updateError);
@@ -193,16 +161,8 @@ const ProfileCompletionPage = () => {
         </Typography>
 
         <Typography variant="body1" color="text.secondary" align="center" sx={{ mb: 4 }}>
-          Pour finaliser votre inscription, nous avons besoin de quelques informations supplémentaires.
+          Pour finaliser votre inscription, nous avons besoin de quelques informations.
         </Typography>
-
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
@@ -211,148 +171,125 @@ const ProfileCompletionPage = () => {
         )}
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
-          {/* Étape 1: Informations de base */}
-          {activeStep === 0 && (
-            <Box>
-              <Typography variant="h6" gutterBottom>
-                Informations de base (obligatoires)
-              </Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Ces informations sont nécessaires pour créer votre compte.
-              </Typography>
+          {/* Section 1: Informations de base */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Informations de base
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Le pseudo est obligatoire pour créer votre compte.
+            </Typography>
 
-              <TextField
-                required
-                fullWidth
-                id="pseudo"
-                label="Pseudo"
-                name="pseudo"
-                value={pseudo}
-                onChange={(e) => setPseudo(e.target.value)}
-                disabled={loading}
-                placeholder="Choisissez un pseudo pour vous identifier"
-                helperText="Ce pseudo sera visible par les autres utilisateurs"
-                sx={{ mb: 2 }}
-              />
+            <TextField
+              required
+              fullWidth
+              id="pseudo"
+              label="Pseudo"
+              name="pseudo"
+              value={pseudo}
+              onChange={(e) => setPseudo(e.target.value)}
+              disabled={loading}
+              placeholder="Choisissez un pseudo pour vous identifier"
+              helperText="Ce pseudo sera visible par les autres utilisateurs"
+              sx={{ mb: 2 }}
+            />
 
-              <Alert severity="info" sx={{ mt: 2 }}>
-                Votre email: <strong>{user.email}</strong>
-              </Alert>
+            <Alert severity="info">
+              Votre email: <strong>{user.email}</strong>
+            </Alert>
+          </Box>
+
+          {/* Section 2: Informations complémentaires */}
+          <Box sx={{ mb: 4 }}>
+            <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
+              <Typography variant="h6">
+                Informations pour la préparation des séances
+              </Typography>
+              <Tooltip
+                title="Ces informations sont indispensables pour préparer la séance: tous vos prénoms, le nom de famille complet, et la date de naissance"
+                arrow
+              >
+                <IconButton size="small" sx={{ ml: 1 }}>
+                  <HelpOutlineIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             </Box>
-          )}
 
-          {/* Étape 2: Informations complémentaires */}
-          {activeStep === 1 && (
-            <Box>
-              <Box display="flex" alignItems="center" sx={{ mb: 2 }}>
-                <Typography variant="h6" gutterBottom>
-                  Informations pour la préparation des séances
-                </Typography>
-                <Tooltip
-                  title="Ces informations sont indispensables pour préparer la séance: tous vos prénoms, le nom de famille complet, et la date de naissance"
-                  arrow
-                >
-                  <IconButton size="small" sx={{ ml: 1 }}>
-                    <HelpOutlineIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Ces informations sont facultatives pour la création du profil mais obligatoire pour une séance.
+            </Typography>
 
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                Ces informations sont facultatives mais recommandées pour une meilleure expérience.
-              </Typography>
-
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    id="firstName"
-                    label="Tous les prénoms"
-                    name="firstName"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    disabled={loading}
-                    helperText="Veuillez indiquer tous vos prénoms dans l'ordre de l'état civil"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    id="lastName"
-                    label="Nom de famille complet"
-                    name="lastName"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    disabled={loading}
-                    helperText="Nom complet tel qu'il apparaît sur vos documents"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    id="birthDate"
-                    label="Date de naissance"
-                    name="birthDate"
-                    type="date"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    disabled={loading}
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
-                    helperText="Format: AAAA-MM-JJ"
-                  />
-                </Grid>
-                <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    id="phone"
-                    label="Téléphone"
-                    name="phone"
-                    type="tel"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    disabled={loading}
-                    helperText="Numéro de contact (facultatif)"
-                  />
-                </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="firstName"
+                  label="Tous les prénoms"
+                  name="firstName"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  disabled={loading}
+                  helperText="Tous vos prénoms dans l'ordre de l'état civil"
+                />
               </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="lastName"
+                  label="Nom de famille complet"
+                  name="lastName"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  disabled={loading}
+                  helperText="Nom complet tel qu'il apparaît sur vos documents"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="birthDate"
+                  label="Date de naissance"
+                  name="birthDate"
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  disabled={loading}
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                  helperText="Format: AAAA-MM-JJ"
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  id="phone"
+                  label="Téléphone"
+                  name="phone"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  disabled={loading}
+                  helperText="Numéro de contact (facultatif)"
+                />
+              </Grid>
+            </Grid>
 
-              <Alert severity="info" sx={{ mt: 3 }}>
-                Vous pourrez modifier ces informations ultérieurement dans votre profil.
-              </Alert>
-            </Box>
-          )}
+            <Alert severity="info" sx={{ mt: 3 }}>
+              Vous pourrez modifier ces informations ultérieurement dans votre profil.
+            </Alert>
+          </Box>
 
-          {/* Boutons de navigation */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+          {/* Bouton de validation */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 4 }}>
             <Button
-              disabled={activeStep === 0 || loading}
-              onClick={handleBack}
-              variant="outlined"
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={loading || !pseudo.trim()}
             >
-              Retour
+              {loading ? <CircularProgress size={24} /> : 'Enregistrer mon profil'}
             </Button>
-
-            <Box>
-              {activeStep === steps.length - 1 ? (
-                <Button
-                  type="submit"
-                  variant="contained"
-                  disabled={loading || !pseudo.trim()}
-                >
-                  {loading ? <CircularProgress size={24} /> : 'Terminer'}
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  onClick={handleNext}
-                  disabled={loading || !pseudo.trim()}
-                >
-                  Suivant
-                </Button>
-              )}
-            </Box>
           </Box>
         </Box>
       </Paper>

@@ -231,34 +231,50 @@ const TableView: React.FC<TableViewProps> = ({
         )}
       </Toolbar>
 
-      <TableContainer sx={{ maxHeight: 600 }}>
-        <Table stickyHeader aria-label={`tableau-${tableName}`}>
+      <TableContainer sx={{ maxHeight: 600, width: '100%', overflowX: 'auto' }}>
+        <Table stickyHeader aria-label={`tableau-${tableName}`} sx={{ minWidth: { xs: 650, sm: 750 } }}>
           <TableHead>
             <TableRow>
-              {columns.map((column) => (
-                <TableCell
-                  key={column.id}
-                  align={column.align}
-                  style={{ minWidth: column.minWidth }}
-                >
-                  {column.sortable ? (
-                    <TableSortLabel
-                      active={orderBy === column.id}
-                      direction={orderBy === column.id ? order : 'asc'}
-                      onClick={() => handleRequestSort(column.id)}
-                    >
-                      {column.label}
-                      {orderBy === column.id ? (
-                        <Box component="span" sx={visuallyHidden}>
-                          {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
-                        </Box>
-                      ) : null}
-                    </TableSortLabel>
-                  ) : (
-                    column.label
-                  )}
-                </TableCell>
-              ))}
+              {columns.map((column, index) => {
+                // Déterminer si la colonne doit être cachée sur mobile/tablet
+                let responsiveSx = {};
+                // Cacher les colonnes du milieu sur mobile (xs), sauf la première, dernière et actions
+                if (index > 0 && index < columns.length - 1) {
+                  if (index === 1) {
+                    // Deuxième colonne: visible à partir de sm
+                    responsiveSx = { display: { xs: 'none', sm: 'table-cell' } };
+                  } else {
+                    // Autres colonnes: visible à partir de md
+                    responsiveSx = { display: { xs: 'none', md: 'table-cell' } };
+                  }
+                }
+
+                return (
+                  <TableCell
+                    key={column.id}
+                    align={column.align}
+                    style={{ minWidth: column.minWidth }}
+                    sx={responsiveSx}
+                  >
+                    {column.sortable ? (
+                      <TableSortLabel
+                        active={orderBy === column.id}
+                        direction={orderBy === column.id ? order : 'asc'}
+                        onClick={() => handleRequestSort(column.id)}
+                      >
+                        {column.label}
+                        {orderBy === column.id ? (
+                          <Box component="span" sx={visuallyHidden}>
+                            {order === 'desc' ? 'sorted descending' : 'sorted ascending'}
+                          </Box>
+                        ) : null}
+                      </TableSortLabel>
+                    ) : (
+                      column.label
+                    )}
+                  </TableCell>
+                );
+              })}
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -278,10 +294,20 @@ const TableView: React.FC<TableViewProps> = ({
             ) : (
               paginatedRows.map((row) => (
                 <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
-                  {columns.map((column) => {
+                  {columns.map((column, index) => {
                     const value = row[column.id];
+                    // Appliquer le même responsive que pour les headers
+                    let responsiveSx = {};
+                    if (index > 0 && index < columns.length - 1) {
+                      if (index === 1) {
+                        responsiveSx = { display: { xs: 'none', sm: 'table-cell' } };
+                      } else {
+                        responsiveSx = { display: { xs: 'none', md: 'table-cell' } };
+                      }
+                    }
+
                     return (
-                      <TableCell key={column.id} align={column.align}>
+                      <TableCell key={column.id} align={column.align} sx={responsiveSx}>
                         {column.format && value !== null && value !== undefined
                           ? column.format(value)
                           : value}

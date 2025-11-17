@@ -32,6 +32,8 @@ interface Consultant {
   title?: string;
   summary?: string;
   is_active: boolean;
+  expertise_domains?: string[];
+  qualifications?: string[];
   profile?: {
     first_name: string;
     last_name: string;

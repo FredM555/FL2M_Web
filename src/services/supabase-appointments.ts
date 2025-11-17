@@ -1,5 +1,5 @@
 // src/services/supabase-appointments.ts
-import { supabase, Appointment } from './supabase';
+import { supabase, Appointment, logActivity } from './supabase';
 import { startOfWeek, endOfWeek, format, parseISO } from 'date-fns';
 
 /**
@@ -281,18 +281,32 @@ export const cancelAppointment = async (
         .eq('id', appointmentId)
         .select()
         .single();
-      
+
       if (error) throw error;
-      
-      return { 
-        success: true, 
-        data, 
+
+      // Logger l'annulation
+      if (data && appointment.client_id) {
+        logActivity({
+          userId: appointment.client_id,
+          actionType: 'appointment_cancelled',
+          actionDescription: 'Rendez-vous annulé (conservé dans l\'historique)',
+          entityType: 'appointment',
+          entityId: appointmentId,
+          metadata: { keepRecord: true, isPaid }
+        }).catch(err => console.warn('Erreur log annulation RDV:', err));
+      }
+
+      return {
+        success: true,
+        data,
         action: 'cancelled',
-        message: 'Le rendez-vous a été annulé et marqué comme tel dans l\'historique.' 
+        message: 'Le rendez-vous a été annulé et marqué comme tel dans l\'historique.'
       };
     } 
     // Sinon, pour un rendez-vous non payé, le rendre à nouveau disponible
     else {
+      const clientId = appointment.client_id; // Sauvegarder avant de le mettre à null
+
       const { data, error } = await supabase
         .from('appointments')
         .update({
@@ -310,14 +324,26 @@ export const cancelAppointment = async (
         .eq('id', appointmentId)
         .select()
         .single();
-      
+
       if (error) throw error;
-      
-      return { 
-        success: true, 
-        data, 
+
+      // Logger l'annulation
+      if (clientId) {
+        logActivity({
+          userId: clientId,
+          actionType: 'appointment_cancelled',
+          actionDescription: 'Rendez-vous annulé (créneau libéré)',
+          entityType: 'appointment',
+          entityId: appointmentId,
+          metadata: { keepRecord: false, isPaid: false }
+        }).catch(err => console.warn('Erreur log annulation RDV:', err));
+      }
+
+      return {
+        success: true,
+        data,
         action: 'released',
-        message: 'Le rendez-vous a été annulé et est à nouveau disponible pour réservation.' 
+        message: 'Le rendez-vous a été annulé et est à nouveau disponible pour réservation.'
       };
     }
   } catch (error) {

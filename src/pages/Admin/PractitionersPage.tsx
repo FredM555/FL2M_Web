@@ -285,14 +285,14 @@ const AdminPractitionersPage: React.FC = () => {
           </CardContent>
         </Card>
       ) : (
-        <TableContainer component={Paper}>
-          <Table>
+        <TableContainer component={Paper} sx={{ width: '100%', overflowX: 'auto' }}>
+          <Table sx={{ minWidth: { xs: 650, sm: 750 } }}>
             <TableHead>
               <TableRow>
                 <TableCell>Consultant</TableCell>
-                <TableCell>Titre</TableCell>
-                <TableCell>Résumé</TableCell>
-                <TableCell align="center">Priorité</TableCell>
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Titre</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Résumé</TableCell>
+                <TableCell align="center" sx={{ display: { xs: 'none', md: 'table-cell' } }}>Priorité</TableCell>
                 <TableCell align="center">Statut</TableCell>
                 <TableCell align="right">Actions</TableCell>
               </TableRow>
@@ -304,10 +304,10 @@ const AdminPractitionersPage: React.FC = () => {
                 }}>
                   <TableCell>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                      <Avatar 
-                        sx={{ 
-                          mr: 2, 
-                          bgcolor: practitioner.is_active === false ? 'grey.500' : 'primary.main' 
+                      <Avatar
+                        sx={{
+                          mr: 2,
+                          bgcolor: practitioner.is_active === false ? 'grey.500' : 'primary.main'
                         }}
                         alt={practitioner.display_name || practitioner.profile?.first_name}
                       >
@@ -323,14 +323,14 @@ const AdminPractitionersPage: React.FC = () => {
                       </Box>
                     </Box>
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                     <Typography variant="body2">
                       {practitioner.title || "—"}
                     </Typography>
                   </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" sx={{ 
-                      maxWidth: 250, 
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                    <Typography variant="body2" sx={{
+                      maxWidth: 250,
                       whiteSpace: 'nowrap',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis'
@@ -338,7 +338,7 @@ const AdminPractitionersPage: React.FC = () => {
                       {practitioner.summary || practitioner.bio || "—"}
                     </Typography>
                   </TableCell>
-                  <TableCell align="center">
+                  <TableCell align="center" sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     {practitioner.priority || 0}
                   </TableCell>
                   <TableCell align="center">

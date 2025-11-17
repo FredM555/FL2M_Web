@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -41,6 +41,26 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
+
+  // Auto-play quand le dialog s'ouvre
+  useEffect(() => {
+    if (open && audioRef.current && url) {
+      // Petit délai pour s'assurer que l'audio est chargé
+      const timer = setTimeout(() => {
+        audioRef.current?.play()
+          .then(() => {
+            setIsPlaying(true);
+          })
+          .catch((error) => {
+            console.error('Erreur lors de la lecture automatique:', error);
+            // Si l'auto-play échoue (politique du navigateur), on ne fait rien
+            // L'utilisateur devra cliquer sur le bouton play
+          });
+      }, 100);
+
+      return () => clearTimeout(timer);
+    }
+  }, [open, url]);
 
   const togglePlay = () => {
     if (!audioRef.current) return;

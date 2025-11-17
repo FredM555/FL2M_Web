@@ -9,7 +9,9 @@ import {
   Paper,
   Grid,
   CircularProgress,
-  Snackbar
+  Snackbar,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import PersonIcon from '@mui/icons-material/Person';
@@ -17,6 +19,8 @@ import CakeIcon from '@mui/icons-material/Cake';
 import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
 import PaymentIcon from '@mui/icons-material/Payment';
+import EmailIcon from '@mui/icons-material/Email';
+import PhoneIcon from '@mui/icons-material/Phone';
 import { Appointment, updateAppointmentBeneficiary } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -39,6 +43,9 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [birthDate, setBirthDate] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [customPrice, setCustomPrice] = useState<string>('');
 
   // Déterminer si l'utilisateur peut modifier
@@ -61,6 +68,9 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
     setFirstName(appointment.beneficiary_first_name || '');
     setLastName(appointment.beneficiary_last_name || '');
     setBirthDate(appointment.beneficiary_birth_date || '');
+    setEmail(appointment.beneficiary_email || '');
+    setPhone(appointment.beneficiary_phone || '');
+    setNotificationsEnabled(appointment.beneficiary_notifications_enabled || false);
     setCustomPrice(appointment.custom_price?.toString() || '');
   }, [appointment]);
 
@@ -80,6 +90,19 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
         throw new Error('La date de naissance est requise');
       }
 
+      // Validation de l'email si renseigné
+      if (email.trim()) {
+        const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+        if (!emailRegex.test(email.trim())) {
+          throw new Error('L\'adresse email n\'est pas valide');
+        }
+      }
+
+      // Si notifications activées, l'email est obligatoire
+      if (notificationsEnabled && !email.trim()) {
+        throw new Error('L\'email est requis pour recevoir des notifications');
+      }
+
       // Validation du prix si renseigné
       let priceValue: number | null = null;
       if (customPrice.trim()) {
@@ -94,6 +117,9 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
         beneficiary_first_name: firstName.trim(),
         beneficiary_last_name: lastName.trim(),
         beneficiary_birth_date: birthDate,
+        beneficiary_email: email.trim() || null,
+        beneficiary_phone: phone.trim() || null,
+        beneficiary_notifications_enabled: notificationsEnabled,
         custom_price: priceValue
       };
 
@@ -141,6 +167,9 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
     setFirstName(appointment.beneficiary_first_name || '');
     setLastName(appointment.beneficiary_last_name || '');
     setBirthDate(appointment.beneficiary_birth_date || '');
+    setEmail(appointment.beneficiary_email || '');
+    setPhone(appointment.beneficiary_phone || '');
+    setNotificationsEnabled(appointment.beneficiary_notifications_enabled || false);
     setCustomPrice(appointment.custom_price?.toString() || '');
     setIsEditing(false);
     setError(null);
@@ -257,6 +286,77 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
               </Typography>
             )}
           </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <EmailIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+              <Typography variant="subtitle2" color="text.secondary">
+                Email (optionnel)
+              </Typography>
+            </Box>
+            {isEditing ? (
+              <TextField
+                fullWidth
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                placeholder="exemple@email.com"
+                size="small"
+                helperText="Pour recevoir les confirmations et rappels"
+              />
+            ) : (
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                {email || '-'}
+              </Typography>
+            )}
+          </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <PhoneIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+              <Typography variant="subtitle2" color="text.secondary">
+                Téléphone (optionnel)
+              </Typography>
+            </Box>
+            {isEditing ? (
+              <TextField
+                fullWidth
+                type="tel"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                disabled={loading}
+                placeholder="06 12 34 56 78"
+                size="small"
+                helperText="Pour les rappels SMS"
+              />
+            ) : (
+              <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                {phone || '-'}
+              </Typography>
+            )}
+          </Grid>
+
+          {isEditing && email.trim() && (
+            <Grid item xs={12}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={notificationsEnabled}
+                    onChange={(e) => setNotificationsEnabled(e.target.checked)}
+                    disabled={loading}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Typography variant="body2">
+                    J'accepte de recevoir des notifications par email concernant ce rendez-vous
+                    (confirmations, rappels, documents) - <strong>Consentement RGPD</strong>
+                  </Typography>
+                }
+              />
+            </Grid>
+          )}
 
           <Grid item xs={12} sm={6}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>

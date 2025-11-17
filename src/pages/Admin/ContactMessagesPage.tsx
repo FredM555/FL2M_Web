@@ -325,14 +325,14 @@ const AdminContactMessagesPage: React.FC = () => {
               </Typography>
             </Box>
           ) : (
-            <TableContainer component={Paper}>
-              <Table>
+            <TableContainer component={Paper} sx={{ width: '100%', overflowX: 'auto' }}>
+              <Table sx={{ minWidth: { xs: 650, sm: 750 } }}>
                 <TableHead>
                   <TableRow>
                     <TableCell>Expéditeur</TableCell>
                     <TableCell>Sujet</TableCell>
-                    <TableCell>Message</TableCell>
-                    <TableCell>Date</TableCell>
+                    <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Message</TableCell>
+                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Date</TableCell>
                     <TableCell>Statut</TableCell>
                     <TableCell align="right">Actions</TableCell>
                   </TableRow>
@@ -360,12 +360,12 @@ const AdminContactMessagesPage: React.FC = () => {
                           {message.subject}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                         <Typography variant="body2">
                           {truncateText(message.message, 50)}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                         <Typography variant="body2">
                           {format(parseISO(message.created_at), 'PPp', { locale: fr })}
                         </Typography>

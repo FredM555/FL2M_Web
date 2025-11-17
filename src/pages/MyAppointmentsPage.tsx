@@ -287,17 +287,25 @@ const MyAppointmentsPage = () => {
           },
         }}
       >
-        <CardContent sx={{ p: 2.5 }}>
-          <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
+        <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              justifyContent: 'space-between',
+              alignItems: { xs: 'flex-start', sm: 'center' },
+              gap: { xs: 1.5, sm: 0 },
+              mb: 2
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a2e', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
               {appointment.service?.name}
             </Typography>
-            <Box>
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <Chip
                 label={getStatusLabel(appointment.status)}
                 color={getStatusColor(appointment.status)}
                 size="small"
-                sx={{ mr: 1 }}
               />
               {appointment.payment_status && (
                 <Chip
@@ -311,54 +319,54 @@ const MyAppointmentsPage = () => {
 
           <Divider sx={{ mb: 2, borderColor: 'rgba(255, 215, 0, 0.2)' }} />
 
-          <Grid container spacing={2}>
+          <Grid container spacing={{ xs: 1.5, sm: 2 }}>
             <Grid item xs={12} sm={6}>
-              <Box display="flex" alignItems="center" mb={1}>
-                <EventIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
-                <Typography variant="body2">
+              <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                <EventIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
                   {format(parseISO(appointment.start_time), 'EEEE d MMMM yyyy', { locale: fr })}
                 </Typography>
               </Box>
 
-              <Box display="flex" alignItems="center" mb={1}>
-                <AccessTimeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
-                <Typography variant="body2">
+              <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                <AccessTimeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
                   {format(parseISO(appointment.start_time), 'HH:mm', { locale: fr })}
                   {' - '}
                   {format(parseISO(appointment.end_time), 'HH:mm', { locale: fr })}
                 </Typography>
               </Box>
 
-              <Box display="flex" alignItems="center" mb={1}>
-                <BadgeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
-                <Typography variant="body2">
-                  Séance avec {appointment.practitioner?.profile?.pseudo ||
-                    `${appointment.practitioner?.profile?.first_name} ${appointment.practitioner?.profile?.last_name}`}
+              <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                <BadgeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                  Séance avec {appointment.practitioner?.profile?.pseudo || 'Intervenant'}
+                  {appointment.practitioner?.title && ` - ${appointment.practitioner.title}`}
                 </Typography>
               </Box>
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <Box display="flex" alignItems="center" mb={1}>
-                <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
-                <Typography variant="body2">
+              <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
                   {appointment.beneficiary_first_name || appointment.client?.first_name}{' '}
                   {appointment.beneficiary_last_name || appointment.client?.last_name}
                 </Typography>
               </Box>
 
               {(appointment.beneficiary_birth_date || appointment.client?.birth_date) && (
-                <Box display="flex" alignItems="center" mb={1}>
-                  <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
-                  <Typography variant="body2">
+                <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                  <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                  <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
                     {format(parseISO(appointment.beneficiary_birth_date || appointment.client!.birth_date!), 'dd/MM/yyyy', { locale: fr })}
                   </Typography>
                 </Box>
               )}
 
-              <Box display="flex" alignItems="center" mb={1}>
-                <WorkIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
-                <Typography variant="body2">
+              <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                <WorkIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
                   {appointment.service?.duration} minutes
                 </Typography>
               </Box>
@@ -367,8 +375,8 @@ const MyAppointmentsPage = () => {
                 const price = appointment.custom_price ?? appointment.service?.price;
                 return price !== 9999 && (
                   <Box display="flex" alignItems="center">
-                    <PaymentIcon fontSize="small" sx={{ mr: 1, color: '#FFA500' }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: appointment.custom_price ? 'primary.main' : '#FFA500' }}>
+                    <PaymentIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: appointment.custom_price ? 'primary.main' : '#FFA500', fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
                       {price} €{appointment.custom_price ? ' (personnalisé)' : ''}
                     </Typography>
                   </Box>
@@ -377,16 +385,25 @@ const MyAppointmentsPage = () => {
             </Grid>
           </Grid>
 
-          <Box mt={2} display="flex" gap={2}>
+          <Box
+            mt={2}
+            sx={{
+              display: 'flex',
+              flexDirection: { xs: 'column', sm: 'row' },
+              gap: { xs: 1.5, sm: 2 }
+            }}
+          >
             {appointment.meeting_link && (
               <Button
                 variant="contained"
-                startIcon={<VideoCallIcon />}
+                startIcon={<VideoCallIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
                 onClick={() => window.open(appointment.meeting_link, '_blank', 'noopener,noreferrer')}
                 fullWidth
                 sx={{
                   borderRadius: 2,
                   fontWeight: 600,
+                  py: { xs: 1.5, sm: 1 },
+                  fontSize: { xs: '0.9rem', sm: '0.875rem' },
                   background: 'linear-gradient(45deg, #4CAF50, #45a049)',
                   '&:hover': {
                     background: 'linear-gradient(45deg, #45a049, #4CAF50)',
@@ -398,12 +415,14 @@ const MyAppointmentsPage = () => {
             )}
             <Button
               variant="outlined"
-              startIcon={<InfoIcon />}
+              startIcon={<InfoIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
               onClick={() => handleOpenDetailsDialog(appointment)}
               fullWidth
               sx={{
                 borderRadius: 2,
                 fontWeight: 600,
+                py: { xs: 1.5, sm: 1 },
+                fontSize: { xs: '0.9rem', sm: '0.875rem' },
                 borderColor: '#FFA500',
                 color: '#FFA500',
                 '&:hover': {
@@ -423,6 +442,8 @@ const MyAppointmentsPage = () => {
                 sx={{
                   borderRadius: 2,
                   fontWeight: 600,
+                  py: { xs: 1.5, sm: 1 },
+                  fontSize: { xs: '0.9rem', sm: '0.875rem' },
                 }}
               >
                 Annuler

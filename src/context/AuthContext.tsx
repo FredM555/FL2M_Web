@@ -1,7 +1,7 @@
 // src/context/AuthContext.tsx - Solution modifiée sans awaits
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
-import { supabase, Profile, getProfile } from '../services/supabase';
+import { supabase, Profile, getProfile, logActivity } from '../services/supabase';
 
 interface AuthContextType {
   user: User | null;
@@ -101,35 +101,53 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
 // Enregistrer la tentative de connexion (uniquement pour de vraies connexions)
-const logUserLogin = (userId: string, isDirectAuth = false) => {
+const logUserLogin = (userId: string, isDirectAuth = false, email?: string) => {
   // Ne logger que les vraies connexions, pas les restaurations de session
   if (!isDirectAuth) {
     console.log('[LOG_LOGIN] Rafraîchissement de page détecté, pas de journalisation');
     return Promise.resolve();
   }
-  
+
   console.log('[LOG_LOGIN] Nouvelle connexion détectée, début enregistrement pour:', userId);
-  
-  // Récupérer l'IP sans await
-  return fetch('https://api.ipify.org?format=json')
-    .then(response => response.json())
-    .then(ipData => {
-      const ip = ipData.ip;
-      
-      // Appeler la fonction RPC
-      return supabase.rpc('log_user_login', {
-        client_ip: ip,
-        user_agent: navigator.userAgent
-      });
-    })
-    .then(() => {
-      console.log('[LOG_LOGIN] Connexion enregistrée avec succès');
-    })
-    .catch(error => {
-      console.warn('[LOG_LOGIN] Non critique - Erreur log connexion:', error);
-      // Ne pas bloquer sur les erreurs de log
-      return Promise.resolve();
-    });
+
+  // Utiliser le nouveau système de logging
+  logActivity({
+    userId,
+    actionType: 'login',
+    actionDescription: `Connexion réussie${email ? ` - ${email}` : ''}`
+  }).catch(error => {
+    console.warn('[LOG_LOGIN] Non critique - Erreur log connexion:', error);
+  });
+
+  return Promise.resolve();
+};
+
+// Enregistrer la déconnexion
+const logUserLogout = (userId: string) => {
+  console.log('[LOG_LOGOUT] Enregistrement déconnexion pour:', userId);
+
+  // Utiliser le nouveau système de logging
+  logActivity({
+    userId,
+    actionType: 'logout',
+    actionDescription: 'Déconnexion'
+  }).catch(error => {
+    console.warn('[LOG_LOGOUT] Non critique - Erreur log déconnexion:', error);
+  });
+
+  return Promise.resolve();
+};
+
+// Enregistrer un échec de connexion
+const logLoginFailed = (email: string, reason?: string) => {
+  console.log('[LOG_LOGIN_FAILED] Échec de connexion pour:', email);
+
+  // Note: on ne peut pas logger avec userId puisque la connexion a échoué
+  // On loggera avec un userId factice ou on pourrait modifier la table pour accepter NULL
+  // Pour l'instant, on log juste dans la console
+  console.warn('[LOG_LOGIN_FAILED] Email:', email, 'Raison:', reason);
+
+  return Promise.resolve();
 };
 
   // Initialiser l'authentification sans awaits
@@ -227,12 +245,12 @@ const logUserLogin = (userId: string, isDirectAuth = false) => {
         // Traiter l'événement
         if (event === 'SIGNED_IN' && session) {
           console.log('[HANDLE_SIGNED_IN] Traitement SIGNED_IN');
-          
+
           // Log non bloquant en parallèle
-          logUserLogin(session.user.id, true).catch(e => 
+          logUserLogin(session.user.id, true, session.user.email).catch(e =>
             console.warn('[HANDLE_SIGNED_IN] Erreur log:', e)
           );
-          
+
           // Récupérer le profil sans await
           Promise.race([
             fetchUserProfile(session.user.id),
@@ -322,17 +340,20 @@ const logUserLogin = (userId: string, isDirectAuth = false) => {
       .then(({ data, error }) => {
         if (error) {
           console.error('[SIGNIN_EMAIL] Erreur connexion:', error.message);
+          // Logger l'échec de connexion
+          logLoginFailed(email, error.message);
         } else {
           console.log('[SIGNIN_EMAIL] Connexion réussie');
           // Ici, c'est une vraie connexion
           if (data?.user) {
-            logUserLogin(data.user.id, true);
+            logUserLogin(data.user.id, true, email);
           }
         }
         return { error: error ? new Error(error.message) : null };
       })
       .catch(error => {
         console.error('[SIGNIN_EMAIL] Exception lors de la connexion:', error);
+        logLoginFailed(email, error.message);
         return { error: error as Error };
       });
   };
@@ -427,6 +448,12 @@ const logUserLogin = (userId: string, isDirectAuth = false) => {
 
   const signOut = () => {
     console.log('[SIGNOUT] Tentative de déconnexion');
+
+    // Logger la déconnexion avant de déconnecter (car on aura plus accès à user.id après)
+    if (user?.id) {
+      logUserLogout(user.id);
+    }
+
     return supabase.auth.signOut()
       .then(({ error }) => {
         if (error) {
@@ -447,22 +474,54 @@ const logUserLogin = (userId: string, isDirectAuth = false) => {
       console.error('[UPDATE_PROFILE] Tentative de mise à jour du profil sans être authentifié');
       return Promise.resolve({ error: new Error('Non authentifié') });
     }
-    
-    console.log('[UPDATE_PROFILE] Tentative de mise à jour du profil');
+
+    console.log('[UPDATE_PROFILE] Tentative de mise à jour du profil:', profileData);
+
+    // D'abord mettre à jour la BDD
     return (supabase.from('profiles').update(profileData).eq('id', user.id) as any)
-      .then(({ error }: any) => {
-        if (error) {
-          console.error('[UPDATE_PROFILE] Erreur mise à jour profil:', error.message);
-        } else {
-          console.log('[UPDATE_PROFILE] Profil mis à jour avec succès');
-          safeSetState(setProfile, (prev: any) => {
-            const updated = prev ? { ...prev, ...profileData } : null;
-            console.log('[UPDATE_PROFILE] Nouvel état profil:', updated);
-            return updated;
-          }, 'profile (update)');
+      .then(({ error: updateError }: any) => {
+        if (updateError) {
+          console.error('[UPDATE_PROFILE] Erreur mise à jour profil:', updateError.message);
+          throw updateError;
         }
 
-        return { error: error ? new Error(error.message) : null };
+        console.log('[UPDATE_PROFILE] Mise à jour BDD réussie');
+
+        // Ensuite récupérer le profil complet depuis la BDD
+        return supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+      })
+      .then(({ data, error: fetchError }: any) => {
+        if (fetchError) {
+          console.error('[UPDATE_PROFILE] Erreur récupération profil après update:', fetchError.message);
+          // Même si on ne peut pas récupérer, on met à jour le contexte localement
+          safeSetState(setProfile, (prev: any) => {
+            if (!prev) {
+              return {
+                id: user.id,
+                email: user.email,
+                ...profileData,
+              } as Profile;
+            }
+            const updated = { ...prev, ...profileData };
+            console.log('[UPDATE_PROFILE] Nouvel état profil (local):', updated);
+            return updated;
+          }, 'profile (update local)');
+
+          return { error: null }; // Ne pas bloquer même si la récupération échoue
+        }
+
+        console.log('[UPDATE_PROFILE] Profil récupéré avec succès:', data);
+
+        // Mettre à jour le contexte avec les données fraîches de la BDD
+        if (data) {
+          safeSetState(setProfile, data, 'profile (update from DB)');
+        }
+
+        return { error: null };
       })
       .catch((error: any) => {
         console.error('[UPDATE_PROFILE] Exception lors de la mise à jour du profil:', error);

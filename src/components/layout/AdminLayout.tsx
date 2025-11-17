@@ -37,6 +37,7 @@ import LogoutIcon from '@mui/icons-material/Logout';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import MessageIcon from '@mui/icons-material/Message';
 import WorkIcon from '@mui/icons-material/Work';
+import HistoryIcon from '@mui/icons-material/History';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 
@@ -163,6 +164,11 @@ const AdminLayout: React.FC = () => {
       path: '/admin/messages',
       icon: <MessageIcon />,
       badge: newMessagesCount
+    },
+    {
+      text: 'Journaux d\'activité',
+      path: '/admin/journaux-activite',
+      icon: <HistoryIcon />
     }
   ];
 

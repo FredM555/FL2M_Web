@@ -106,10 +106,16 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
       maxWidth="md"
       fullWidth
       scroll="paper"
+      PaperProps={{
+        sx: {
+          m: { xs: 1, sm: 2 },
+          maxHeight: { xs: 'calc(100% - 16px)', sm: 'calc(100% - 64px)' }
+        }
+      }}
     >
-      <DialogTitle>
+      <DialogTitle sx={{ px: { xs: 2, sm: 3 } }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">
+          <Typography variant="h6" sx={{ fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
             Détails du rendez-vous
           </Typography>
           <IconButton onClick={onClose} size="small">
@@ -118,53 +124,58 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
         </Box>
       </DialogTitle>
 
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ px: { xs: 1.5, sm: 3 } }}>
         {/* Informations du RDV */}
         <Box mb={3} sx={{
-          p: 2,
+          p: { xs: 1.5, sm: 2 },
           bgcolor: 'grey.50',
           borderRadius: 2,
           border: '1px solid',
           borderColor: 'divider'
         }}>
-          <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start' }}>
+          <Box sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: { xs: 2, md: 3 },
+            alignItems: 'flex-start'
+          }}>
             {/* Colonne de gauche : Infos du RDV */}
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="subtitle2" color="text.secondary">
+            <Box sx={{ flex: 1, width: '100%' }}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                 Service
               </Typography>
-              <Typography variant="body1" fontWeight={600} gutterBottom>
+              <Typography variant="body1" fontWeight={600} gutterBottom sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                 {currentAppointment.service?.name}
               </Typography>
 
-              <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
+              <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                 Date et heure
               </Typography>
-              <Typography variant="body1" gutterBottom>
+              <Typography variant="body1" gutterBottom sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                 {format(parseISO(currentAppointment.start_time), 'EEEE d MMMM yyyy - HH:mm', { locale: fr })}
               </Typography>
 
-              {currentAppointment.practitioner && (
+              {currentAppointment.practitioner && currentAppointment.practitioner.profile?.pseudo && (
                 <>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     Intervenant
                   </Typography>
-                  <Typography variant="body1" gutterBottom>
-                    {currentAppointment.practitioner.profile?.pseudo ||
-                     `${currentAppointment.practitioner.profile?.first_name} ${currentAppointment.practitioner.profile?.last_name}`}
+                  <Typography variant="body1" gutterBottom sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                    {currentAppointment.practitioner.profile.pseudo}
+                    {currentAppointment.practitioner.title && ` - ${currentAppointment.practitioner.title}`}
                   </Typography>
                 </>
               )}
 
               {currentAppointment.service && (
                 <>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                       <PaymentIcon fontSize="small" />
                       Prix de la séance
                     </Box>
                   </Typography>
-                  <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 700 }}>
+                  <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 700, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
                     {(() => {
                       const price = currentAppointment.custom_price ?? currentAppointment.service.price;
                       return price === 9999 ? 'Sur devis' : `${price} €`;
@@ -182,6 +193,8 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                       onClick={() => window.open(currentAppointment.meeting_link, '_blank', 'noopener,noreferrer')}
                       fullWidth
                       sx={{
+                        py: { xs: 1.5, sm: 1 },
+                        fontSize: { xs: '0.9rem', sm: '0.875rem' },
                         background: 'linear-gradient(45deg, #4CAF50, #45a049)',
                         '&:hover': {
                           background: 'linear-gradient(45deg, #45a049, #4CAF50)',
@@ -197,8 +210,9 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
 
             {/* Colonne de droite : Bénéficiaire (mis en évidence) */}
             <Box sx={{
-              minWidth: '280px',
-              p: 2.5,
+              width: { xs: '100%', md: '280px' },
+              minWidth: { xs: 'auto', md: '280px' },
+              p: { xs: 2, sm: 2.5 },
               bgcolor: 'white',
               borderRadius: 2,
               border: '2px solid',
@@ -214,14 +228,15 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                   display: 'flex',
                   alignItems: 'center',
                   gap: 0.5,
-                  mb: 2
+                  mb: 2,
+                  fontSize: { xs: '0.7rem', sm: '0.75rem' }
                 }}
               >
                 <PersonIcon fontSize="small" />
                 Bénéficiaire
               </Typography>
 
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
                 {currentAppointment.beneficiary_first_name || currentAppointment.client?.first_name}{' '}
                 {currentAppointment.beneficiary_last_name || currentAppointment.client?.last_name}
               </Typography>
@@ -232,19 +247,19 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                     display: 'flex',
                     alignItems: 'center',
                     gap: 1,
-                    p: 1.5,
+                    p: { xs: 1, sm: 1.5 },
                     bgcolor: 'grey.50',
                     borderRadius: 1,
                     border: '1px solid',
                     borderColor: 'grey.300'
                   }}
                 >
-                  <CakeIcon sx={{ color: 'primary.main', fontSize: 24 }} />
+                  <CakeIcon sx={{ color: 'primary.main', fontSize: { xs: 20, sm: 24 } }} />
                   <Box>
-                    <Typography variant="caption" color="text.secondary" display="block">
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
                       Date de naissance
                     </Typography>
-                    <Typography variant="body1" fontWeight={600}>
+                    <Typography variant="body1" fontWeight={600} sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }}>
                       {format(
                         parseISO(currentAppointment.beneficiary_birth_date || currentAppointment.client!.birth_date!),
                         'dd/MM/yyyy'
@@ -258,8 +273,21 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
         </Box>
 
         {/* Tabs pour Bénéficiaire, Intervenant, Visio, Documents et Commentaires */}
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={currentTab} onChange={handleTabChange}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mx: { xs: -1.5, sm: 0 } }}>
+          <Tabs
+            value={currentTab}
+            onChange={handleTabChange}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            sx={{
+              '& .MuiTab-root': {
+                fontSize: { xs: '0.75rem', sm: '0.875rem' },
+                minWidth: { xs: 'auto', sm: 90 },
+                px: { xs: 1.5, sm: 2 }
+              }
+            }}
+          >
             <Tab label="Bénéficiaire" />
             {profile?.user_type === 'admin' && <Tab label="Intervenant" />}
             <Tab label="Visio" />

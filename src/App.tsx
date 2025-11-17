@@ -68,6 +68,7 @@ import AdminAppointmentsPage from './pages/Admin/AppointmentsPage';
 // Import du nouveau composant
 import AdminContactMessagesPage from './pages/Admin/ContactMessagesPage';
 import AdminPractitionerRequestsPage from './pages/Admin/PractitionerRequestsPage';
+import AdminActivityLogsPage from './pages/Admin/ActivityLogsPage';
 
 // Composant pour les routes protégées
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -288,6 +289,7 @@ function App() {
             <Route path="prestations" element={<AdminServicesPage />} />
             <Route path="rendez-vous" element={<AdminAppointmentsPage />} />
             <Route path="messages" element={<AdminContactMessagesPage />} />
+            <Route path="journaux-activite" element={<AdminActivityLogsPage />} />
           </Route>
           
           {/* Route 404 */}

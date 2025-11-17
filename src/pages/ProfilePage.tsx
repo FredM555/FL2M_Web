@@ -188,7 +188,7 @@ const ProfilePage = () => {
                   {profile && <UserRoleBadge userType={profile.user_type} size="medium" />}
                 </Box>
               </Box>
-              {profile?.user_type === 'intervenant' && (
+              {(profile?.user_type === 'intervenant' || profile?.user_type === 'admin') && (
                 <Button
                   variant="contained"
                   startIcon={<WorkIcon />}

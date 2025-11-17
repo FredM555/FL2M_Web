@@ -189,13 +189,13 @@ const AdminPractitionerRequestsPage: React.FC = () => {
     }
 
     return (
-      <TableContainer>
-        <Table>
+      <TableContainer component={Paper} sx={{ width: '100%', overflowX: 'auto' }}>
+        <Table sx={{ minWidth: { xs: 650, sm: 750 } }}>
           <TableHead>
             <TableRow>
               <TableCell>Utilisateur</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell>Date de demande</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Email</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Date de demande</TableCell>
               <TableCell>Statut</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
@@ -206,8 +206,8 @@ const AdminPractitionerRequestsPage: React.FC = () => {
                 <TableCell>
                   {request.user?.first_name} {request.user?.last_name}
                 </TableCell>
-                <TableCell>{request.user?.email}</TableCell>
-                <TableCell>
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{request.user?.email}</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                   {format(new Date(request.created_at), 'dd MMMM yyyy', { locale: fr })}
                 </TableCell>
                 <TableCell>{getStatusChip(request.status)}</TableCell>

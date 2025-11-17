@@ -51,6 +51,9 @@ export type Practitioner = {
   title?: string;
   summary?: string;
   is_active: boolean;
+  // Domaines d'expertise et qualifications
+  expertise_domains?: string[];
+  qualifications?: string[];
 };
 
 export type Appointment = {
@@ -68,6 +71,9 @@ export type Appointment = {
   beneficiary_first_name?: string;
   beneficiary_last_name?: string;
   beneficiary_birth_date?: string;
+  beneficiary_email?: string;
+  beneficiary_phone?: string;
+  beneficiary_notifications_enabled?: boolean;
   // Lien de visioconférence
   meeting_link?: string;
   // Prix personnalisé (si NULL, utilise service.price)
@@ -116,7 +122,7 @@ export type PractitionerRequest = {
   reviewer?: Profile;
 };
 
-// Nouveau type pour les logs de connexion
+// Nouveau type pour les logs de connexion (legacy - à remplacer par ActivityLog)
 export type LoginLog = {
   id: string;
   user_id: string;
@@ -128,6 +134,30 @@ export type LoginLog = {
   region?: string;
   latitude?: number;
   longitude?: number;
+};
+
+// Type pour les logs d'activité (nouveau système complet)
+export type ActivityLog = {
+  id: string;
+  user_id: string;
+  action_type: 'login' | 'logout' | 'login_failed' |
+               'appointment_created' | 'appointment_updated' | 'appointment_cancelled' |
+               'appointment_confirmed' | 'appointment_completed' |
+               'profile_updated' | 'password_changed' |
+               'document_uploaded' | 'document_deleted' | string;
+  action_description?: string;
+  entity_type?: string; // 'appointment', 'profile', 'document', etc.
+  entity_id?: string;
+  ip_address?: string;
+  user_agent?: string;
+  metadata?: any; // Données JSON supplémentaires
+  created_at: string;
+  // Relations jointes
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  user_type?: 'admin' | 'intervenant' | 'client';
+  pseudo?: string;
 };
 
 // Nouveau type pour les documents de rendez-vous
@@ -186,13 +216,20 @@ export const getProfile = (userId: string) => {
       .select('*')
       .eq('id', userId)
       .single();
-    
+
     console.log('[GET_PROFILE] Requête envoyée:', result);
     return result;
   } catch (error) {
     console.error('[GET_PROFILE] Exception dans getProfile:', error);
     throw error;
   }
+};
+
+export const getProfiles = () => {
+  return supabase
+    .from('profiles')
+    .select('*')
+    .order('created_at', { ascending: false });
 };
 
 export const createProfile = (profileData: Partial<Profile>) => {
@@ -334,6 +371,8 @@ export const updateMyPractitionerProfile = async (
     display_name?: string;
     title?: string;
     summary?: string;
+    expertise_domains?: string[];
+    qualifications?: string[];
   }
 ) => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -346,7 +385,9 @@ export const updateMyPractitionerProfile = async (
     bio: updates.bio,
     display_name: updates.display_name,
     title: updates.title,
-    summary: updates.summary
+    summary: updates.summary,
+    expertise_domains: updates.expertise_domains,
+    qualifications: updates.qualifications
   };
 
   // Supprimer les champs undefined
@@ -355,14 +396,24 @@ export const updateMyPractitionerProfile = async (
     delete allowedFields[key as keyof typeof allowedFields]
   );
 
-  return supabase
+  // D'abord faire l'UPDATE sans la jointure pour éviter la récursion RLS
+  const { error: updateError } = await supabase
     .from('practitioners')
     .update(allowedFields)
-    .eq('user_id', user.id)
+    .eq('user_id', user.id);
+
+  if (updateError) {
+    return { data: null, error: updateError };
+  }
+
+  // Puis récupérer les données avec la jointure
+  return supabase
+    .from('practitioners')
     .select(`
       *,
       profile:profiles(*)
     `)
+    .eq('user_id', user.id)
     .single();
 };
 
@@ -424,30 +475,85 @@ export const getAppointmentById = (appointmentId: string) => {
     .single();
 };
 
-export const createAppointment = (appointmentData: Partial<Appointment>) => {
-  return supabase
+export const createAppointment = async (appointmentData: Partial<Appointment>) => {
+  const result = await supabase
     .from('appointments')
     .insert(appointmentData)
     .select()
     .single();
+
+  // Logger la création du rendez-vous si succès
+  if (!result.error && result.data && appointmentData.client_id) {
+    logActivity({
+      userId: appointmentData.client_id,
+      actionType: 'appointment_created',
+      actionDescription: `Rendez-vous créé pour le service ${appointmentData.service_id}`,
+      entityType: 'appointment',
+      entityId: result.data.id,
+      metadata: {
+        service_id: appointmentData.service_id,
+        start_time: appointmentData.start_time
+      }
+    }).catch(err => console.warn('Erreur log création RDV:', err));
+  }
+
+  return result;
 };
 
-export const updateAppointment = (appointmentId: string, appointmentData: Partial<Appointment>) => {
-  return supabase
+export const updateAppointment = async (appointmentId: string, appointmentData: Partial<Appointment>) => {
+  const result = await supabase
     .from('appointments')
     .update(appointmentData)
     .eq('id', appointmentId)
     .select()
     .single();
+
+  // Logger la mise à jour du rendez-vous si succès
+  if (!result.error && result.data) {
+    const userId = result.data.client_id || appointmentData.client_id;
+    if (userId) {
+      logActivity({
+        userId,
+        actionType: 'appointment_updated',
+        actionDescription: `Rendez-vous modifié`,
+        entityType: 'appointment',
+        entityId: appointmentId,
+        metadata: appointmentData
+      }).catch(err => console.warn('Erreur log modification RDV:', err));
+    }
+  }
+
+  return result;
 };
 
-export const updateAppointmentStatus = (appointmentId: string, status: string) => {
-  return supabase
+export const updateAppointmentStatus = async (appointmentId: string, status: string) => {
+  const result = await supabase
     .from('appointments')
     .update({ status })
     .eq('id', appointmentId)
     .select()
     .single();
+
+  // Logger le changement de statut si succès
+  if (!result.error && result.data && result.data.client_id) {
+    const actionTypes: { [key: string]: string } = {
+      'confirmed': 'appointment_confirmed',
+      'completed': 'appointment_completed',
+      'cancelled': 'appointment_cancelled'
+    };
+    const actionType = actionTypes[status] || 'appointment_updated';
+
+    logActivity({
+      userId: result.data.client_id,
+      actionType,
+      actionDescription: `Statut du rendez-vous changé à ${status}`,
+      entityType: 'appointment',
+      entityId: appointmentId,
+      metadata: { status }
+    }).catch(err => console.warn('Erreur log statut RDV:', err));
+  }
+
+  return result;
 };
 
 /**
@@ -961,6 +1067,159 @@ export const deletePractitionerRequest = async (requestId: string) => {
     .from('practitioner_requests')
     .delete()
     .eq('id', requestId);
+};
+
+// =====================================================
+// ACTIVITY LOGS - Système de traçabilité
+// =====================================================
+
+/**
+ * Enregistrer une activité dans les logs
+ */
+export const logActivity = async (params: {
+  userId: string;
+  actionType: string;
+  actionDescription?: string;
+  entityType?: string;
+  entityId?: string;
+  metadata?: any;
+}) => {
+  try {
+    const { data, error } = await supabase.rpc('log_activity', {
+      p_user_id: params.userId,
+      p_action_type: params.actionType,
+      p_action_description: params.actionDescription || null,
+      p_entity_type: params.entityType || null,
+      p_entity_id: params.entityId || null,
+      p_metadata: params.metadata ? JSON.stringify(params.metadata) : null
+    });
+
+    if (error) {
+      console.error('Erreur lors de l\'enregistrement du log:', error);
+    }
+
+    return { data, error };
+  } catch (err) {
+    console.error('Exception lors de l\'enregistrement du log:', err);
+    return { data: null, error: err };
+  }
+};
+
+/**
+ * Récupérer les logs d'activité avec filtres
+ */
+export const getActivityLogs = async (params?: {
+  userId?: string;
+  actionType?: string;
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+  offset?: number;
+}) => {
+  try {
+    let query = supabase
+      .from('activity_logs_with_user')
+      .select('*', { count: 'exact' });
+
+    // Filtres
+    if (params?.userId) {
+      query = query.eq('user_id', params.userId);
+    }
+
+    if (params?.actionType) {
+      query = query.eq('action_type', params.actionType);
+    }
+
+    if (params?.startDate) {
+      query = query.gte('created_at', params.startDate);
+    }
+
+    if (params?.endDate) {
+      query = query.lte('created_at', params.endDate);
+    }
+
+    // Ordre et pagination
+    query = query.order('created_at', { ascending: false });
+
+    if (params?.limit) {
+      query = query.limit(params.limit);
+    }
+
+    if (params?.offset) {
+      query = query.range(params.offset, params.offset + (params.limit || 50) - 1);
+    }
+
+    const { data, error, count } = await query;
+
+    return { data: data as ActivityLog[] || [], error, count };
+  } catch (err) {
+    console.error('Erreur lors de la récupération des logs:', err);
+    return { data: [], error: err, count: 0 };
+  }
+};
+
+/**
+ * Récupérer les statistiques des logs
+ */
+export const getActivityStats = async (params?: {
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
+}) => {
+  try {
+    let query = supabase
+      .from('activity_logs')
+      .select('action_type');
+
+    if (params?.userId) {
+      query = query.eq('user_id', params.userId);
+    }
+
+    if (params?.startDate) {
+      query = query.gte('created_at', params.startDate);
+    }
+
+    if (params?.endDate) {
+      query = query.lte('created_at', params.endDate);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    // Compter par type d'action
+    const stats = data.reduce((acc: any, log: any) => {
+      acc[log.action_type] = (acc[log.action_type] || 0) + 1;
+      return acc;
+    }, {});
+
+    return { data: stats, error: null };
+  } catch (err) {
+    console.error('Erreur lors de la récupération des stats:', err);
+    return { data: null, error: err };
+  }
+};
+
+/**
+ * Récupérer les types d'actions uniques
+ */
+export const getActionTypes = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('activity_logs')
+      .select('action_type')
+      .order('action_type');
+
+    if (error) throw error;
+
+    // Extraire les types uniques
+    const uniqueTypes = [...new Set(data.map((log: any) => log.action_type))];
+
+    return { data: uniqueTypes, error: null };
+  } catch (err) {
+    console.error('Erreur lors de la récupération des types d\'action:', err);
+    return { data: [], error: err };
+  }
 };
 
 

@@ -5,6 +5,7 @@ import {
   TableCell,
   TableHead,
   TableRow,
+  TableContainer,
   Paper,
   Card,
   CardContent,
@@ -118,16 +119,16 @@ const AdminUsersPage: React.FC = () => {
           title="Gestion des Utilisateurs"
         />
         <CardContent>
-          <Paper sx={{ width: '100%', overflow: 'hidden' }}>
-            <Table>
+          <TableContainer component={Paper} sx={{ width: '100%', overflowX: 'auto' }}>
+            <Table sx={{ minWidth: { xs: 650, sm: 750 } }}>
               <TableHead>
                 <TableRow>
                   <TableCell>Email</TableCell>
                   <TableCell>Prénom</TableCell>
                   <TableCell>Nom</TableCell>
-                  <TableCell>Téléphone</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Téléphone</TableCell>
                   <TableCell>Type</TableCell>
-                  <TableCell>Date Naissance</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Date Naissance</TableCell>
                   <TableCell align="right">Actions</TableCell>
                 </TableRow>
               </TableHead>
@@ -137,23 +138,27 @@ const AdminUsersPage: React.FC = () => {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.first_name}</TableCell>
                     <TableCell>{user.last_name}</TableCell>
-                    <TableCell>{user.phone || 'N/A'}</TableCell>
+                    <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
+                      {user.phone || 'N/A'}
+                    </TableCell>
                     <TableCell>
-                      {user.user_type === 'admin' ? 'Administrateur' : 
+                      {user.user_type === 'admin' ? 'Administrateur' :
                       user.user_type === 'intervenant' ? 'Intervenant' : 'Client'}
                     </TableCell>
-                    <TableCell>{user.birth_date}</TableCell>
+                    <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
+                      {user.birth_date}
+                    </TableCell>
                     <TableCell align="right">
                       <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                        <IconButton 
-                          color="primary" 
+                        <IconButton
+                          color="primary"
                           size="small"
                           onClick={() => handleEditUser(user)}
                         >
                           <EditIcon fontSize="small" />
                         </IconButton>
-                        <IconButton 
-                          color="error" 
+                        <IconButton
+                          color="error"
                           size="small"
                           onClick={() => handleDeleteUser(user.id)}
                         >
@@ -165,7 +170,7 @@ const AdminUsersPage: React.FC = () => {
                 ))}
               </TableBody>
             </Table>
-          </Paper>
+          </TableContainer>
         </CardContent>
       </Card>
 

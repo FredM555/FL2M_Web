@@ -390,18 +390,18 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
   return (
     <>
       <Paper sx={{ width: '100%', overflow: 'auto' }}>
-        <Table>
+        <Table sx={{ minWidth: { xs: 650, sm: 750 } }}>
           <TableHead>
             <TableRow>
               <TableCell>Date</TableCell>
               <TableCell>Heure</TableCell>
-              <TableCell>Durée</TableCell>
-              <TableCell>Catégorie</TableCell>
-              <TableCell>Service</TableCell>
-              <TableCell>Intervenant</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Durée</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Catégorie</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Service</TableCell>
+              <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Intervenant</TableCell>
               <TableCell>Client</TableCell>
               <TableCell>Statut</TableCell>
-              <TableCell>Paiement</TableCell>
+              <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Paiement</TableCell>
               <TableCell align="right">Actions</TableCell>
             </TableRow>
           </TableHead>
@@ -421,14 +421,14 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                   <TableCell>
                     {format(parseISO(appointment.start_time), 'HH:mm', { locale: fr })}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     {appointment.service?.duration} min
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     {appointment.service?.category && getStatusChip(appointment.service.category)}
                   </TableCell>
-                  <TableCell>{appointment.service?.name}</TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>{appointment.service?.name}</TableCell>
+                  <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     {appointment.practitioner?.profile?.first_name} {appointment.practitioner?.profile?.last_name}
                   </TableCell>
                   <TableCell>
@@ -441,7 +441,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                   <TableCell>
                     {getStatusChip(appointment.status)}
                   </TableCell>
-                  <TableCell>
+                  <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
                     {getPaymentStatusChip(appointment.payment_status)}
                   </TableCell>
                   <TableCell align="right">

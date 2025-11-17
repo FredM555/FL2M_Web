@@ -43,6 +43,8 @@ interface Consultant {
   title?: string;
   summary?: string;
   is_active: boolean;
+  expertise_domains?: string[];
+  qualifications?: string[];
   profile?: {
     first_name: string;
     last_name: string;
@@ -59,15 +61,6 @@ const ConsultantDetailPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
-
-  // Liste fictive de spécialités (à remplacer par des données réelles)
-  const specialties = [
-    "Accompagnement personnel",
-    "Développement professionnel",
-    "Gestion du stress",
-    "Communication efficace",
-    "Confiance en soi"
-  ];
 
   // Charger tous les intervenants
   useEffect(() => {
@@ -97,6 +90,8 @@ const ConsultantDetailPage: React.FC = () => {
           title,
           summary,
           is_active,
+          expertise_domains,
+          qualifications,
           profile:profiles!user_id(first_name, last_name, email, phone)
         `)
         .eq('is_active', true)
@@ -509,16 +504,42 @@ const ConsultantDetailPage: React.FC = () => {
                   Domaines d'expertise
                 </Typography>
                 <Divider sx={{ mb: 2, borderColor: 'rgba(255, 215, 0, 0.2)' }} />
-                <List dense disablePadding>
-                  {specialties.map((specialty, index) => (
-                    <ListItem key={index} disableGutters sx={{ pb: 1 }}>
-                      <ListItemIcon sx={{ minWidth: 32 }}>
-                        <CheckCircleIcon fontSize="small" sx={{ color: '#FFA500' }} />
-                      </ListItemIcon>
-                      <ListItemText primary={specialty} />
-                    </ListItem>
-                  ))}
-                </List>
+                {consultant?.expertise_domains && consultant.expertise_domains.length > 0 ? (
+                  <List dense disablePadding>
+                    {consultant.expertise_domains.map((domain, index) => (
+                      <ListItem key={index} disableGutters sx={{ pb: 1 }}>
+                        <ListItemIcon sx={{ minWidth: 32 }}>
+                          <CheckCircleIcon fontSize="small" sx={{ color: '#FFA500' }} />
+                        </ListItemIcon>
+                        <ListItemText primary={domain} />
+                      </ListItem>
+                    ))}
+                  </List>
+                ) : (
+                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                    Aucun domaine d'expertise renseigné
+                  </Typography>
+                )}
+
+                {/* Formations et diplômes */}
+                {consultant?.qualifications && consultant.qualifications.length > 0 && (
+                  <>
+                    <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, color: '#1a1a2e', mt: 3 }}>
+                      Formations / Diplômes
+                    </Typography>
+                    <Divider sx={{ mb: 2, borderColor: 'rgba(255, 215, 0, 0.2)' }} />
+                    <List dense disablePadding>
+                      {consultant.qualifications.map((qualification, index) => (
+                        <ListItem key={index} disableGutters sx={{ pb: 1 }}>
+                          <ListItemIcon sx={{ minWidth: 32 }}>
+                            <CheckCircleIcon fontSize="small" sx={{ color: '#FFA500' }} />
+                          </ListItemIcon>
+                          <ListItemText primary={qualification} />
+                        </ListItem>
+                      ))}
+                    </List>
+                  </>
+                )}
               </CardContent>
             </Card>
           </Grid>
@@ -544,8 +565,17 @@ const ConsultantDetailPage: React.FC = () => {
                 },
               }}
             >
-              <CardContent sx={{ p: 4 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <CardContent sx={{ p: { xs: 2, sm: 3, md: 4 } }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    justifyContent: 'space-between',
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    mb: 2,
+                    gap: { xs: 1, sm: 0 }
+                  }}
+                >
                   <Typography variant="h5" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
                     À propos
                   </Typography>
@@ -646,7 +676,7 @@ const ConsultantDetailPage: React.FC = () => {
                             Suivi régulier
                           </Typography>
                           <Typography variant="body2" sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-                            Programme d'accompagnement sur plusieurs séances pour des résultats durables.
+                            Programme d'accompagnement avec séance de suivi annuelle pour des résultats plus durables.
                           </Typography>
                         </CardContent>
                       </Card>
