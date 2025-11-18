@@ -122,11 +122,14 @@ export type PractitionerRequest = {
   reviewer?: Profile;
 };
 
-// Nouveau type pour les logs de connexion (legacy - à remplacer par ActivityLog)
+// Type pour les logs de connexion (vue depuis activity_logs)
 export type LoginLog = {
   id: string;
   user_id: string;
-  login_time: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  user_type: 'admin' | 'intervenant' | 'client';
   ip_address?: string;
   user_agent?: string;
   country?: string;
@@ -134,6 +137,7 @@ export type LoginLog = {
   region?: string;
   latitude?: number;
   longitude?: number;
+  login_time: string;
 };
 
 // Type pour les logs d'activité (nouveau système complet)
@@ -694,9 +698,198 @@ export const uploadAppointmentDocument = async (
       .select()
       .single();
 
+    // 3. Envoyer un email au client si le document est visible pour lui
+    if (data && visibleToClient) {
+      sendDocumentNotificationEmail(appointmentId, file.name, fileType, description).catch(err =>
+        console.error('Erreur lors de l\'envoi de l\'email de notification de document:', err)
+      );
+    }
+
     return { data, error };
   } catch (error) {
     return { error };
+  }
+};
+
+/**
+ * Envoie un email de notification au client lorsqu'un nouveau document est disponible
+ * @param appointmentId ID du rendez-vous
+ * @param fileName Nom du fichier
+ * @param fileType Type de fichier
+ * @param description Description du document
+ */
+const sendDocumentNotificationEmail = async (
+  appointmentId: string,
+  fileName: string,
+  fileType: string,
+  description?: string
+) => {
+  try {
+    // Récupérer les informations du rendez-vous avec le client
+    const { data: appointment, error: appointmentError } = await supabase
+      .from('appointments')
+      .select(`
+        *,
+        practitioner:practitioners!practitioner_id(
+          *,
+          profile:profiles(*)
+        ),
+        service:services(*),
+        client:profiles!client_id(*)
+      `)
+      .eq('id', appointmentId)
+      .single();
+
+    if (appointmentError || !appointment) {
+      console.error('Impossible de récupérer les informations du rendez-vous');
+      return;
+    }
+
+    const getFileTypeLabel = (type: string) => {
+      if (type === 'pdf') return 'Document PDF';
+      if (type === 'mp3' || type === 'mp4') return 'Fichier audio';
+      return 'Document';
+    };
+
+    // Fonction pour obtenir le nom d'affichage de l'intervenant
+    const getPractitionerDisplayName = () => {
+      if (!appointment.practitioner) return 'Non spécifié';
+
+      // Priorité : display_name > pseudo > prénom nom
+      if (appointment.practitioner.display_name) {
+        return appointment.practitioner.display_name;
+      }
+
+      if (appointment.practitioner.profile?.pseudo) {
+        return appointment.practitioner.profile.pseudo;
+      }
+
+      if (appointment.practitioner.profile?.first_name) {
+        return `${appointment.practitioner.profile.first_name} ${appointment.practitioner.profile.last_name || ''}`.trim();
+      }
+
+      return 'Non spécifié';
+    };
+
+    const emailHtml = (recipientFirstName: string, recipientLastName: string) => `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #345995 0%, #1D3461 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .document-box { background: white; padding: 20px; border-left: 4px solid #FFD700; margin: 20px 0; border-radius: 4px; }
+          .info-row { margin: 12px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+          .label { font-weight: bold; color: #345995; display: inline-block; min-width: 120px; }
+          .highlight { background: linear-gradient(45deg, #FFD700, #FFA500); color: #1a1a2e; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }
+          .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #FFD700; }
+          .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #1a1a2e; text-decoration: none; border-radius: 25px; font-weight: bold; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2 style="margin: 0; color: white;">📄 Nouveau document disponible</h2>
+          </div>
+          <div class="content">
+            <p>Bonjour ${recipientFirstName} ${recipientLastName},</p>
+
+            <p>Un nouveau document est disponible pour votre rendez-vous !</p>
+
+            <div class="document-box">
+              <h3 style="margin-top: 0; color: #345995;">Détails du document</h3>
+
+              <div class="info-row">
+                <span class="label">Type :</span>
+                <span>${getFileTypeLabel(fileType)}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="label">Nom du fichier :</span>
+                <span>${fileName}</span>
+              </div>
+
+              ${description ? `
+              <div class="info-row">
+                <span class="label">Description :</span>
+                <span>${description}</span>
+              </div>
+              ` : ''}
+
+              ${appointment.service?.name ? `
+              <div class="info-row">
+                <span class="label">Service :</span>
+                <span>${appointment.service.name}</span>
+              </div>
+              ` : ''}
+
+              ${appointment.practitioner ? `
+              <div class="info-row">
+                <span class="label">Intervenant :</span>
+                <span>${getPractitionerDisplayName()}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            <div class="highlight">
+              Connectez-vous à votre espace client pour consulter ce document
+            </div>
+
+            <p style="text-align: center;">
+              <a href="${window.location.origin}/mes-rendez-vous" class="btn">Accéder à mes rendez-vous</a>
+            </p>
+
+            <div class="footer">
+              <p style="margin: 0; color: #345995; font-weight: bold;">FL²M Services</p>
+              <p style="margin: 5px 0; color: #666;">123 Avenue des Essences, 75001 Paris</p>
+              <p style="margin: 5px 0; color: #666;">contact@fl2m.fr | +33 (0)1 23 45 67 89</p>
+            </div>
+
+            <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
+              Ceci est un message automatique, merci de ne pas y répondre directement.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Envoyer l'email au client
+    if (appointment.client?.email) {
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: appointment.client.email,
+          subject: `Nouveau document disponible - ${appointment.service?.name || 'FL²M Services'}`,
+          html: emailHtml(appointment.client.first_name, appointment.client.last_name),
+          appointmentId: appointment.id,
+          emailType: 'document'
+        }
+      });
+    }
+
+    // Envoyer l'email au bénéficiaire si différent du client et si notifications activées
+    if (appointment.beneficiary_email &&
+        appointment.beneficiary_email !== appointment.client?.email &&
+        appointment.beneficiary_notifications_enabled &&
+        appointment.beneficiary_first_name &&
+        appointment.beneficiary_last_name) {
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: appointment.beneficiary_email,
+          subject: `Nouveau document disponible - ${appointment.service?.name || 'FL²M Services'}`,
+          html: emailHtml(appointment.beneficiary_first_name, appointment.beneficiary_last_name),
+          appointmentId: appointment.id,
+          emailType: 'document'
+        }
+      });
+    }
+
+    console.log('Email de notification de document envoyé avec succès');
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de l\'email de notification de document:', error);
+    throw error;
   }
 };
 
@@ -804,6 +997,201 @@ export const deleteAppointmentDocument = (documentId: string): Promise<any> => {
     }) as any;
 };
 
+/**
+ * Envoie un email de notification au client lorsqu'un nouveau commentaire public est ajouté
+ * @param appointmentId ID du rendez-vous
+ * @param commentContent Contenu du commentaire
+ * @param author Profil de l'auteur du commentaire
+ */
+const sendCommentNotificationEmail = async (
+  appointmentId: string,
+  commentContent: string,
+  author: Profile
+) => {
+  try {
+    // Récupérer les informations du rendez-vous avec le client
+    const { data: appointment, error: appointmentError } = await supabase
+      .from('appointments')
+      .select(`
+        *,
+        practitioner:practitioners!practitioner_id(
+          *,
+          profile:profiles(*)
+        ),
+        service:services(*),
+        client:profiles!client_id(*)
+      `)
+      .eq('id', appointmentId)
+      .single();
+
+    if (appointmentError || !appointment) {
+      console.error('Impossible de récupérer les informations du rendez-vous');
+      return;
+    }
+
+    const formatDate = (dateString: string) => {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('fr-FR', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    };
+
+    // Fonction pour obtenir le nom d'affichage de l'intervenant
+    const getPractitionerDisplayName = () => {
+      if (!appointment.practitioner) return 'Non spécifié';
+
+      // Priorité : display_name > pseudo > prénom nom
+      if (appointment.practitioner.display_name) {
+        return appointment.practitioner.display_name;
+      }
+
+      if (appointment.practitioner.profile?.pseudo) {
+        return appointment.practitioner.profile.pseudo;
+      }
+
+      if (appointment.practitioner.profile?.first_name) {
+        return `${appointment.practitioner.profile.first_name} ${appointment.practitioner.profile.last_name || ''}`.trim();
+      }
+
+      return 'Non spécifié';
+    };
+
+    // Fonction pour obtenir le nom d'affichage de l'auteur du commentaire
+    const getAuthorDisplayName = () => {
+      // Priorité : pseudo > prénom nom
+      if (author.pseudo) {
+        return author.pseudo;
+      }
+
+      if (author.first_name) {
+        return `${author.first_name} ${author.last_name || ''}`.trim();
+      }
+
+      return 'Anonyme';
+    };
+
+    const emailHtml = (recipientFirstName: string, recipientLastName: string) => `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #345995 0%, #1D3461 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .comment-box { background: white; padding: 20px; border-left: 4px solid #FFD700; margin: 20px 0; border-radius: 4px; }
+          .info-row { margin: 12px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+          .label { font-weight: bold; color: #345995; display: inline-block; min-width: 120px; }
+          .highlight { background: linear-gradient(45deg, #FFD700, #FFA500); color: #1a1a2e; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }
+          .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #FFD700; }
+          .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #1a1a2e; text-decoration: none; border-radius: 25px; font-weight: bold; margin-top: 20px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2 style="margin: 0; color: white;">💬 Nouveau commentaire sur votre rendez-vous</h2>
+          </div>
+          <div class="content">
+            <p>Bonjour ${recipientFirstName} ${recipientLastName},</p>
+
+            <p>Un nouveau commentaire a été ajouté à votre rendez-vous.</p>
+
+            <div class="comment-box">
+              <h3 style="margin-top: 0; color: #345995;">Commentaire de ${getAuthorDisplayName()}</h3>
+              <p style="margin-top: 15px; line-height: 1.8;">${commentContent.replace(/\n/g, '<br>')}</p>
+            </div>
+
+            <div style="background: white; padding: 15px; border-radius: 4px; margin: 20px 0;">
+              <h4 style="margin-top: 0; color: #345995;">Détails du rendez-vous</h4>
+
+              ${appointment.service?.name ? `
+              <div class="info-row">
+                <span class="label">Service :</span>
+                <span>${appointment.service.name}</span>
+              </div>
+              ` : ''}
+
+              ${appointment.start_time ? `
+              <div class="info-row">
+                <span class="label">Date et heure :</span>
+                <span>${formatDate(appointment.start_time)}</span>
+              </div>
+              ` : ''}
+
+              ${appointment.practitioner ? `
+              <div class="info-row">
+                <span class="label">Intervenant :</span>
+                <span>${getPractitionerDisplayName()}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            <div class="highlight">
+              Connectez-vous à votre espace client pour voir tous les commentaires
+            </div>
+
+            <p style="text-align: center;">
+              <a href="${window.location.origin}/mes-rendez-vous" class="btn">Accéder à mes rendez-vous</a>
+            </p>
+
+            <div class="footer">
+              <p style="margin: 0; color: #345995; font-weight: bold;">FL²M Services</p>
+              <p style="margin: 5px 0; color: #666;">123 Avenue des Essences, 75001 Paris</p>
+              <p style="margin: 5px 0; color: #666;">contact@fl2m.fr | +33 (0)1 23 45 67 89</p>
+            </div>
+
+            <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
+              Ceci est un message automatique, merci de ne pas y répondre directement.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Envoyer l'email au client
+    if (appointment.client?.email) {
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: appointment.client.email,
+          subject: `Nouveau commentaire sur votre rendez-vous - ${appointment.service?.name || 'FL²M Services'}`,
+          html: emailHtml(appointment.client.first_name, appointment.client.last_name),
+          appointmentId: appointment.id,
+          emailType: 'comment'
+        }
+      });
+    }
+
+    // Envoyer l'email au bénéficiaire si différent du client et si notifications activées
+    if (appointment.beneficiary_email &&
+        appointment.beneficiary_email !== appointment.client?.email &&
+        appointment.beneficiary_notifications_enabled &&
+        appointment.beneficiary_first_name &&
+        appointment.beneficiary_last_name) {
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: appointment.beneficiary_email,
+          subject: `Nouveau commentaire sur votre rendez-vous - ${appointment.service?.name || 'FL²M Services'}`,
+          html: emailHtml(appointment.beneficiary_first_name, appointment.beneficiary_last_name),
+          appointmentId: appointment.id,
+          emailType: 'comment'
+        }
+      });
+    }
+
+    console.log('Email de notification de commentaire envoyé avec succès');
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi de l\'email de notification de commentaire:', error);
+    throw error;
+  }
+};
+
 // Commentaires de rendez-vous
 export const getAppointmentComments = (appointmentId: string) => {
   return supabase
@@ -838,6 +1226,13 @@ export const createAppointmentComment = async (
       .select('*, author:profiles!author_id(*)')
       .single();
 
+    // Envoyer un email au client si le commentaire est public
+    if (data && !isPrivate) {
+      sendCommentNotificationEmail(appointmentId, content, data.author).catch(err =>
+        console.error('Erreur lors de l\'envoi de l\'email de notification de commentaire:', err)
+      );
+    }
+
     return { data, error };
   } catch (error) {
     return { error };
@@ -869,20 +1264,34 @@ export const deleteAppointmentComment = (commentId: string) => {
     .eq('id', commentId);
 };
 
-// Logs de connexion utilisateur
+// =====================================================
+// LOGS DE CONNEXION - Utilise activity_logs centralisé
+// =====================================================
+
+/**
+ * Récupérer les logs de connexion d'un utilisateur
+ * @param userId ID de l'utilisateur
+ * @returns Logs de connexion depuis activity_logs
+ */
 export const getLoginLogs = (userId: string) => {
   return supabase
-    .from('login_logs')
+    .from('login_logs_view')
     .select('*')
     .eq('user_id', userId)
     .order('login_time', { ascending: false });
 };
 
-// Fonction pour enregistrer manuellement une connexion (utile si la fonction RPC ne fonctionne pas)
-export const logUserLogin = (
-  userId: string, 
-  ipAddress?: string, 
-  userAgent?: string, 
+/**
+ * Enregistrer une connexion utilisateur dans activity_logs
+ * @param userId ID de l'utilisateur
+ * @param ipAddress Adresse IP
+ * @param userAgent User agent du navigateur
+ * @param geoData Données de géolocalisation
+ */
+export const logUserLogin = async (
+  userId: string,
+  ipAddress?: string,
+  userAgent?: string,
   geoData?: {
     country?: string;
     city?: string;
@@ -891,18 +1300,28 @@ export const logUserLogin = (
     longitude?: number;
   }
 ) => {
-  const logData: Partial<LoginLog> = {
-    user_id: userId,
-    ip_address: ipAddress,
-    user_agent: userAgent,
-    ...geoData
-  };
-  
-  return supabase
-    .from('login_logs')
-    .insert(logData)
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase.rpc('log_user_login', {
+      p_user_id: userId,
+      p_ip_address: ipAddress || null,
+      p_user_agent: userAgent || null,
+      p_country: geoData?.country || null,
+      p_city: geoData?.city || null,
+      p_region: geoData?.region || null,
+      p_latitude: geoData?.latitude || null,
+      p_longitude: geoData?.longitude || null
+    });
+
+    if (error) {
+      console.error('Erreur lors du log de connexion:', error);
+      return { data: null, error };
+    }
+
+    return { data, error: null };
+  } catch (err) {
+    console.error('Exception lors du log de connexion:', err);
+    return { data: null, error: err };
+  }
 };
 
 // ========================================
