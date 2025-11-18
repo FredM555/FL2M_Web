@@ -114,7 +114,7 @@ const sendReminderEmail = async (appointment: any) => {
               </div>
               ` : ''}
 
-              ${appointment.meeting_link ? `
+              ${appointment.meeting_link && appointment.status !== 'completed' ? `
               <div class="info-row">
                 <span class="label">Lien visio :</span>
                 <span><a href="${appointment.meeting_link}" style="color: #345995;">${appointment.meeting_link}</a></span>

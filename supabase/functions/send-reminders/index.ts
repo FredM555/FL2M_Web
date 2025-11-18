@@ -140,7 +140,7 @@ serve(async (req) => {
                   <div class="info-row"><span class="label">Date :</span><span>${formatDate(startDate)}</span></div>
                   <div class="info-row"><span class="label">Heure :</span><span>${formatTime(startDate)} - ${formatTime(new Date(fullAppointment.end_time))}</span></div>
                   ${fullAppointment.practitioner ? `<div class="info-row"><span class="label">Intervenant :</span><span>${getPractitionerDisplayName()}</span></div>` : ''}
-                  ${fullAppointment.meeting_link ? `<div class="info-row"><span class="label">Lien visio :</span><span><a href="${fullAppointment.meeting_link}" style="color: #345995;">${fullAppointment.meeting_link}</a></span></div>` : ''}
+                  ${fullAppointment.meeting_link && fullAppointment.status !== 'completed' ? `<div class="info-row"><span class="label">Lien visio :</span><span><a href="${fullAppointment.meeting_link}" style="color: #345995;">${fullAppointment.meeting_link}</a></span></div>` : ''}
                 </div>
                 <p style="background: #fff3cd; padding: 15px; border-left: 4px solid #FFA500; border-radius: 4px;"><strong>⚠️ Rappel important :</strong><br>Merci de vous présenter 5 minutes avant l'heure du rendez-vous.</p>
                 <div class="footer">

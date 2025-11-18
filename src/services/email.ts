@@ -169,7 +169,7 @@ export const sendAppointmentConfirmation = async (
         : '<p><strong>Prix :</strong> Sur devis</p>'}
     </div>
 
-    ${appointment.meeting_link
+    ${appointment.meeting_link && appointment.status !== 'completed'
       ? `<p style="text-align: center;">
           <a href="${appointment.meeting_link}" class="button">Rejoindre la séance</a>
         </p>`
@@ -206,7 +206,7 @@ export const sendAppointmentReminder = async (
       <p><strong>Intervenant :</strong> ${appointment.practitioner?.profile?.pseudo || '-'}</p>
     </div>
 
-    ${appointment.meeting_link
+    ${appointment.meeting_link && appointment.status !== 'completed'
       ? `<p style="text-align: center;">
           <a href="${appointment.meeting_link}" class="button">Rejoindre la séance</a>
         </p>`
