@@ -254,7 +254,11 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
                   setSelectedPractitioner(newValue);
                 }}
                 options={practitioners}
-                getOptionLabel={(option) => option.profile?.pseudo || ''}
+                getOptionLabel={(option) => {
+                  const pseudo = option.profile?.pseudo || '';
+                  const title = option.title || '';
+                  return title ? `${pseudo} - ${title}` : pseudo;
+                }}
                 loading={loadingPractitioners}
                 disabled={loading}
                 renderInput={(params) => (
@@ -282,12 +286,8 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
                     <Box>
                       <Typography variant="body2" sx={{ fontWeight: 500 }}>
                         {option.profile?.pseudo || '-'}
+                        {option.title && ` - ${option.title}`}
                       </Typography>
-                      {option.title && (
-                        <Typography variant="caption" color="text.secondary">
-                          {option.title}
-                        </Typography>
-                      )}
                     </Box>
                   </Box>
                 )}
@@ -300,12 +300,8 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
                 <Box>
                   <Typography variant="body1" sx={{ fontWeight: 500 }}>
                     {appointment.practitioner?.profile?.pseudo || '-'}
+                    {appointment.practitioner?.title && ` - ${appointment.practitioner.title}`}
                   </Typography>
-                  {appointment.practitioner?.title && (
-                    <Typography variant="caption" color="text.secondary">
-                      {appointment.practitioner.title}
-                    </Typography>
-                  )}
                 </Box>
               </Box>
             )}

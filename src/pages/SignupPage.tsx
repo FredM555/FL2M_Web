@@ -1,27 +1,30 @@
 // src/pages/SignupPage.tsx
 import React, { useState } from 'react';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  TextField, 
-  Button, 
-  Paper, 
-  Divider, 
-  Grid, 
-  Link, 
-  Alert, 
+import {
+  Container,
+  Typography,
+  Box,
+  TextField,
+  Button,
+  Paper,
+  Divider,
+  Grid,
+  Link,
+  Alert,
   CircularProgress,
   FormControlLabel,
   Checkbox,
   IconButton,
-  Tooltip
+  Tooltip,
+  InputAdornment
 } from '@mui/material';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import GoogleIcon from '@mui/icons-material/Google';
 import AppleIcon from '@mui/icons-material/Apple';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 interface LocationState {
   from?: string;
@@ -50,6 +53,16 @@ const SignupPage: React.FC = () => {
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  const handleToggleConfirmPasswordVisibility = () => {
+    setShowConfirmPassword(!showConfirmPassword);
+  };
   
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -187,12 +200,26 @@ const SignupPage: React.FC = () => {
                 fullWidth
                 name="password"
                 label="Mot de passe"
-                type="password"
+                type={showPassword ? 'text' : 'password'}
                 id="password"
                 autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 disabled={loading}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={handleTogglePasswordVisibility}
+                        edge="end"
+                        disabled={loading}
+                      >
+                        {showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
             <Grid item xs={12}>
@@ -201,11 +228,25 @@ const SignupPage: React.FC = () => {
                 fullWidth
                 name="confirmPassword"
                 label="Confirmer le mot de passe"
-                type="password"
+                type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={loading}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle confirm password visibility"
+                        onClick={handleToggleConfirmPasswordVisibility}
+                        edge="end"
+                        disabled={loading}
+                      >
+                        {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </Grid>
           </Grid>

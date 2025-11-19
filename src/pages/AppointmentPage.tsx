@@ -236,7 +236,7 @@ const AppointmentPage = () => {
                           <strong>Durée:</strong> {service.duration} minutes
                         </Typography>
                         <Typography variant="body2" color="text.primary">
-                          <strong>Prix:</strong> {service.price} €
+                          <strong>Prix:à partir de </strong> {service.price} €
                         </Typography>
                         <Typography variant="body2" color="text.primary">
                           <strong>Code:</strong> {service.code}
@@ -405,7 +405,7 @@ const AppointmentPage = () => {
                   <Typography variant="subtitle2">Durée:</Typography>
                   <Typography variant="body1" gutterBottom>{selectedService?.duration} minutes</Typography>
                   
-                  <Typography variant="subtitle2">Prix:</Typography>
+                  <Typography variant="subtitle2">Prix:à partir de </Typography>
                   <Typography variant="h6" color="primary" gutterBottom>{selectedService?.price} €</Typography>
                 </Grid>
               </Grid>

@@ -567,11 +567,18 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                   required
                   disabled={isPractitionerView}
                 >
-                  {practitioners.map((practitioner) => (
-                    <MenuItem key={practitioner.id} value={practitioner.id}>
-                      {practitioner.profile?.first_name} {practitioner.profile?.last_name}
-                    </MenuItem>
-                  ))}
+                  {practitioners.map((practitioner) => {
+                    const name = practitioner.display_name ||
+                      `${practitioner.profile?.first_name || ''} ${practitioner.profile?.last_name || ''}`.trim();
+                    const title = practitioner.title;
+                    const displayText = title ? `${name} - ${title}` : name;
+
+                    return (
+                      <MenuItem key={practitioner.id} value={practitioner.id}>
+                        {displayText}
+                      </MenuItem>
+                    );
+                  })}
                 </Select>
               </FormControl>
             </Grid>

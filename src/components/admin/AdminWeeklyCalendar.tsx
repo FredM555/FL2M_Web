@@ -1085,13 +1085,19 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                       required
                       disabled={isPractitionerView}
                     >
-                      {practitioners.map((practitioner) => (
-                        <MenuItem key={practitioner.id} value={practitioner.id}>
-                          {practitioner.display_name ||
-                           (practitioner.profile &&
-                            `${practitioner.profile.first_name} ${practitioner.profile.last_name}`)}
-                        </MenuItem>
-                      ))}
+                      {practitioners.map((practitioner) => {
+                        const name = practitioner.display_name ||
+                          (practitioner.profile &&
+                           `${practitioner.profile.first_name} ${practitioner.profile.last_name}`) || '';
+                        const title = practitioner.title;
+                        const displayText = title ? `${name} - ${title}` : name;
+
+                        return (
+                          <MenuItem key={practitioner.id} value={practitioner.id}>
+                            {displayText}
+                          </MenuItem>
+                        );
+                      })}
                     </Select>
                   </FormControl>
                   {isPractitionerView && (

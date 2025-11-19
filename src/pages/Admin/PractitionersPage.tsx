@@ -316,6 +316,7 @@ const AdminPractitionersPage: React.FC = () => {
                       <Box>
                         <Typography variant="subtitle2">
                           {practitioner.display_name || `${practitioner.profile?.first_name || ''} ${practitioner.profile?.last_name || ''}`}
+                          {practitioner.title && ` - ${practitioner.title}`}
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
                           {practitioner.profile?.email}

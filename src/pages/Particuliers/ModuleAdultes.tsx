@@ -367,7 +367,7 @@ const ModuleAdultes: React.FC = () => {
             sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}
           >
             Durée: {service.duration} minutes
-            {service.price !== 9999 && ` | Prix: ${service.price} €`}
+            {service.price !== 9999 && ` | Prix:à partir de ${service.price} €`}
           </Typography>
         )}
 

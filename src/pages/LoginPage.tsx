@@ -1,22 +1,26 @@
 // src/pages/LoginPage.tsx
 import React, { useState } from 'react';
-import { 
-  Container, 
-  Typography, 
-  Box, 
-  TextField, 
-  Button, 
-  Paper, 
-  Divider, 
-  Grid, 
-  Link, 
-  Alert, 
-  CircularProgress 
+import {
+  Container,
+  Typography,
+  Box,
+  TextField,
+  Button,
+  Paper,
+  Divider,
+  Grid,
+  Link,
+  Alert,
+  CircularProgress,
+  IconButton,
+  InputAdornment
 } from '@mui/material';
 import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import GoogleIcon from '@mui/icons-material/Google';
 import AppleIcon from '@mui/icons-material/Apple';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
 
 interface LocationState {
   from?: string;
@@ -35,6 +39,11 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
   
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -129,12 +138,26 @@ const LoginPage: React.FC = () => {
             fullWidth
             name="password"
             label="Mot de passe"
-            type="password"
+            type={showPassword ? 'text' : 'password'}
             id="password"
             autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             disabled={loading}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    aria-label="toggle password visibility"
+                    onClick={handleTogglePasswordVisibility}
+                    edge="end"
+                    disabled={loading}
+                  >
+                    {showPassword ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
           />
           
           <Button

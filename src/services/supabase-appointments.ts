@@ -95,6 +95,43 @@ export const bookAppointment = async (
   }
 };
 
+// Fonctions utilitaires pour le formatage des dates et noms
+const formatDate = (date: Date) => {
+  return new Intl.DateTimeFormat('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  }).format(date);
+};
+
+const formatTime = (date: Date) => {
+  return new Intl.DateTimeFormat('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  }).format(date);
+};
+
+// Fonction pour obtenir le nom d'affichage de l'intervenant
+const getPractitionerDisplayName = (appointment: any) => {
+  if (!appointment.practitioner) return 'Non spécifié';
+
+  // Priorité : display_name > pseudo > prénom nom
+  if (appointment.practitioner.display_name) {
+    return appointment.practitioner.display_name;
+  }
+
+  if (appointment.practitioner.profile?.pseudo) {
+    return appointment.practitioner.profile.pseudo;
+  }
+
+  if (appointment.practitioner.profile?.first_name) {
+    return `${appointment.practitioner.profile.first_name} ${appointment.practitioner.profile.last_name || ''}`.trim();
+  }
+
+  return 'Non spécifié';
+};
+
 /**
  * Envoie les emails de confirmation de rendez-vous au client et au bénéficiaire
  * @param appointment Le rendez-vous confirmé avec toutes les informations
@@ -104,43 +141,7 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
     const startDate = new Date(appointment.start_time);
     const endDate = new Date(appointment.end_time);
 
-    const formatDate = (date: Date) => {
-      return new Intl.DateTimeFormat('fr-FR', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }).format(date);
-    };
-
-    const formatTime = (date: Date) => {
-      return new Intl.DateTimeFormat('fr-FR', {
-        hour: '2-digit',
-        minute: '2-digit'
-      }).format(date);
-    };
-
-    // Fonction pour obtenir le nom d'affichage de l'intervenant
-    const getPractitionerDisplayName = () => {
-      if (!appointment.practitioner) return 'Non spécifié';
-
-      // Priorité : display_name > pseudo > prénom nom
-      if (appointment.practitioner.display_name) {
-        return appointment.practitioner.display_name;
-      }
-
-      if (appointment.practitioner.profile?.pseudo) {
-        return appointment.practitioner.profile.pseudo;
-      }
-
-      if (appointment.practitioner.profile?.first_name) {
-        return `${appointment.practitioner.profile.first_name} ${appointment.practitioner.profile.last_name || ''}`.trim();
-      }
-
-      return 'Non spécifié';
-    };
-
-    const emailHtml = (recipientFirstName: string, recipientLastName: string) => `
+    const emailHtml = (recipientFirstName: string, recipientLastName: string, isClient: boolean = true) => `
       <!DOCTYPE html>
       <html>
       <head>
@@ -162,7 +163,7 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
             <h2 style="margin: 0; color: white;">✓ Rendez-vous confirmé</h2>
           </div>
           <div class="content">
-            <p>Bonjour ${recipientFirstName} ${recipientLastName},</p>
+            <p>Bonjour ${isClient && appointment.client?.pseudo ? appointment.client.pseudo : recipientFirstName},</p>
 
             <p>Votre rendez-vous a été confirmé avec succès !</p>
 
@@ -187,7 +188,7 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
               ${appointment.practitioner ? `
               <div class="info-row">
                 <span class="label">Intervenant :</span>
-                <span>${getPractitionerDisplayName()}</span>
+                <span>${getPractitionerDisplayName(appointment)}</span>
               </div>
               ` : ''}
 
@@ -214,15 +215,15 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
             </div>
 
             <div class="highlight">
-              Merci de vous présenter 5 minutes avant l'heure du rendez-vous
+              Merci de vous connecter 5 minutes avant le rendez-vous pour valider la connexion
             </div>
 
-            <p>Si vous avez besoin de modifier ou d'annuler ce rendez-vous, merci de nous contacter au plus tôt.</p>
+            <p>Si vous avez besoin de modifier ou d'annuler ce rendez-vous, merci d'aller dans le menu <strong>"Mes rendez-vous"</strong> sur <a href="https://www.fl2m.fr" style="color: #345995; text-decoration: none; font-weight: bold;">www.fl2m.fr</a></p>
 
             <div class="footer">
-              <p style="margin: 0; color: #345995; font-weight: bold;">FL²M Services</p>
-              <p style="margin: 5px 0; color: #666;">123 Avenue des Essences, 75001 Paris</p>
-              <p style="margin: 5px 0; color: #666;">contact@fl2m.fr | +33 (0)1 23 45 67 89</p>
+              <p style="margin: 0; color: #345995; font-weight: bold;">FL2M IPServices</p>
+              <p style="margin: 5px 0; color: #666;">6, rue albert nicolas</p>
+              <p style="margin: 5px 0; color: #666;">+33 (0)6 95 57 31 37</p>
             </div>
 
             <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
@@ -265,6 +266,130 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
     console.log('Emails de confirmation envoyés avec succès');
   } catch (error) {
     console.error('Erreur lors de l\'envoi des emails de confirmation:', error);
+    throw error;
+  }
+};
+
+/**
+ * Envoie les emails d'annulation de rendez-vous au client et au bénéficiaire
+ * @param appointment Le rendez-vous annulé avec toutes les informations
+ */
+const sendAppointmentCancellationEmails = async (appointment: any) => {
+  try {
+    const startDate = new Date(appointment.start_time);
+    const endDate = new Date(appointment.end_time);
+
+    const emailHtml = (recipientFirstName: string, recipientLastName: string, isClient: boolean = true) => `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+          .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+          .info-box { background: white; padding: 20px; border-left: 4px solid #d32f2f; margin: 20px 0; border-radius: 4px; }
+          .info-row { margin: 12px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+          .label { font-weight: bold; color: #d32f2f; display: inline-block; width: 150px; }
+          .highlight { background: linear-gradient(45deg, #ffcdd2, #ef9a9a); color: #b71c1c; padding: 15px; border-radius: 8px; margin: 20px 0; text-align: center; font-weight: bold; }
+          .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #d32f2f; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h2 style="margin: 0; color: white;">✗ Rendez-vous annulé</h2>
+          </div>
+          <div class="content">
+            <p>Bonjour ${isClient && appointment.client?.pseudo ? appointment.client.pseudo : recipientFirstName},</p>
+
+            <p>Votre rendez-vous a été annulé.</p>
+
+            <div class="info-box">
+              <h3 style="margin-top: 0; color: #d32f2f;">Détails du rendez-vous annulé</h3>
+
+              <div class="info-row">
+                <span class="label">Service :</span>
+                <span>${appointment.service?.name || 'Non spécifié'}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="label">Date :</span>
+                <span>${formatDate(startDate)}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="label">Heure :</span>
+                <span>${formatTime(startDate)} - ${formatTime(endDate)}</span>
+              </div>
+
+              ${appointment.practitioner ? `
+              <div class="info-row">
+                <span class="label">Intervenant :</span>
+                <span>${getPractitionerDisplayName(appointment)}</span>
+              </div>
+              ` : ''}
+
+              ${appointment.beneficiary_first_name ? `
+              <div class="info-row">
+                <span class="label">Bénéficiaire :</span>
+                <span>${appointment.beneficiary_first_name} ${appointment.beneficiary_last_name}</span>
+              </div>
+              ` : ''}
+            </div>
+
+            <div class="highlight">
+              Ce rendez-vous a été annulé avec succès
+            </div>
+
+            <p>Si vous souhaitez prendre un nouveau rendez-vous, merci de vous rendre sur <a href="https://www.fl2m.fr" style="color: #d32f2f; text-decoration: none; font-weight: bold;">www.fl2m.fr</a></p>
+
+            <div class="footer">
+              <p style="margin: 0; color: #345995; font-weight: bold;">FL2M IPServices</p>
+              <p style="margin: 5px 0; color: #666;">6, rue albert nicolas</p>
+              <p style="margin: 5px 0; color: #666;">+33 (0)6 95 57 31 37</p>
+            </div>
+
+            <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
+              Ceci est un message automatique, merci de ne pas y répondre directement.
+            </p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Envoyer l'email au client
+    if (appointment.client?.email) {
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: appointment.client.email,
+          subject: `Annulation de votre rendez-vous - ${appointment.service?.name || 'FL²M Services'}`,
+          html: emailHtml(appointment.client.first_name, appointment.client.last_name),
+          appointmentId: appointment.id,
+          emailType: 'cancellation'
+        }
+      });
+    }
+
+    // Envoyer l'email au bénéficiaire si différent du client et si email renseigné
+    if (appointment.beneficiary_email &&
+        appointment.beneficiary_email !== appointment.client?.email &&
+        appointment.beneficiary_notifications_enabled) {
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: appointment.beneficiary_email,
+          subject: `Annulation de votre rendez-vous - ${appointment.service?.name || 'FL²M Services'}`,
+          html: emailHtml(appointment.beneficiary_first_name, appointment.beneficiary_last_name, false),
+          appointmentId: appointment.id,
+          emailType: 'cancellation'
+        }
+      });
+    }
+
+    console.log('Emails d\'annulation envoyés avec succès');
+  } catch (error) {
+    console.error('Erreur lors de l\'envoi des emails d\'annulation:', error);
     throw error;
   }
 };
@@ -475,26 +600,39 @@ export const cancelAppointment = async (
   userId?: string
 ) => {
   try {
-    // Récupérer d'abord l'état actuel du rendez-vous
+    // Récupérer d'abord toutes les informations du rendez-vous pour l'email
     const { data: appointment, error: fetchError } = await supabase
       .from('appointments')
-      .select('payment_status, client_id')
+      .select(`
+        *,
+        client:profiles!client_id(id, first_name, last_name, email, pseudo),
+        practitioner:practitioners!practitioner_id(
+          id,
+          user_id,
+          bio,
+          priority,
+          display_name,
+          title,
+          profile:profiles!user_id(id, first_name, last_name, email, phone, pseudo)
+        ),
+        service:services(id, code, name, category, subcategory, price, duration, description)
+      `)
       .eq('id', appointmentId)
       .single();
-    
+
     if (fetchError) throw fetchError;
-    
+
     // Si le rendez-vous n'existe pas ou n'a pas de client, retourner une erreur
     if (!appointment || !appointment.client_id) {
-      return { 
-        success: false, 
-        error: new Error('Rendez-vous introuvable ou déjà annulé') 
+      return {
+        success: false,
+        error: new Error('Rendez-vous introuvable ou déjà annulé')
       };
     }
     
     // Déterminer l'action à effectuer en fonction du statut de paiement
     const isPaid = appointment.payment_status === 'paid';
-    
+
     // Si le rendez-vous a été payé ou si keepRecord est true, juste marquer comme annulé
     if (isPaid || keepRecord) {
       const { data, error } = await supabase
@@ -509,6 +647,11 @@ export const cancelAppointment = async (
         .single();
 
       if (error) throw error;
+
+      // Envoyer les emails d'annulation
+      sendAppointmentCancellationEmails(appointment).catch(err =>
+        console.error('Erreur lors de l\'envoi des emails d\'annulation:', err)
+      );
 
       // Logger l'annulation
       if (data && appointment.client_id) {
@@ -533,6 +676,11 @@ export const cancelAppointment = async (
     else {
       const clientId = appointment.client_id; // Sauvegarder avant de le mettre à null
 
+      // Envoyer les emails d'annulation AVANT de supprimer les données du client
+      sendAppointmentCancellationEmails(appointment).catch(err =>
+        console.error('Erreur lors de l\'envoi des emails d\'annulation:', err)
+      );
+
       const { data, error } = await supabase
         .from('appointments')
         .update({
@@ -544,6 +692,8 @@ export const cancelAppointment = async (
           beneficiary_first_name: null,
           beneficiary_last_name: null,
           beneficiary_birth_date: null,
+          beneficiary_email: null,
+          beneficiary_notifications_enabled: false,
           updated_at: new Date().toISOString(),
           updated_by: userId || null
         })

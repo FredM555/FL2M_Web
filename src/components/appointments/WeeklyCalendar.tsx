@@ -401,28 +401,33 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                 },
               }}
             >
-              <Box sx={{ minWidth: isMobile ? 600 : 'auto' }}>
+              <Box sx={{ minWidth: isMobile ? 600 : 'auto', display: 'table', width: '100%', tableLayout: 'fixed' }}>
                 {/* En-têtes des jours */}
-                <Grid container sx={{ borderBottom: 2, borderColor: colors.border, mt: '4px' }}>
+                <Box sx={{ display: 'table-row', borderBottom: 2, borderColor: colors.border }}>
                   {/* Cellule vide pour l'en-tête des heures */}
-                  <Grid item xs={1} sx={{
+                  <Box sx={{
+                    display: 'table-cell',
+                    width: '80px',
                     py: 1.5,
                     borderRight: 1,
                     borderColor: colors.border,
                     textAlign: 'center',
                     fontWeight: 600,
+                    verticalAlign: 'middle',
                   }}>
                     <Typography variant="caption" fontWeight={600}>Heure</Typography>
-                  </Grid>
+                  </Box>
 
                   {/* En-têtes des jours */}
                   {weekDays.map((day) => (
-                    <Grid item xs key={day.dateString} sx={{
+                    <Box key={day.dateString} sx={{
+                      display: 'table-cell',
                       py: 1.5,
                       borderRight: 1,
                       borderColor: colors.border,
                       textAlign: 'center',
                       backgroundColor: hasDayAppointments(day.dateString) ? colors.light : 'rgba(0, 0, 0, 0.02)',
+                      verticalAlign: 'middle',
                     }}>
                       <Typography variant="subtitle2" sx={{ textTransform: 'capitalize', fontWeight: 600, color: '#1a1a2e' }}>
                         {day.dayName}
@@ -438,44 +443,48 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                           Disponible
                         </Typography>
                       )}
-                    </Grid>
+                    </Box>
                   ))}
-                </Grid>
+                </Box>
                 
                 {/* Lignes pour chaque créneau horaire */}
                 {timeSlots.map((timeSlot) => (
-                  <Grid container key={timeSlot.hour} sx={{ 
-                    borderBottom: 1, 
+                  <Box key={timeSlot.hour} sx={{
+                    display: 'table-row',
+                    borderBottom: 1,
                     borderColor: 'divider',
                     '&:last-child': {
                       borderBottom: 0
                     }
                   }}>
                     {/* Cellule d'heure */}
-                    <Grid item xs={1} sx={{
+                    <Box sx={{
+                      display: 'table-cell',
+                      width: '80px',
                       py: 1,
                       px: 0.5,
                       borderRight: 1,
                       borderColor: colors.border,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      textAlign: 'center',
+                      verticalAlign: 'middle',
                       backgroundColor: 'rgba(0, 0, 0, 0.03)',
                     }}>
                       <Typography variant="caption" fontWeight={600} sx={{ color: '#1a1a2e' }}>{timeSlot.label}</Typography>
-                    </Grid>
+                    </Box>
 
                     {/* Cellules pour chaque jour */}
                     {weekDays.map((day) => {
                       const appointmentsInSlot = getAppointmentsInTimeSlot(day.dateString, timeSlot.hour);
 
                       return (
-                        <Grid item xs key={`${day.dateString}-${timeSlot.hour}`} sx={{
+                        <Box key={`${day.dateString}-${timeSlot.hour}`} sx={{
+                          display: 'table-cell',
                           py: 1,
                           borderRight: 1,
                           borderColor: colors.border,
                           minHeight: '45px',
                           position: 'relative',
+                          verticalAlign: 'middle',
                           backgroundColor: hasDayAppointments(day.dateString) ? 'transparent' : 'rgba(0, 0, 0, 0.02)'
                         }}>
                           {appointmentsInSlot.length > 0 ? (
@@ -508,6 +517,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                                       textOverflow: 'ellipsis',
                                       whiteSpace: 'nowrap',
                                       minHeight: '32px',
+                                      width: '100%',
                                       background: selectedSlot?.id === slot.id ? colors.gradient : 'transparent',
                                       color: selectedSlot?.id === slot.id ? 'white' : colors.secondary,
                                       borderColor: colors.border,
@@ -524,10 +534,10 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                               })}
                             </Box>
                           ) : null}
-                        </Grid>
+                        </Box>
                       );
                     })}
-                  </Grid>
+                  </Box>
                 ))}
               </Box>
             </Paper>
@@ -611,9 +621,9 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                       Intervenant:
                     </Typography>
                     <Typography variant="body1" gutterBottom>
-                      {selectedAppointmentDetails.practitioner.display_name || 
+                      {selectedAppointmentDetails.practitioner.display_name ||
                        `${selectedAppointmentDetails.practitioner.profile.first_name} ${selectedAppointmentDetails.practitioner.profile.last_name}`}
-                      {selectedAppointmentDetails.practitioner.title && ` (${selectedAppointmentDetails.practitioner.title})`}
+                      {selectedAppointmentDetails.practitioner.title && ` - ${selectedAppointmentDetails.practitioner.title}`}
                     </Typography>
                     
                     {selectedAppointmentDetails.practitioner.bio && (
