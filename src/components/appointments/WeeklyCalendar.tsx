@@ -24,11 +24,13 @@ interface AppointmentSlot {
   id: string;
   start_time: string;
   end_time: string;
+  custom_price?: number;
   service: {
     id: string;
     name: string;
     duration: number;
     price: number;
+    description?: string;
   };
   practitioner: {
     id: string;
@@ -586,8 +588,22 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                       Prix:
                     </Typography>
                     <Typography variant="body1" gutterBottom>
-                      {selectedAppointmentDetails.service.price === 9999 ? 'Nous consulter' : `${selectedAppointmentDetails.service.price} €`}
+                      {(() => {
+                        const price = selectedAppointmentDetails.custom_price ?? selectedAppointmentDetails.service.price;
+                        return price === 9999 ? 'Nous consulter' : `${price} €`;
+                      })()}
                     </Typography>
+
+                    {selectedAppointmentDetails.service.description && (
+                      <>
+                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 2 }}>
+                          Description:
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {selectedAppointmentDetails.service.description}
+                        </Typography>
+                      </>
+                    )}
                   </Grid>
                   
                   <Grid item xs={12} md={6}>

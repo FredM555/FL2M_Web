@@ -344,6 +344,13 @@ const MyAppointmentsPage = () => {
                   {appointment.practitioner?.title && ` - ${appointment.practitioner.title}`}
                 </Typography>
               </Box>
+
+              <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                <WorkIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                  {appointment.service?.duration} minutes
+                </Typography>
+              </Box>
             </Grid>
 
             <Grid item xs={12} sm={6}>
@@ -363,13 +370,6 @@ const MyAppointmentsPage = () => {
                   </Typography>
                 </Box>
               )}
-
-              <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
-                <WorkIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                  {appointment.service?.duration} minutes
-                </Typography>
-              </Box>
 
               {(() => {
                 const price = appointment.custom_price ?? appointment.service?.price;

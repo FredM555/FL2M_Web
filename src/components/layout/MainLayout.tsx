@@ -496,19 +496,19 @@ const MainLayout: React.FC = () => {
                             </Box>
                             <Typography sx={{ fontWeight: 500 }}>Mes rendez-vous</Typography>
                           </MenuItem>
-                          {profile?.user_type === 'admin' && (
+                          {profile?.user_type === 'intervenant' && (
                             <MenuItem
                               component={RouterLink}
-                              to="/admin"
+                              to="/intervenant/planning"
                               onClick={handleMenuClose(setUserMenuAnchor)}
                               sx={{
                                 px: 3,
                                 py: 1.5,
                                 transition: 'all 0.2s ease',
-                                background: 'rgba(255, 215, 0, 0.05)',
-                                borderLeft: '3px solid #FFD700',
+                                background: 'rgba(52, 89, 149, 0.05)',
+                                borderLeft: '3px solid #345995',
                                 '&:hover': {
-                                  backgroundColor: 'rgba(255, 215, 0, 0.12)',
+                                  backgroundColor: 'rgba(52, 89, 149, 0.12)',
                                   '& .menu-icon': {
                                     transform: 'scale(1.1) rotate(15deg)',
                                   },
@@ -525,10 +525,78 @@ const MainLayout: React.FC = () => {
                                   transition: 'all 0.2s ease',
                                 }}
                               >
-                                🔧
+                                📆
                               </Box>
-                              <Typography sx={{ fontWeight: 600, color: '#345995' }}>Administration</Typography>
+                              <Typography sx={{ fontWeight: 500 }}>Gérer mon planning</Typography>
                             </MenuItem>
+                          )}
+                          {profile?.user_type === 'admin' && (
+                            <>
+                              <MenuItem
+                                component={RouterLink}
+                                to="/intervenant/planning"
+                                onClick={handleMenuClose(setUserMenuAnchor)}
+                                sx={{
+                                  px: 3,
+                                  py: 1.5,
+                                  transition: 'all 0.2s ease',
+                                  background: 'rgba(52, 89, 149, 0.05)',
+                                  borderLeft: '3px solid #345995',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(52, 89, 149, 0.12)',
+                                    '& .menu-icon': {
+                                      transform: 'scale(1.1) rotate(15deg)',
+                                    },
+                                  },
+                                }}
+                              >
+                                <Box
+                                  component="span"
+                                  className="menu-icon"
+                                  sx={{
+                                    mr: 2,
+                                    display: 'inline-flex',
+                                    fontSize: '1.2rem',
+                                    transition: 'all 0.2s ease',
+                                  }}
+                                >
+                                  📆
+                                </Box>
+                                <Typography sx={{ fontWeight: 500 }}>Gérer mon planning</Typography>
+                              </MenuItem>
+                              <MenuItem
+                                component={RouterLink}
+                                to="/admin"
+                                onClick={handleMenuClose(setUserMenuAnchor)}
+                                sx={{
+                                  px: 3,
+                                  py: 1.5,
+                                  transition: 'all 0.2s ease',
+                                  background: 'rgba(255, 215, 0, 0.05)',
+                                  borderLeft: '3px solid #FFD700',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+                                    '& .menu-icon': {
+                                      transform: 'scale(1.1) rotate(15deg)',
+                                    },
+                                  },
+                                }}
+                              >
+                                <Box
+                                  component="span"
+                                  className="menu-icon"
+                                  sx={{
+                                    mr: 2,
+                                    display: 'inline-flex',
+                                    fontSize: '1.2rem',
+                                    transition: 'all 0.2s ease',
+                                  }}
+                                >
+                                  🔧
+                                </Box>
+                                <Typography sx={{ fontWeight: 600, color: '#345995' }}>Administration</Typography>
+                              </MenuItem>
+                            </>
                           )}
                         </Box>
                         <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
@@ -1140,18 +1208,45 @@ const MainLayout: React.FC = () => {
               <ListItemText primary="Mes rendez-vous" />
             </ListItem>
 
-            {profile?.user_type === 'admin' && (
-              <ListItem 
-                button 
-                component={RouterLink} 
-                to="/admin"
+            {profile?.user_type === 'intervenant' && (
+              <ListItem
+                button
+                component={RouterLink}
+                to="/intervenant/planning"
                 onClick={toggleMobileMenu}
               >
                 <ListItemIcon>
-                  <Box component="span" sx={{ display: 'inline-flex' }}>🔧</Box>
+                  <Box component="span" sx={{ display: 'inline-flex' }}>📆</Box>
                 </ListItemIcon>
-                <ListItemText primary="Administration" />
+                <ListItemText primary="Gérer mon planning" />
               </ListItem>
+            )}
+
+            {profile?.user_type === 'admin' && (
+              <>
+                <ListItem
+                  button
+                  component={RouterLink}
+                  to="/intervenant/planning"
+                  onClick={toggleMobileMenu}
+                >
+                  <ListItemIcon>
+                    <Box component="span" sx={{ display: 'inline-flex' }}>📆</Box>
+                  </ListItemIcon>
+                  <ListItemText primary="Gérer mon planning" />
+                </ListItem>
+                <ListItem
+                  button
+                  component={RouterLink}
+                  to="/admin"
+                  onClick={toggleMobileMenu}
+                >
+                  <ListItemIcon>
+                    <Box component="span" sx={{ display: 'inline-flex' }}>🔧</Box>
+                  </ListItemIcon>
+                  <ListItemText primary="Administration" />
+                </ListItem>
+              </>
             )}
 
             <ListItem 

@@ -112,7 +112,7 @@ const CGUPage: React.FC = () => {
             <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
               <li>Des consultations personnalisées en numérologie</li>
               <li>Des analyses numérologique pour le développement personnel et professionnel</li>
-              <li>La prise de rendez-vous en ligne avec des consultants</li>
+              <li>La prise de rendez-vous en ligne avec des intervenants</li>
               <li>Des modules et programmes dédiés</li>
             </Typography>
           </Box>
@@ -235,7 +235,7 @@ const CGUPage: React.FC = () => {
               5.1. Prise de rendez-vous
             </Typography>
             <Typography variant="body1" paragraph>
-              Les utilisateurs peuvent réserver des rendez-vous avec des consultants en numérologie via la plateforme. La disponibilité des consultants est mise à jour régulièrement.
+              Les utilisateurs peuvent réserver des rendez-vous avec des intervenants en numérologie via la plateforme. La disponibilité des intervenants est mise à jour régulièrement.
             </Typography>
 
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>

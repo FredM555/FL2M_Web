@@ -55,6 +55,7 @@ import ModuleTeam from './pages/Sportifs/ModuleTeam';
 import ProfilePage from './pages/ProfilePage';
 import PractitionerProfilePage from './pages/PractitionerProfilePage';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
+import PractitionerSchedulePage from './pages/Practitioner/PractitionerSchedulePage';
 
 
 
@@ -269,6 +270,11 @@ function App() {
             <Route path="mes-rendez-vous" element={
               <ProtectedRoute>
                 <MyAppointmentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="intervenant/planning" element={
+              <ProtectedRoute>
+                <PractitionerSchedulePage />
               </ProtectedRoute>
             } />
           </Route>

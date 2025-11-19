@@ -167,23 +167,6 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                 </>
               )}
 
-              {currentAppointment.service && (
-                <>
-                  <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                      <PaymentIcon fontSize="small" />
-                      Prix de la séance
-                    </Box>
-                  </Typography>
-                  <Typography variant="h6" sx={{ color: 'primary.main', fontWeight: 700, fontSize: { xs: '1.1rem', sm: '1.25rem' } }}>
-                    {(() => {
-                      const price = currentAppointment.custom_price ?? currentAppointment.service.price;
-                      return price === 9999 ? 'Sur devis' : `${price} €`;
-                    })()}
-                  </Typography>
-                </>
-              )}
-
               {currentAppointment.meeting_link && (
                 <Box sx={{ mt: 2 }}>
                   <Tooltip title="Rejoindre la visioconférence">
@@ -241,33 +224,52 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                 {currentAppointment.beneficiary_last_name || currentAppointment.client?.last_name}
               </Typography>
 
-              {(currentAppointment.beneficiary_birth_date || currentAppointment.client?.birth_date) && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                    p: { xs: 1, sm: 1.5 },
-                    bgcolor: 'grey.50',
-                    borderRadius: 1,
-                    border: '1px solid',
-                    borderColor: 'grey.300'
-                  }}
-                >
-                  <CakeIcon sx={{ color: 'primary.main', fontSize: { xs: 20, sm: 24 } }} />
-                  <Box>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                      Date de naissance
-                    </Typography>
-                    <Typography variant="body1" fontWeight={600} sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }}>
-                      {format(
-                        parseISO(currentAppointment.beneficiary_birth_date || currentAppointment.client!.birth_date!),
-                        'dd/MM/yyyy'
-                      )}
-                    </Typography>
+              <Box>
+                {(currentAppointment.beneficiary_birth_date || currentAppointment.client?.birth_date) && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      p: { xs: 1, sm: 1.5 },
+                      bgcolor: 'grey.50',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'grey.300'
+                    }}
+                  >
+                    <CakeIcon sx={{ color: 'primary.main', fontSize: { xs: 20, sm: 24 } }} />
+                    <Box>
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+                        Date de naissance
+                      </Typography>
+                      <Typography variant="body1" fontWeight={600} sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }}>
+                        {format(
+                          parseISO(currentAppointment.beneficiary_birth_date || currentAppointment.client!.birth_date!),
+                          'dd/MM/yyyy'
+                        )}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              )}
+                )}
+
+                {currentAppointment.beneficiary_email && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: 'block',
+                      mt: 0.5,
+                      pl: { xs: 1, sm: 1.5 },
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                      color: 'text.secondary',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word'
+                    }}
+                  >
+                    {currentAppointment.beneficiary_email}
+                  </Typography>
+                )}
+              </Box>
             </Box>
           </Box>
         </Box>
@@ -289,7 +291,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
             }}
           >
             <Tab label="Bénéficiaire" />
-            {profile?.user_type === 'admin' && <Tab label="Intervenant" />}
+            <Tab label="Intervenant" />
             <Tab label="Visio" />
             <Tab label="Documents" />
             <Tab label="Commentaires" />
@@ -303,23 +305,21 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
           />
         </TabPanel>
 
-        {profile?.user_type === 'admin' && (
-          <TabPanel value={currentTab} index={1}>
-            <AppointmentPractitioner
-              appointment={currentAppointment}
-              onUpdate={handleAppointmentUpdate}
-            />
-          </TabPanel>
-        )}
+        <TabPanel value={currentTab} index={1}>
+          <AppointmentPractitioner
+            appointment={currentAppointment}
+            onUpdate={handleAppointmentUpdate}
+          />
+        </TabPanel>
 
-        <TabPanel value={currentTab} index={profile?.user_type === 'admin' ? 2 : 1}>
+        <TabPanel value={currentTab} index={2}>
           <AppointmentMeetingLink
             appointment={currentAppointment}
             onUpdate={handleAppointmentUpdate}
           />
         </TabPanel>
 
-        <TabPanel value={currentTab} index={profile?.user_type === 'admin' ? 3 : 2}>
+        <TabPanel value={currentTab} index={3}>
           <AppointmentDocuments
             appointmentId={currentAppointment.id}
             practitionerId={currentAppointment.practitioner_id}
@@ -327,7 +327,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
           />
         </TabPanel>
 
-        <TabPanel value={currentTab} index={profile?.user_type === 'admin' ? 4 : 3}>
+        <TabPanel value={currentTab} index={4}>
           <AppointmentComments
             appointmentId={currentAppointment.id}
             practitionerId={currentAppointment.practitioner_id}

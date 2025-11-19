@@ -71,7 +71,7 @@ const AdminPractitionersPage: React.FC = () => {
   const loadData = async () => {
     setLoading(true);
     try {
-      // Chargement des consultants avec leur profil associé
+      // Chargement des intervenants avec leur profil associé
       const { data: practitionersData, error: practitionersError } = await supabase
         .from('practitioners')
         .select(`
@@ -89,7 +89,7 @@ const AdminPractitionersPage: React.FC = () => {
         
       if (profilesError) throw profilesError;
       
-      // Filtrer les profils qui ne sont pas déjà des consultants
+      // Filtrer les profils qui ne sont pas déjà des intervenants
       const practitionerUserIds = practitionersData?.map(p => p.user_id) || [];
       const availableProfiles = profilesData?.filter(p => !practitionerUserIds.includes(p.id)) || [];
       
@@ -261,7 +261,7 @@ const AdminPractitionersPage: React.FC = () => {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
         <Typography variant="h4" component="h1">
-          Gestion des Consultants
+          Gestion des Intervenants
         </Typography>
         <Button
           variant="contained"

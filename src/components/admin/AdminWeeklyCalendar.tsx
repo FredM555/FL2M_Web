@@ -86,7 +86,9 @@ interface Appointment {
   beneficiary_first_name?: string;
   beneficiary_last_name?: string;
   beneficiary_birth_date?: string;
+  beneficiary_email?: string;
   meeting_link?: string;
+  custom_price?: number;
   client?: Profile;
   practitioner?: Practitioner;
   service?: Service;
@@ -96,21 +98,46 @@ interface AdminWeeklyCalendarProps {
   appointments: Appointment[];
   practitioners: Practitioner[];
   services: Service[];
-  loading: boolean;
-  error: string | null;
-  setError: (error: string | null) => void;
-  onAppointmentChange: () => void;
+  loading?: boolean;
+  error?: string | null;
+  setError?: (error: string | null) => void;
+  onAppointmentChange?: () => void;
+  onAppointmentCreated?: () => void;
+  onAppointmentUpdated?: () => void;
+  onAppointmentDeleted?: () => void;
+  isPractitionerView?: boolean;
+  practitionerId?: string;
 }
 
 const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   appointments,
   practitioners,
   services,
-  loading,
-  error,
+  loading = false,
+  error = null,
   setError,
-  onAppointmentChange
+  onAppointmentChange,
+  onAppointmentCreated,
+  onAppointmentUpdated,
+  onAppointmentDeleted,
+  isPractitionerView = false,
+  practitionerId
 }) => {
+  // État pour le champ de prix personnalisé
+  const [customPrice, setCustomPrice] = useState<number | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
+
+  // Fonction helper pour notifier les changements
+  const notifyAppointmentChange = () => {
+    if (onAppointmentChange) onAppointmentChange();
+    if (onAppointmentCreated) onAppointmentCreated();
+    if (onAppointmentUpdated) onAppointmentUpdated();
+  };
+
+  const notifyAppointmentDelete = () => {
+    if (onAppointmentChange) onAppointmentChange();
+    if (onAppointmentDeleted) onAppointmentDeleted();
+  };
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   
@@ -269,7 +296,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   const handleAddAppointment = (date?: Date, hour?: number) => {
     // Initialiser avec la date et l'heure actuelles ou celles fournies
     let roundedTime: Date;
-    
+
     if (date && hour !== undefined) {
       roundedTime = new Date(date);
       roundedTime.setHours(hour, 0, 0, 0);
@@ -280,15 +307,23 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
       roundedTime = new Date(now);
       roundedTime.setMinutes(minutes, 0, 0);
     }
-    
+
     setSelectedDate(roundedTime);
     setSelectedTime(roundedTime);
-    
-    setCurrentAppointment({
+
+    // Si mode intervenant, pré-sélectionner l'intervenant
+    const initialAppointment: Partial<Appointment> = {
       status: 'pending',
       payment_status: 'unpaid'
-    });
-    
+    };
+
+    if (isPractitionerView && practitionerId) {
+      initialAppointment.practitioner_id = practitionerId;
+    }
+
+    setCurrentAppointment(initialAppointment);
+    setCustomPrice(null);
+    setPriceError(null);
     setDialogMode('create');
     setShowCopyOptions(false);
     setIsDialogOpen(true);
@@ -298,10 +333,12 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   const handleEditAppointment = (appointment: Appointment) => {
     // Convertir les dates string en objets Date pour les pickers
     const startTime = parseISO(appointment.start_time);
-    
+
     setSelectedDate(startTime);
     setSelectedTime(startTime);
     setCurrentAppointment(appointment);
+    setCustomPrice(appointment.custom_price || null);
+    setPriceError(null);
     setDialogMode('edit');
     setShowCopyOptions(false);
     setIsDialogOpen(true);
@@ -311,19 +348,22 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   const handleCopyAppointment = (appointment: Appointment) => {
     // Créer une copie du rendez-vous sans l'ID et les informations du client
     const appointmentCopy: Partial<Appointment> = {
-      practitioner_id: appointment.practitioner_id,
+      // En mode intervenant, toujours utiliser le practitionerId de l'intervenant connecté
+      practitioner_id: isPractitionerView && practitionerId ? practitionerId : appointment.practitioner_id,
       service_id: appointment.service_id,
       status: 'pending',
       payment_status: 'unpaid',
       notes: appointment.notes
     };
-    
+
     // Convertir les dates string en objets Date pour les pickers
     const startTime = parseISO(appointment.start_time);
-    
+
     setSelectedDate(startTime);
     setSelectedTime(startTime);
     setCurrentAppointment(appointmentCopy);
+    setCustomPrice(null);
+    setPriceError(null);
     setDialogMode('copy');
     setShowCopyOptions(true);
     setCopyCount(1);
@@ -344,9 +384,9 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
 
       if (error) throw error;
 
-      onAppointmentChange();
+      notifyAppointmentDelete();
     } catch (err: any) {
-      setError(`Erreur lors de la suppression : ${err.message}`);
+      if (setError) setError(`Erreur lors de la suppression : ${err.message}`);
     }
   };
   
@@ -359,10 +399,10 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
     try {
       // Vérifier si le rendez-vous est payé
       if (appointment.payment_status === 'paid') {
-        setError("Impossible de libérer un rendez-vous payé. Effectuez d'abord un remboursement.");
+        if (setError) setError("Impossible de libérer un rendez-vous payé. Effectuez d'abord un remboursement.");
         return;
       }
-      
+
       // Mettre à jour le rendez-vous dans la base de données
       const { error } = await supabase
         .from('appointments')
@@ -381,9 +421,9 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
 
       if (error) throw error;
 
-      onAppointmentChange();
+      notifyAppointmentChange();
     } catch (err: any) {
-      setError(`Erreur lors de la libération du rendez-vous : ${err.message}`);
+      if (setError) setError(`Erreur lors de la libération du rendez-vous : ${err.message}`);
     }
   };
   
@@ -397,22 +437,37 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
     setSelectedDate(null);
     setSelectedTime(null);
     setShowCopyOptions(false);
+    setCustomPrice(null);
+    setPriceError(null);
   };
   
   // Enregistrer un rendez-vous
   const handleSaveAppointment = async () => {
     if (!selectedDate || !selectedTime || !currentAppointment.practitioner_id || !currentAppointment.service_id) {
-      setError('Veuillez remplir tous les champs obligatoires');
+      if (setError) setError('Veuillez remplir tous les champs obligatoires');
       return;
     }
 
     try {
+      // Trouver le service sélectionné pour la validation du prix
+      const selectedService = services.find(s => s.id === currentAppointment.service_id);
+
+      // Valider le prix personnalisé si présent (mode intervenant)
+      if (isPractitionerView && customPrice !== null && selectedService) {
+        if (customPrice < selectedService.price) {
+          setPriceError(`Le prix doit être au minimum ${selectedService.price} €`);
+          if (setError) setError(`Le prix personnalisé ne peut pas être inférieur au prix du service (${selectedService.price} €)`);
+          return;
+        }
+        setPriceError(null);
+      }
+
       // Si c'est une copie multiple
       if (dialogMode === 'copy' && showCopyOptions && copyCount > 1) {
         await handleMultipleCopy();
         return;
       }
-      
+
       // Combiner la date et l'heure pour créer start_time
       const startTime = new Date(
         selectedDate.getFullYear(),
@@ -421,15 +476,14 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
         selectedTime.getHours(),
         selectedTime.getMinutes()
       );
-      
+
       // Trouver la durée du service pour calculer end_time
-      const selectedService = services.find(s => s.id === currentAppointment.service_id);
       const duration = selectedService?.duration || 60; // Par défaut 60 minutes
-      
+
       const endTime = addMinutes(startTime, duration);
-      
+
       // Extraire uniquement les champs de la table appointments
-      const appointmentData = {
+      const appointmentData: any = {
         client_id: currentAppointment.client_id || null,
         practitioner_id: currentAppointment.practitioner_id,
         service_id: currentAppointment.service_id,
@@ -439,7 +493,12 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
         payment_status: currentAppointment.payment_status || 'unpaid',
         notes: currentAppointment.notes,
       };
-      
+
+      // Ajouter le prix personnalisé si défini
+      if (customPrice !== null && customPrice !== undefined) {
+        appointmentData.custom_price = customPrice;
+      }
+
       if (dialogMode === 'edit' && currentAppointment.id) {
         // Mise à jour
         const { error } = await supabase
@@ -459,9 +518,9 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
 
       // Fermer le dialogue et rafraîchir la liste
       handleCloseDialog();
-      onAppointmentChange();
+      notifyAppointmentChange();
     } catch (err: any) {
-      setError(`Erreur lors de l'enregistrement : ${err.message}`);
+      if (setError) setError(`Erreur lors de l'enregistrement : ${err.message}`);
     }
   };
   
@@ -525,10 +584,10 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
       
       // Fermer le dialogue et rafraîchir la liste
       handleCloseDialog();
-      onAppointmentChange();
-      
+      notifyAppointmentChange();
+
     } catch (err: any) {
-      setError(`Erreur lors de la création des copies : ${err.message}`);
+      if (setError) setError(`Erreur lors de la création des copies : ${err.message}`);
     }
   };
   
@@ -659,10 +718,10 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
       if (error) throw error;
       
       // Rafraîchir les données
-      onAppointmentChange();
-      
+      notifyAppointmentChange();
+
     } catch (err: any) {
-      setError(`Erreur lors du déplacement du rendez-vous : ${err.message}`);
+      if (setError) setError(`Erreur lors du déplacement du rendez-vous : ${err.message}`);
     } finally {
       setDraggedAppointment(null);
     }
@@ -732,7 +791,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
       </Box>
       
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError && setError(null)}>
           {error}
         </Alert>
       )}
@@ -1024,16 +1083,22 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                       })}
                       label="Intervenant"
                       required
+                      disabled={isPractitionerView}
                     >
                       {practitioners.map((practitioner) => (
                         <MenuItem key={practitioner.id} value={practitioner.id}>
-                          {practitioner.display_name || 
-                           (practitioner.profile && 
+                          {practitioner.display_name ||
+                           (practitioner.profile &&
                             `${practitioner.profile.first_name} ${practitioner.profile.last_name}`)}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
+                  {isPractitionerView && (
+                    <Typography variant="caption" color="text.secondary">
+                      En mode intervenant, vous ne pouvez créer des rendez-vous que pour vous-même
+                    </Typography>
+                  )}
                 </Grid>
                 
                 <Grid item xs={12} md={6}>
@@ -1042,21 +1107,72 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                     <Select
                       labelId="service-select-label"
                       value={currentAppointment.service_id || ''}
-                      onChange={(e) => setCurrentAppointment({
-                        ...currentAppointment,
-                        service_id: e.target.value as string
-                      })}
+                      onChange={(e) => {
+                        const serviceId = e.target.value as string;
+                        setCurrentAppointment({
+                          ...currentAppointment,
+                          service_id: serviceId
+                        });
+                        // Réinitialiser le prix personnalisé quand le service change
+                        const selectedService = services.find(s => s.id === serviceId);
+                        if (selectedService && isPractitionerView) {
+                          setCustomPrice(selectedService.price);
+                          setPriceError(null);
+                        }
+                      }}
                       label="Service"
                       required
                     >
                       {services.map((service) => (
                         <MenuItem key={service.id} value={service.id}>
-                          {service.name} ({service.duration} min)
+                          {service.name} ({service.duration} min) - {service.price === 9999 ? 'Sur devis' : `${service.price} €`}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
                 </Grid>
+
+                {/* Champ de prix personnalisé (uniquement en mode intervenant) */}
+                {isPractitionerView && currentAppointment.service_id && (
+                  <Grid item xs={12} md={6}>
+                    <TextField
+                      label="Prix personnalisé (€)"
+                      type="number"
+                      fullWidth
+                      value={customPrice !== null ? customPrice : (() => {
+                        const selectedService = services.find(s => s.id === currentAppointment.service_id);
+                        return selectedService?.price || '';
+                      })()}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value);
+                        setCustomPrice(isNaN(value) ? null : value);
+
+                        // Valider le prix
+                        const selectedService = services.find(s => s.id === currentAppointment.service_id);
+                        if (selectedService && !isNaN(value) && value < selectedService.price) {
+                          setPriceError(`Le prix doit être au minimum ${selectedService.price} €`);
+                        } else {
+                          setPriceError(null);
+                        }
+                      }}
+                      error={!!priceError}
+                      helperText={priceError || (() => {
+                        const selectedService = services.find(s => s.id === currentAppointment.service_id);
+                        return selectedService ? `Prix minimum: ${selectedService.price} €` : '';
+                      })()}
+                      InputProps={{
+                        inputProps: {
+                          min: (() => {
+                            const selectedService = services.find(s => s.id === currentAppointment.service_id);
+                            return selectedService?.price || 0;
+                          })(),
+                          step: 0.01
+                        }
+                      }}
+                      sx={{ mb: 2 }}
+                    />
+                  </Grid>
+                )}
                 
                 <Grid item xs={12} md={6}>
                   <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={fr}>
@@ -1168,6 +1284,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                         status: e.target.value as 'pending' | 'confirmed' | 'cancelled' | 'completed'
                       })}
                       label="Statut"
+                      disabled={isPractitionerView}
                     >
                       <MenuItem value="pending">En attente</MenuItem>
                       <MenuItem value="confirmed">Confirmé</MenuItem>
@@ -1187,6 +1304,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                         payment_status: e.target.value as 'unpaid' | 'paid' | 'refunded'
                       })}
                       label="Statut de paiement"
+                      disabled={isPractitionerView}
                     >
                       <MenuItem value="unpaid">Non payé</MenuItem>
                       <MenuItem value="paid">Payé</MenuItem>

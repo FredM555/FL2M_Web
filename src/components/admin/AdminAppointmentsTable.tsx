@@ -54,6 +54,8 @@ interface AdminAppointmentsTableProps {
   error: string | null;
   setError: (error: string | null) => void;
   onAppointmentChange: () => void;
+  isPractitionerView?: boolean;
+  practitionerId?: string;
 }
 
 const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
@@ -63,8 +65,14 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
   loading,
   error,
   setError,
-  onAppointmentChange
+  onAppointmentChange,
+  isPractitionerView = false,
+  practitionerId
 }) => {
+  // État pour le champ de prix personnalisé
+  const [customPrice, setCustomPrice] = useState<number | null>(null);
+  const [priceError, setPriceError] = useState<string | null>(null);
+
   // États pour le dialogue
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit' | 'copy'>('create');
@@ -74,7 +82,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
   });
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<Date | null>(null);
-  
+
   // États pour la copie multiple
   const [copyCount, setCopyCount] = useState<number>(1);
   const [copyInterval, setCopyInterval] = useState<number>(1);
@@ -110,12 +118,14 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
   const handleEditAppointment = (appointment: Appointment) => {
     // Convertir les dates string en objets Date pour les pickers
     const startTime = parseISO(appointment.start_time);
-    
+
     setSelectedDate(startTime);
     setSelectedTime(startTime);
     setCurrentAppointment(appointment);
     setDialogMode('edit');
     setShowCopyOptions(false);
+    setCustomPrice(appointment.custom_price || null);
+    setPriceError(null);
     setIsDialogOpen(true);
   };
   
@@ -123,16 +133,17 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
   const handleCopyAppointment = (appointment: Appointment) => {
     // Créer une copie du rendez-vous sans l'ID et les informations du client
     const appointmentCopy: Partial<Appointment> = {
-      practitioner_id: appointment.practitioner_id,
+      // En mode intervenant, toujours utiliser le practitionerId de l'intervenant connecté
+      practitioner_id: isPractitionerView && practitionerId ? practitionerId : appointment.practitioner_id,
       service_id: appointment.service_id,
       status: 'pending',
       payment_status: 'unpaid',
       notes: appointment.notes
     };
-    
+
     // Convertir les dates string en objets Date pour les pickers
     const startTime = parseISO(appointment.start_time);
-    
+
     setSelectedDate(startTime);
     setSelectedTime(startTime);
     setCurrentAppointment(appointmentCopy);
@@ -141,6 +152,8 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
     setCopyCount(1);
     setCopyInterval(1);
     setCopyIntervalUnit('days');
+    setCustomPrice(null);
+    setPriceError(null);
     setIsDialogOpen(true);
   };
   
@@ -209,6 +222,8 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
     setSelectedDate(null);
     setSelectedTime(null);
     setShowCopyOptions(false);
+    setCustomPrice(null);
+    setPriceError(null);
   };
   
   // Enregistrer un rendez-vous
@@ -218,13 +233,22 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
       return;
     }
 
+    // Validation du prix personnalisé en mode intervenant
+    if (isPractitionerView && customPrice !== null) {
+      const selectedService = services.find(s => s.id === currentAppointment.service_id);
+      if (selectedService && customPrice < selectedService.price) {
+        setError(`Le prix doit être au minimum ${selectedService.price} €`);
+        return;
+      }
+    }
+
     try {
       // Si c'est une copie multiple
       if (dialogMode === 'copy' && showCopyOptions && copyCount > 1) {
         await handleMultipleCopy();
         return;
       }
-      
+
       // Combiner la date et l'heure pour créer start_time
       const startTime = new Date(
         selectedDate.getFullYear(),
@@ -233,15 +257,15 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
         selectedTime.getHours(),
         selectedTime.getMinutes()
       );
-      
+
       // Trouver la durée du service pour calculer end_time
       const selectedService = services.find(s => s.id === currentAppointment.service_id);
       const duration = selectedService?.duration || 60; // Par défaut 60 minutes
-      
+
       const endTime = addMinutes(startTime, duration);
-      
+
       // Extraire uniquement les champs de la table appointments
-      const appointmentData = {
+      const appointmentData: any = {
         client_id: currentAppointment.client_id || null,
         practitioner_id: currentAppointment.practitioner_id,
         service_id: currentAppointment.service_id,
@@ -251,6 +275,11 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
         payment_status: currentAppointment.payment_status || 'unpaid',
         notes: currentAppointment.notes,
       };
+
+      // Ajouter le prix personnalisé en mode intervenant
+      if (isPractitionerView && customPrice !== null) {
+        appointmentData.custom_price = customPrice;
+      }
       
       if (dialogMode === 'edit' && currentAppointment.id) {
         // Mise à jour
@@ -536,6 +565,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                   })}
                   label="Intervenant"
                   required
+                  disabled={isPractitionerView}
                 >
                   {practitioners.map((practitioner) => (
                     <MenuItem key={practitioner.id} value={practitioner.id}>
@@ -567,7 +597,49 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                 </Select>
               </FormControl>
             </Grid>
-            
+
+            {/* Champ de prix personnalisé (uniquement en mode intervenant) */}
+            {isPractitionerView && currentAppointment.service_id && (
+              <Grid item xs={12} md={6}>
+                <TextField
+                  label="Prix personnalisé (€)"
+                  type="number"
+                  fullWidth
+                  value={customPrice !== null ? customPrice : (() => {
+                    const selectedService = services.find(s => s.id === currentAppointment.service_id);
+                    return selectedService?.price || '';
+                  })()}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value);
+                    setCustomPrice(isNaN(value) ? null : value);
+
+                    // Valider le prix
+                    const selectedService = services.find(s => s.id === currentAppointment.service_id);
+                    if (selectedService && !isNaN(value) && value < selectedService.price) {
+                      setPriceError(`Le prix doit être au minimum ${selectedService.price} €`);
+                    } else {
+                      setPriceError(null);
+                    }
+                  }}
+                  error={!!priceError}
+                  helperText={priceError || (() => {
+                    const selectedService = services.find(s => s.id === currentAppointment.service_id);
+                    return selectedService ? `Prix minimum: ${selectedService.price} €` : '';
+                  })()}
+                  InputProps={{
+                    inputProps: {
+                      min: (() => {
+                        const selectedService = services.find(s => s.id === currentAppointment.service_id);
+                        return selectedService?.price || 0;
+                      })(),
+                      step: 0.01
+                    }
+                  }}
+                  sx={{ mb: 2 }}
+                />
+              </Grid>
+            )}
+
             <Grid item xs={12} md={6}>
               <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={fr}>
                 <DatePicker
@@ -678,6 +750,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                     status: e.target.value as 'pending' | 'confirmed' | 'cancelled' | 'completed'
                   })}
                   label="Statut"
+                  disabled={isPractitionerView}
                 >
                   <MenuItem value="pending">En attente</MenuItem>
                   <MenuItem value="confirmed">Confirmé</MenuItem>
@@ -686,7 +759,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                 </Select>
               </FormControl>
             </Grid>
-            
+
             <Grid item xs={12} md={6}>
               <FormControl fullWidth sx={{ mt: 1 }}>
                 <InputLabel>Statut de paiement</InputLabel>
@@ -697,6 +770,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                     payment_status: e.target.value as 'unpaid' | 'paid' | 'refunded'
                   })}
                   label="Statut de paiement"
+                  disabled={isPractitionerView}
                 >
                   <MenuItem value="unpaid">Non payé</MenuItem>
                   <MenuItem value="paid">Payé</MenuItem>

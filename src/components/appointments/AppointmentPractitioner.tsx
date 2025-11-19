@@ -18,6 +18,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
 import BadgeIcon from '@mui/icons-material/Badge';
+import PaymentIcon from '@mui/icons-material/Payment';
 import { Appointment, Practitioner, getPractitioners, supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -42,6 +43,7 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
   const [selectedPractitioner, setSelectedPractitioner] = useState<Practitioner | null>(
     appointment.practitioner || null
   );
+  const [customPrice, setCustomPrice] = useState<string>('');
 
   // Déterminer si l'utilisateur peut modifier (admin seulement)
   const canEdit = React.useMemo(() => {
@@ -73,6 +75,7 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
   // Initialiser l'intervenant sélectionné
   useEffect(() => {
     setSelectedPractitioner(appointment.practitioner || null);
+    setCustomPrice(appointment.custom_price?.toString() || '');
   }, [appointment]);
 
   const handleSave = async () => {
@@ -85,15 +88,35 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
         throw new Error('Veuillez sélectionner un intervenant');
       }
 
+      // Validation du prix si renseigné
+      let priceValue: number | null = null;
+      if (customPrice.trim()) {
+        const parsedPrice = parseFloat(customPrice);
+        if (isNaN(parsedPrice) || parsedPrice < 0) {
+          throw new Error('Le prix doit être un nombre valide positif');
+        }
+        // Vérifier que le prix n'est pas inférieur au prix du service
+        if (appointment.service && parsedPrice < appointment.service.price) {
+          throw new Error(`Le prix doit être au minimum ${appointment.service.price} €`);
+        }
+        priceValue = parsedPrice;
+      }
+
       console.log('🔵 Changement intervenant:', {
         ancien: appointment.practitioner?.id,
-        nouveau: selectedPractitioner.id
+        nouveau: selectedPractitioner.id,
+        customPrice: priceValue
       });
 
       // Mise à jour
+      const updateData: any = { practitioner_id: selectedPractitioner.id };
+      if (priceValue !== null) {
+        updateData.custom_price = priceValue;
+      }
+
       const { error: updateError } = await supabase
         .from('appointments')
-        .update({ practitioner_id: selectedPractitioner.id })
+        .update(updateData)
         .eq('id', appointment.id);
 
       if (updateError) {
@@ -147,8 +170,9 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
   };
 
   const handleCancel = () => {
-    // Réinitialiser l'intervenant sélectionné
+    // Réinitialiser l'intervenant sélectionné et le prix
     setSelectedPractitioner(appointment.practitioner || null);
+    setCustomPrice(appointment.custom_price?.toString() || '');
     setIsEditing(false);
     setError(null);
   };
@@ -168,6 +192,34 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
           >
             Modifier
           </Button>
+        )}
+        {canEdit && isEditing && (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Button
+              variant="outlined"
+              startIcon={<CancelIcon />}
+              onClick={handleCancel}
+              disabled={loading}
+              size="small"
+            >
+              Annuler
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+              onClick={handleSave}
+              disabled={loading || !selectedPractitioner}
+              size="small"
+              sx={{
+                background: 'linear-gradient(45deg, #345995, #1D3461)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1D3461, #345995)',
+                },
+              }}
+            >
+              {loading ? 'Enregistrement...' : 'Enregistrer'}
+            </Button>
+          </Box>
         )}
       </Box>
 
@@ -258,6 +310,46 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
               </Box>
             )}
           </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <PaymentIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+              <Typography variant="subtitle2" color="text.secondary">
+                Prix
+              </Typography>
+            </Box>
+            {isEditing && canEdit ? (
+              <TextField
+                fullWidth
+                type="number"
+                value={customPrice}
+                onChange={(e) => setCustomPrice(e.target.value)}
+                disabled={loading}
+                placeholder={appointment.service?.price?.toString() || '0'}
+                size="small"
+                helperText={`Laisser vide pour utiliser le prix du service (${appointment.service?.price === 9999 ? 'Sur devis' : `${appointment.service?.price} €`}). Prix minimum: ${appointment.service?.price} €`}
+                InputProps={{
+                  inputProps: {
+                    min: appointment.service?.price || 0,
+                    step: 0.01
+                  }
+                }}
+              />
+            ) : (
+              <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                {(() => {
+                  const price = appointment.custom_price ?? appointment.service?.price;
+                  if (!price) return '-';
+                  return price === 9999 ? 'Sur devis' : `${price} €`;
+                })()}
+                {appointment.custom_price && (
+                  <Typography component="span" variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                    (personnalisé)
+                  </Typography>
+                )}
+              </Typography>
+            )}
+          </Grid>
         </Grid>
 
         {!canEdit && (
@@ -266,33 +358,6 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
               <strong>Note :</strong> Seuls les administrateurs peuvent modifier l'intervenant du rendez-vous.
             </Typography>
           </Alert>
-        )}
-
-        {isEditing && (
-          <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-            <Button
-              variant="outlined"
-              startIcon={<CancelIcon />}
-              onClick={handleCancel}
-              disabled={loading}
-            >
-              Annuler
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-              onClick={handleSave}
-              disabled={loading || !selectedPractitioner}
-              sx={{
-                background: 'linear-gradient(45deg, #345995, #1D3461)',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #1D3461, #345995)',
-                },
-              }}
-            >
-              {loading ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
-          </Box>
         )}
       </Paper>
 

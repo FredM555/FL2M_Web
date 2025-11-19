@@ -307,14 +307,20 @@ export const deleteService = (serviceId: string) => {
 };
 
 // Intervenants
-export const getPractitioners = () => {
-  return supabase
+export const getPractitioners = (onlyActive: boolean = false) => {
+  let query = supabase
     .from('practitioners')
     .select(`
       *,
       profile:profiles(*)
-    `)
-    .order('priority', { ascending: false });
+    `);
+
+  // Filtrer sur les actifs si demandé
+  if (onlyActive) {
+    query = query.eq('is_active', true);
+  }
+
+  return query.order('priority', { ascending: false });
 };
 
 export const getPractitionerById = (practitionerId: string) => {

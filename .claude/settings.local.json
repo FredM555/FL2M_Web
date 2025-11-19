@@ -25,7 +25,10 @@
       "Bash(cat \"C:\\FLM\\flm-services-new\\index.html\")",
       "WebSearch",
       "Bash(psql:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(git add:*)",
+      "Bash(git push:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": []

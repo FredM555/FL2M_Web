@@ -510,7 +510,7 @@ const HomePage = () => {
               },
             }}
           >
-            Réserver une consultation
+            Prendre rendez-vous
           </Button>
         </Box>
         </Container>

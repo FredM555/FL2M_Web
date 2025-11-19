@@ -18,9 +18,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import CakeIcon from '@mui/icons-material/Cake';
 import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
-import PaymentIcon from '@mui/icons-material/Payment';
 import EmailIcon from '@mui/icons-material/Email';
-import PhoneIcon from '@mui/icons-material/Phone';
 import { Appointment, updateAppointmentBeneficiary } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 
@@ -44,9 +42,7 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
   const [lastName, setLastName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [customPrice, setCustomPrice] = useState<string>('');
 
   // Déterminer si l'utilisateur peut modifier
   const canEdit = React.useMemo(() => {
@@ -60,6 +56,11 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
       return appointment.practitioner?.user_id === profile.id;
     }
 
+    // Client peut modifier ses propres RDV
+    if (profile.user_type === 'client') {
+      return appointment.client_id === profile.id;
+    }
+
     return false;
   }, [profile, appointment]);
 
@@ -69,9 +70,7 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
     setLastName(appointment.beneficiary_last_name || '');
     setBirthDate(appointment.beneficiary_birth_date || '');
     setEmail(appointment.beneficiary_email || '');
-    setPhone(appointment.beneficiary_phone || '');
     setNotificationsEnabled(appointment.beneficiary_notifications_enabled || false);
-    setCustomPrice(appointment.custom_price?.toString() || '');
   }, [appointment]);
 
   const handleSave = async () => {
@@ -103,24 +102,12 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
         throw new Error('L\'email est requis pour recevoir des notifications');
       }
 
-      // Validation du prix si renseigné
-      let priceValue: number | null = null;
-      if (customPrice.trim()) {
-        const parsedPrice = parseFloat(customPrice);
-        if (isNaN(parsedPrice) || parsedPrice < 0) {
-          throw new Error('Le prix doit être un nombre valide positif');
-        }
-        priceValue = parsedPrice;
-      }
-
       const beneficiaryData = {
         beneficiary_first_name: firstName.trim(),
         beneficiary_last_name: lastName.trim(),
         beneficiary_birth_date: birthDate,
         beneficiary_email: email.trim() || null,
-        beneficiary_phone: phone.trim() || null,
-        beneficiary_notifications_enabled: notificationsEnabled,
-        custom_price: priceValue
+        beneficiary_notifications_enabled: notificationsEnabled
       };
 
       console.log('🔵 Données à enregistrer:', beneficiaryData);
@@ -168,29 +155,77 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
     setLastName(appointment.beneficiary_last_name || '');
     setBirthDate(appointment.beneficiary_birth_date || '');
     setEmail(appointment.beneficiary_email || '');
-    setPhone(appointment.beneficiary_phone || '');
     setNotificationsEnabled(appointment.beneficiary_notifications_enabled || false);
-    setCustomPrice(appointment.custom_price?.toString() || '');
     setIsEditing(false);
     setError(null);
   };
 
+  // Fonction pour réinitialiser avec les données du client connecté
+  const handleResetToClientData = () => {
+    if (profile && appointment.client_id === profile.id) {
+      setFirstName(profile.first_name || '');
+      setLastName(profile.last_name || '');
+      setBirthDate(profile.birth_date || '');
+      setEmail(profile.email || '');
+    }
+  };
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, gap: 2 }}>
         <Typography variant="h6" sx={{ fontWeight: 600 }}>
           Informations du bénéficiaire
         </Typography>
-        {canEdit && !isEditing && (
-          <Button
-            variant="outlined"
-            startIcon={<EditIcon />}
-            onClick={() => setIsEditing(true)}
-            size="small"
-          >
-            Modifier
-          </Button>
-        )}
+        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+          {isEditing && profile && appointment.client_id === profile.id && (
+            <Button
+              variant="text"
+              size="small"
+              onClick={handleResetToClientData}
+              sx={{ textTransform: 'none' }}
+            >
+              Utiliser mes informations
+            </Button>
+          )}
+          {canEdit && !isEditing && (
+            <Button
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => setIsEditing(true)}
+              size="small"
+            >
+              Modifier
+            </Button>
+          )}
+          {canEdit && isEditing && (
+            <>
+              <Button
+                variant="outlined"
+                startIcon={<CancelIcon />}
+                onClick={handleCancel}
+                disabled={loading}
+                size="small"
+              >
+                Annuler
+              </Button>
+              <Button
+                variant="contained"
+                startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
+                onClick={handleSave}
+                disabled={loading || !firstName.trim() || !lastName.trim() || !birthDate}
+                size="small"
+                sx={{
+                  background: 'linear-gradient(45deg, #345995, #1D3461)',
+                  '&:hover': {
+                    background: 'linear-gradient(45deg, #1D3461, #345995)',
+                  },
+                }}
+              >
+                {loading ? 'Enregistrement...' : 'Enregistrer'}
+              </Button>
+            </>
+          )}
+        </Box>
       </Box>
 
       {error && (
@@ -312,31 +347,6 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
             )}
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <PhoneIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
-              <Typography variant="subtitle2" color="text.secondary">
-                Téléphone (optionnel)
-              </Typography>
-            </Box>
-            {isEditing ? (
-              <TextField
-                fullWidth
-                type="tel"
-                value={phone}
-                onChange={(e) => setPhone(e.target.value)}
-                disabled={loading}
-                placeholder="06 12 34 56 78"
-                size="small"
-                helperText="Pour les rappels SMS"
-              />
-            ) : (
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {phone || '-'}
-              </Typography>
-            )}
-          </Grid>
-
           {isEditing && email.trim() && (
             <Grid item xs={12}>
               <FormControlLabel
@@ -357,36 +367,6 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
               />
             </Grid>
           )}
-
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <PaymentIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
-              <Typography variant="subtitle2" color="text.secondary">
-                Prix personnalisé (optionnel)
-              </Typography>
-            </Box>
-            {isEditing ? (
-              <TextField
-                fullWidth
-                type="number"
-                value={customPrice}
-                onChange={(e) => setCustomPrice(e.target.value)}
-                disabled={loading}
-                placeholder={appointment.service?.price?.toString() || '0'}
-                size="small"
-                helperText={`Laisser vide pour utiliser le prix du service (${appointment.service?.price === 9999 ? 'Sur devis' : `${appointment.service?.price} €`})`}
-                InputProps={{
-                  inputProps: { min: 0, step: 0.01 }
-                }}
-              />
-            ) : (
-              <Typography variant="body1" sx={{ fontWeight: 500, color: customPrice ? 'primary.main' : 'inherit' }}>
-                {customPrice
-                  ? `${customPrice} € (personnalisé)`
-                  : `${appointment.service?.price === 9999 ? 'Sur devis' : `${appointment.service?.price} €`} (prix du service)`}
-              </Typography>
-            )}
-          </Grid>
         </Grid>
 
         {!canEdit && (
@@ -395,33 +375,6 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
               <strong>Note :</strong> Seuls les administrateurs et l'intervenant du rendez-vous peuvent modifier ces informations.
             </Typography>
           </Alert>
-        )}
-
-        {isEditing && (
-          <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-            <Button
-              variant="outlined"
-              startIcon={<CancelIcon />}
-              onClick={handleCancel}
-              disabled={loading}
-            >
-              Annuler
-            </Button>
-            <Button
-              variant="contained"
-              startIcon={loading ? <CircularProgress size={20} /> : <SaveIcon />}
-              onClick={handleSave}
-              disabled={loading || !firstName.trim() || !lastName.trim() || !birthDate}
-              sx={{
-                background: 'linear-gradient(45deg, #345995, #1D3461)',
-                '&:hover': {
-                  background: 'linear-gradient(45deg, #1D3461, #345995)',
-                },
-              }}
-            >
-              {loading ? 'Enregistrement...' : 'Enregistrer'}
-            </Button>
-          </Box>
         )}
       </Paper>
 

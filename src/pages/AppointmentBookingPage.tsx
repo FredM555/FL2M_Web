@@ -60,6 +60,7 @@ interface AppointmentSlot {
   id: string;
   start_time: string;
   end_time: string;
+  custom_price?: number;
   service: Service;
   practitioner: {
     id: string;
@@ -673,7 +674,10 @@ const AppointmentBookingPage: React.FC = () => {
                   WebkitTextFillColor: 'transparent',
                 }}
               >
-                {selectedService.price === 9999 ? 'Nous consulter' : `${selectedService.price} €`}
+                {(() => {
+                  const price = selectedSlot.custom_price ?? selectedService.price;
+                  return price === 9999 ? 'Nous consulter' : `${price} €`;
+                })()}
               </Typography>
 
               <Box sx={{ mt: 2 }}>

@@ -18,8 +18,8 @@ export const getServices = (category?: string) => {
 };
 
 /**
- * Récupérer les intervenants disponibles
- * @returns Liste des intervenants avec leurs profils
+ * Récupérer les intervenants disponibles (uniquement les actifs)
+ * @returns Liste des intervenants actifs avec leurs profils
  */
 export const getPractitioners = () => {
   return supabase
@@ -28,6 +28,7 @@ export const getPractitioners = () => {
       *,
       profile:profiles(*)
     `)
+    .eq('is_active', true)
     .order('priority', { ascending: false });
 };
 
@@ -276,12 +277,30 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
  * @param practitionerId ID de l'intervenant (optionnel)
  * @returns Liste des créneaux disponibles
  */
-export const getAvailableAppointments = (
+export const getAvailableAppointments = async (
   startDate: string,
   endDate: string,
   serviceId: string,
   practitionerId?: string
 ) => {
+  // D'abord, récupérer les IDs des practitioners actifs
+  const { data: activePractitioners, error: practitionersError } = await supabase
+    .from('practitioners')
+    .select('id')
+    .eq('is_active', true);
+
+  if (practitionersError) {
+    return { data: null, error: practitionersError };
+  }
+
+  // Extraire les IDs
+  const activePractitionerIds = activePractitioners?.map(p => p.id) || [];
+
+  // Si aucun practitioner actif, retourner une liste vide
+  if (activePractitionerIds.length === 0) {
+    return { data: [], error: null };
+  }
+
   // Construire la requête de base
   let query = supabase
     .from('appointments')
@@ -297,13 +316,14 @@ export const getAvailableAppointments = (
     .gte('start_time', startDate)
     .lte('start_time', endDate)
     .not('status', 'eq', 'cancelled')
-    .eq('service_id', serviceId);
-  
+    .eq('service_id', serviceId)
+    .in('practitioner_id', activePractitionerIds); // Filtrer uniquement les intervenants actifs
+
   // Ajouter le filtre d'intervenant si spécifié
   if (practitionerId) {
     query = query.eq('practitioner_id', practitionerId);
   }
-  
+
   return query.order('start_time', { ascending: true });
 };
 
@@ -314,7 +334,7 @@ export const getAvailableAppointments = (
  * @param practitionerId ID de l'intervenant (optionnel)
  * @returns Liste des créneaux disponibles pour cette semaine
  */
-export const getAvailableAppointmentsByWeek = (
+export const getAvailableAppointmentsByWeek = async (
   weekDate: string,
   serviceId: string,
   practitionerId?: string
@@ -323,11 +343,11 @@ export const getAvailableAppointmentsByWeek = (
   const date = parseISO(weekDate);
   const start = startOfWeek(date, { weekStartsOn: 1 }); // Lundi
   const end = endOfWeek(date, { weekStartsOn: 1 }); // Dimanche
-  
+
   const startWeekDate = format(start, "yyyy-MM-dd'T'HH:mm:ss'Z'");
   const endWeekDate = format(end, "yyyy-MM-dd'T'23:59:59'Z'");
-  
-  return getAvailableAppointments(startWeekDate, endWeekDate, serviceId, practitionerId);
+
+  return await getAvailableAppointments(startWeekDate, endWeekDate, serviceId, practitionerId);
 };
 
 /**
@@ -337,23 +357,23 @@ export const getAvailableAppointmentsByWeek = (
  * @param practitionerId ID de l'intervenant (optionnel)
  * @returns Liste des créneaux disponibles pour ce mois
  */
-export const getAvailableAppointmentsByMonth = (
+export const getAvailableAppointmentsByMonth = async (
   yearMonth: string,
   serviceId: string,
   practitionerId?: string
 ) => {
   // Extraire l'année et le mois
   const [year, month] = yearMonth.split('-').map(num => parseInt(num));
-  
+
   // Premier jour du mois
   const startDate = new Date(year, month - 1, 1);
   // Dernier jour du mois
   const endDate = new Date(year, month, 0, 23, 59, 59);
-  
+
   const startMonthDate = format(startDate, "yyyy-MM-dd'T'00:00:00'Z'");
   const endMonthDate = format(endDate, "yyyy-MM-dd'T'23:59:59'Z'");
-  
-  return getAvailableAppointments(startMonthDate, endMonthDate, serviceId, practitionerId);
+
+  return await getAvailableAppointments(startMonthDate, endMonthDate, serviceId, practitionerId);
 };
 
 /**
@@ -371,23 +391,40 @@ export const getAvailableWeeks = async (
   // Définir les dates par défaut si non fournies
   const today = new Date();
   const defaultStartDate = format(today, "yyyy-MM-dd'T'00:00:00'Z'");
-  
+
   const threeMonthsLater = new Date(today);
   threeMonthsLater.setMonth(today.getMonth() + 3);
   const defaultEndDate = format(threeMonthsLater, "yyyy-MM-dd'T'23:59:59'Z'");
-  
+
   // Utiliser les dates fournies ou les dates par défaut
   const fromDate = startDate || defaultStartDate;
   const toDate = endDate || defaultEndDate;
-  
+
   try {
-    // Récupérer tous les rendez-vous disponibles dans la période
+    // D'abord, récupérer les IDs des practitioners actifs
+    const { data: activePractitioners, error: practitionersError } = await supabase
+      .from('practitioners')
+      .select('id')
+      .eq('is_active', true);
+
+    if (practitionersError) throw practitionersError;
+
+    // Extraire les IDs
+    const activePractitionerIds = activePractitioners?.map(p => p.id) || [];
+
+    // Si aucun practitioner actif, retourner une liste vide
+    if (activePractitionerIds.length === 0) {
+      return { data: [] };
+    }
+
+    // Récupérer tous les rendez-vous disponibles dans la période (uniquement pour les intervenants actifs)
     const { data, error } = await supabase
       .from('appointments')
       .select(`start_time`)
       .is('client_id', null)
       .not('status', 'eq', 'cancelled')
       .eq('service_id', serviceId)
+      .in('practitioner_id', activePractitionerIds)
       .gte('start_time', fromDate)
       .lte('start_time', toDate)
       .order('start_time', { ascending: true });
