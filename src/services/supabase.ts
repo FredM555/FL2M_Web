@@ -486,6 +486,33 @@ export const getAppointmentById = (appointmentId: string) => {
 };
 
 export const createAppointment = async (appointmentData: Partial<Appointment>) => {
+  // Vérifier les conflits de créneau avant de créer le rendez-vous
+  if (appointmentData.practitioner_id && appointmentData.service_id &&
+      appointmentData.start_time && appointmentData.end_time) {
+    try {
+      const { checkAppointmentConflict } = await import('./supabase-appointments');
+      const conflict = await checkAppointmentConflict(
+        appointmentData.practitioner_id,
+        appointmentData.service_id,
+        appointmentData.start_time,
+        appointmentData.end_time
+      );
+
+      if (conflict.hasConflict) {
+        return {
+          data: null,
+          error: {
+            message: 'Ce créneau horaire est déjà occupé pour cet intervenant et ce service. Veuillez choisir un autre créneau.',
+            code: 'APPOINTMENT_CONFLICT',
+            details: conflict.conflictingAppointment
+          }
+        };
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification des conflits:', error);
+    }
+  }
+
   const result = await supabase
     .from('appointments')
     .insert(appointmentData)
@@ -511,12 +538,69 @@ export const createAppointment = async (appointmentData: Partial<Appointment>) =
 };
 
 export const updateAppointment = async (appointmentId: string, appointmentData: Partial<Appointment>) => {
+  // Vérifier les conflits de créneau avant de modifier le rendez-vous
+  // Seulement si les informations critiques sont modifiées
+  if (appointmentData.practitioner_id || appointmentData.service_id ||
+      appointmentData.start_time || appointmentData.end_time) {
+    try {
+      // Récupérer les données actuelles du rendez-vous
+      const { data: currentAppointment, error: fetchError } = await supabase
+        .from('appointments')
+        .select('practitioner_id, service_id, start_time, end_time')
+        .eq('id', appointmentId)
+        .single();
+
+      if (!fetchError && currentAppointment) {
+        // Utiliser les nouvelles valeurs ou les valeurs actuelles
+        const practitionerId = appointmentData.practitioner_id || currentAppointment.practitioner_id;
+        const serviceId = appointmentData.service_id || currentAppointment.service_id;
+        const startTime = appointmentData.start_time || currentAppointment.start_time;
+        const endTime = appointmentData.end_time || currentAppointment.end_time;
+
+        const { checkAppointmentConflict } = await import('./supabase-appointments');
+        const conflict = await checkAppointmentConflict(
+          practitionerId,
+          serviceId,
+          startTime,
+          endTime,
+          appointmentId // Exclure ce rendez-vous de la recherche
+        );
+
+        if (conflict.hasConflict) {
+          return {
+            data: null,
+            error: {
+              message: 'Ce créneau horaire est déjà occupé pour cet intervenant et ce service. Veuillez choisir un autre créneau.',
+              code: 'APPOINTMENT_CONFLICT',
+              details: conflict.conflictingAppointment
+            }
+          };
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors de la vérification des conflits:', error);
+    }
+  }
+
   const result = await supabase
     .from('appointments')
     .update(appointmentData)
     .eq('id', appointmentId)
     .select()
     .single();
+
+  // Suspendre les rendez-vous conflictuels si le statut passe à "confirmed"
+  if (!result.error && result.data && result.data.status === 'confirmed') {
+    const { suspendConflictingAppointments } = await import('./supabase-appointments');
+    suspendConflictingAppointments(
+      result.data.practitioner_id,
+      result.data.start_time,
+      result.data.end_time,
+      appointmentId
+    ).catch(err =>
+      console.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
+    );
+  }
 
   // Logger la mise à jour du rendez-vous si succès
   if (!result.error && result.data) {
@@ -543,6 +627,19 @@ export const updateAppointmentStatus = async (appointmentId: string, status: str
     .eq('id', appointmentId)
     .select()
     .single();
+
+  // Suspendre les rendez-vous conflictuels si le statut passe à "confirmed"
+  if (!result.error && result.data && status === 'confirmed') {
+    const { suspendConflictingAppointments } = await import('./supabase-appointments');
+    suspendConflictingAppointments(
+      result.data.practitioner_id,
+      result.data.start_time,
+      result.data.end_time,
+      appointmentId
+    ).catch(err =>
+      console.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
+    );
+  }
 
   // Logger le changement de statut si succès
   if (!result.error && result.data && result.data.client_id) {

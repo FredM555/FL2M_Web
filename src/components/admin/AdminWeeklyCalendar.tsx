@@ -42,7 +42,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { fr } from 'date-fns/locale';
 import { format, parseISO, addDays, addMinutes, addWeeks } from 'date-fns';
-import { supabase } from '../../services/supabase';
+import { supabase, createAppointment, updateAppointment } from '../../services/supabase';
 
 // Types
 interface Service {
@@ -500,20 +500,29 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
       }
 
       if (dialogMode === 'edit' && currentAppointment.id) {
-        // Mise à jour
-        const { error } = await supabase
-          .from('appointments')
-          .update(appointmentData)
-          .eq('id', currentAppointment.id);
+        // Mise à jour - utiliser la fonction updateAppointment pour bénéficier de la validation
+        const { error } = await updateAppointment(currentAppointment.id, appointmentData);
 
-        if (error) throw error;
+        if (error) {
+          // Gérer spécifiquement les erreurs de conflit
+          if (error.code === 'APPOINTMENT_CONFLICT') {
+            if (setError) setError(error.message);
+            return;
+          }
+          throw error;
+        }
       } else {
-        // Création ou copie simple
-        const { error } = await supabase
-          .from('appointments')
-          .insert([appointmentData]);
+        // Création ou copie simple - utiliser la fonction createAppointment pour bénéficier de la validation
+        const { error } = await createAppointment(appointmentData);
 
-        if (error) throw error;
+        if (error) {
+          // Gérer spécifiquement les erreurs de conflit
+          if (error.code === 'APPOINTMENT_CONFLICT') {
+            if (setError) setError(error.message);
+            return;
+          }
+          throw error;
+        }
       }
 
       // Fermer le dialogue et rafraîchir la liste
@@ -530,24 +539,25 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
       if (!selectedDate || !selectedTime || !currentAppointment.practitioner_id || !currentAppointment.service_id) {
         throw new Error('Informations incomplètes pour la copie');
       }
-      
+
       // Trouver la durée du service pour calculer end_time
       const selectedService = services.find(s => s.id === currentAppointment.service_id);
       const duration = selectedService?.duration || 60; // Par défaut 60 minutes
-      
+
       // Préparer la base du rendez-vous
-      const baseAppointmentData = {
-        client_id: null,
+      const baseAppointmentData: any = {
         practitioner_id: currentAppointment.practitioner_id,
         service_id: currentAppointment.service_id,
         status: 'pending',
         payment_status: 'unpaid',
         notes: currentAppointment.notes,
       };
-      
-      // Créer un tableau de rendez-vous à insérer
-      const appointmentsToInsert = [];
-      
+
+      // Créer les rendez-vous un par un en validant chacun
+      let successCount = 0;
+      let conflictCount = 0;
+      const errors: string[] = [];
+
       for (let i = 0; i < copyCount; i++) {
         // Calculer la date pour cette copie
         let copyDate = new Date(
@@ -557,34 +567,47 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
           selectedTime.getHours(),
           selectedTime.getMinutes()
         );
-        
+
         // Ajouter l'intervalle selon l'unité choisie
         if (copyIntervalUnit === 'days') {
           copyDate = addDays(copyDate, i * copyInterval);
         } else if (copyIntervalUnit === 'weeks') {
           copyDate = addWeeks(copyDate, i * copyInterval);
         }
-        
+
         // Calculer l'heure de fin
         const endTime = addMinutes(copyDate, duration);
-        
-        appointmentsToInsert.push({
+
+        const appointmentData = {
           ...baseAppointmentData,
           start_time: copyDate.toISOString(),
           end_time: endTime.toISOString(),
-        });
+        };
+
+        // Utiliser createAppointment pour bénéficier de la validation
+        const { error } = await createAppointment(appointmentData);
+
+        if (error) {
+          if (error.code === 'APPOINTMENT_CONFLICT') {
+            conflictCount++;
+            errors.push(`${format(copyDate, 'dd/MM/yyyy HH:mm')} : conflit de créneau`);
+          } else {
+            errors.push(`${format(copyDate, 'dd/MM/yyyy HH:mm')} : ${error.message}`);
+          }
+        } else {
+          successCount++;
+        }
       }
-      
-      // Insérer tous les rendez-vous
-      const { error } = await supabase
-        .from('appointments')
-        .insert(appointmentsToInsert);
-      
-      if (error) throw error;
-      
+
       // Fermer le dialogue et rafraîchir la liste
       handleCloseDialog();
       notifyAppointmentChange();
+
+      // Afficher un résumé si certains rendez-vous n'ont pas pu être créés
+      if (conflictCount > 0 || errors.length > 0) {
+        const message = `${successCount} rendez-vous créé(s) avec succès.\n${conflictCount} conflit(s) détecté(s).\n${errors.length > 3 ? errors.slice(0, 3).join('\n') + '\n...' : errors.join('\n')}`;
+        if (setError) setError(message);
+      }
 
     } catch (err: any) {
       if (setError) setError(`Erreur lors de la création des copies : ${err.message}`);
@@ -903,17 +926,19 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                               const formattedStartTime = format(startTime, 'HH:mm');
                               const isBooked = appointment.client_id !== null;
                               const isPaid = appointment.payment_status === 'paid';
-                              
+                              const isCancelled = appointment.status === 'cancelled';
+
                               return (
                                 <Box
                                   key={appointment.id}
                                   sx={{
                                     border: '1px solid',
-                                    borderColor: isBooked ? 'success.main' : 'divider',
+                                    borderColor: isCancelled ? 'error.main' : (isBooked ? 'success.main' : 'divider'),
                                     borderRadius: 1,
                                     p: 1,
-                                    backgroundColor: isBooked ? 'success.50' : 'rgba(0, 0, 0, 0.04)',
+                                    backgroundColor: isCancelled ? 'rgba(211, 47, 47, 0.1)' : (isBooked ? 'success.50' : 'rgba(0, 0, 0, 0.04)'),
                                     position: 'relative',
+                                    opacity: isCancelled ? 0.7 : 1,
                                     '&:hover': {
                                       boxShadow: 1
                                     },
@@ -969,7 +994,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                                   {isBooked ? (
                                     <Box>
                                       <Typography variant="caption" fontWeight="bold" display="block">
-                                        {appointment.client?.first_name} {appointment.client?.last_name} 
+                                        {appointment.client?.first_name} {appointment.client?.last_name}
                                         </Typography>
                                       {appointment.beneficiary_birth_date && (
                                         <Typography variant="caption" display="block">
@@ -979,6 +1004,16 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                                     </Box>
                                   ) : (
                                     <Chip label="Disponible" color="default" size="small" sx={{ mt: 0.5 }} />
+                                  )}
+
+                                  {/* Afficher le statut si annulé */}
+                                  {appointment.status === 'cancelled' && (
+                                    <Chip
+                                      label="Annulé"
+                                      color="error"
+                                      size="small"
+                                      sx={{ mt: 0.5 }}
+                                    />
                                   )}
                                   
                                   <Box sx={{ 

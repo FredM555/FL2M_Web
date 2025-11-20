@@ -3,17 +3,168 @@ import { supabase, Appointment, logActivity } from './supabase';
 import { startOfWeek, endOfWeek, format, parseISO } from 'date-fns';
 
 /**
+ * Vérifie s'il existe un conflit de créneau pour un intervenant et un service donnés
+ * @param practitionerId ID de l'intervenant
+ * @param serviceId ID du service/module
+ * @param startTime Heure de début du nouveau rendez-vous
+ * @param endTime Heure de fin du nouveau rendez-vous
+ * @param excludeAppointmentId ID du rendez-vous à exclure (pour les modifications)
+ * @returns true s'il y a un conflit, false sinon
+ */
+export const checkAppointmentConflict = async (
+  practitionerId: string,
+  serviceId: string,
+  startTime: string,
+  endTime: string,
+  excludeAppointmentId?: string
+): Promise<{ hasConflict: boolean; conflictingAppointment?: any }> => {
+  try {
+    // Requête pour trouver les rendez-vous qui se chevauchent
+    // Deux créneaux se chevauchent si : new_start < existing_end AND new_end > existing_start
+    let query = supabase
+      .from('appointments')
+      .select('*')
+      .eq('practitioner_id', practitionerId)
+      .eq('service_id', serviceId)
+      .not('status', 'eq', 'cancelled') // Ignorer les rendez-vous annulés
+      .lt('start_time', endTime) // existing_start < new_end
+      .gt('end_time', startTime); // existing_end > new_start
+
+    // Exclure le rendez-vous en cours de modification
+    if (excludeAppointmentId) {
+      query = query.neq('id', excludeAppointmentId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Erreur lors de la vérification des conflits:', error);
+      throw error;
+    }
+
+    if (data && data.length > 0) {
+      return {
+        hasConflict: true,
+        conflictingAppointment: data[0]
+      };
+    }
+
+    return { hasConflict: false };
+  } catch (error) {
+    console.error('Exception dans checkAppointmentConflict:', error);
+    throw error;
+  }
+};
+
+/**
+ * Suspend (annule) automatiquement les rendez-vous du même intervenant sur le même créneau
+ * mais pour des modules différents lorsqu'un rendez-vous est confirmé
+ * @param practitionerId ID de l'intervenant
+ * @param startTime Heure de début du rendez-vous confirmé
+ * @param endTime Heure de fin du rendez-vous confirmé
+ * @param confirmedAppointmentId ID du rendez-vous confirmé à exclure
+ * @returns Nombre de rendez-vous suspendus et liste des rendez-vous suspendus
+ */
+export const suspendConflictingAppointments = async (
+  practitionerId: string,
+  startTime: string,
+  endTime: string,
+  confirmedAppointmentId: string
+): Promise<{ suspendedCount: number; suspendedAppointments: any[] }> => {
+  try {
+    // 1. Récupérer le service_id du rendez-vous confirmé
+    const { data: confirmedAppointment, error: fetchError } = await supabase
+      .from('appointments')
+      .select('service_id')
+      .eq('id', confirmedAppointmentId)
+      .single();
+
+    if (fetchError) {
+      console.error('Erreur lors de la récupération du rendez-vous confirmé:', fetchError);
+      throw fetchError;
+    }
+
+    // 2. Trouver tous les rendez-vous qui se chevauchent avec le même intervenant
+    // Deux créneaux se chevauchent si : new_start < existing_end AND new_end > existing_start
+    const { data, error } = await supabase
+      .from('appointments')
+      .select('*')
+      .eq('practitioner_id', practitionerId)
+      .not('status', 'eq', 'cancelled') // Ignorer les rendez-vous déjà annulés
+      .neq('id', confirmedAppointmentId) // Exclure le rendez-vous confirmé
+      .neq('service_id', confirmedAppointment.service_id) // Exclure les rendez-vous du même module
+      .lt('start_time', endTime) // existing_start < new_end
+      .gt('end_time', startTime); // existing_end > new_start
+
+    if (error) {
+      console.error('Erreur lors de la recherche des rendez-vous conflictuels:', error);
+      throw error;
+    }
+
+    // 3. Si aucun rendez-vous à suspendre, retourner
+    if (!data || data.length === 0) {
+      return { suspendedCount: 0, suspendedAppointments: [] };
+    }
+
+    // 4. Suspendre (annuler) tous ces rendez-vous
+    const appointmentIds = data.map(a => a.id);
+
+    const { data: updatedAppointments, error: updateError } = await supabase
+      .from('appointments')
+      .update({
+        status: 'cancelled',
+        notes: 'Suspendu automatiquement car un autre rendez-vous a été confirmé sur ce créneau',
+        updated_at: new Date().toISOString()
+      })
+      .in('id', appointmentIds)
+      .select();
+
+    if (updateError) {
+      console.error('Erreur lors de la suspension des rendez-vous:', updateError);
+      throw updateError;
+    }
+
+    // 5. Logger l'action pour chaque rendez-vous suspendu
+    for (const appointment of data) {
+      if (appointment.client_id) {
+        logActivity({
+          userId: appointment.client_id,
+          actionType: 'appointment_cancelled',
+          actionDescription: 'Rendez-vous suspendu automatiquement suite à la confirmation d\'un autre rendez-vous du même intervenant',
+          entityType: 'appointment',
+          entityId: appointment.id,
+          metadata: {
+            auto_suspended: true,
+            confirmed_appointment_id: confirmedAppointmentId
+          }
+        }).catch(err => console.warn('Erreur log suspension auto RDV:', err));
+      }
+    }
+
+    console.log(`${data.length} rendez-vous suspendu(s) automatiquement`);
+
+    return {
+      suspendedCount: data.length,
+      suspendedAppointments: updatedAppointments || []
+    };
+  } catch (error) {
+    console.error('Exception dans suspendConflictingAppointments:', error);
+    throw error;
+  }
+};
+
+/**
  * Récupérer les services disponibles, éventuellement filtrés par catégorie
  * @param category Catégorie optionnelle pour filtrer les services
  * @returns Liste des services
  */
 export const getServices = (category?: string) => {
   let query = supabase.from('services').select('*');
-  
+
   if (category) {
     query = query.eq('category', category);
   }
-  
+
   return query.order('name');
 };
 
@@ -80,6 +231,18 @@ export const bookAppointment = async (
       .single();
 
     if (updateError) throw updateError;
+
+    // Suspendre les autres rendez-vous du même intervenant sur le même créneau
+    if (data) {
+      suspendConflictingAppointments(
+        data.practitioner_id,
+        data.start_time,
+        data.end_time,
+        data.id
+      ).catch(err =>
+        console.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
+      );
+    }
 
     // Envoyer les emails de confirmation
     if (data) {
