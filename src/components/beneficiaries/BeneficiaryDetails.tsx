@@ -18,7 +18,6 @@ import {
   Description as DescriptionIcon,
 } from '@mui/icons-material';
 import { BeneficiaryWithAccess, formatBirthDate, calculateAge } from '../../types/beneficiary';
-import { BeneficiaryDocuments } from './BeneficiaryDocuments';
 import {
   BeneficiaryDocument,
   DOCUMENT_TYPE_LABELS,
@@ -491,14 +490,6 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
           )}
         </Paper>
       )}
-
-      {/* Documents du bénéficiaire */}
-      <Paper sx={{ p: 3 }}>
-        <BeneficiaryDocuments
-          beneficiaryId={beneficiary.id}
-          canEdit={beneficiary.can_edit}
-        />
-      </Paper>
 
       {/* PDF Viewer pour les raccourcis */}
       {viewerDocument && (

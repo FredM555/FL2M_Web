@@ -20,6 +20,7 @@ import { BeneficiaryHistory } from '../components/beneficiaries/BeneficiaryHisto
 import { BeneficiaryStats } from '../components/beneficiaries/BeneficiaryStats';
 import { BeneficiaryAccessManager } from '../components/beneficiaries/BeneficiaryAccessManager';
 import { BeneficiaryDetails } from '../components/beneficiaries/BeneficiaryDetails';
+import { BeneficiaryDocuments } from '../components/beneficiaries/BeneficiaryDocuments';
 import {
   getUserBeneficiaries,
   createBeneficiary,
@@ -277,6 +278,7 @@ export const BeneficiariesPage: React.FC = () => {
                 {/* Onglets */}
                 <Tabs value={detailTab} onChange={(_e, newValue) => setDetailTab(newValue)}>
                   <Tab label="Informations" />
+                  <Tab label="Documents" />
                   <Tab label="Statistiques" />
                   <Tab label="Historique" />
                   <Tab label="Accès partagés" />
@@ -290,8 +292,14 @@ export const BeneficiariesPage: React.FC = () => {
                       userType={profile?.user_type}
                     />
                   )}
-                  {detailTab === 1 && <BeneficiaryStats beneficiaryId={selectedBeneficiary.id} />}
-                  {detailTab === 2 && (
+                  {detailTab === 1 && (
+                    <BeneficiaryDocuments
+                      beneficiaryId={selectedBeneficiary.id}
+                      canEdit={selectedBeneficiary.can_edit}
+                    />
+                  )}
+                  {detailTab === 2 && <BeneficiaryStats beneficiaryId={selectedBeneficiary.id} />}
+                  {detailTab === 3 && (
                     <BeneficiaryHistory
                       beneficiaryId={selectedBeneficiary.id}
                       onViewAppointment={(id) => {
@@ -300,7 +308,7 @@ export const BeneficiariesPage: React.FC = () => {
                       }}
                     />
                   )}
-                  {detailTab === 3 && (
+                  {detailTab === 4 && (
                     <BeneficiaryAccessManager
                       beneficiary={selectedBeneficiary}
                     />

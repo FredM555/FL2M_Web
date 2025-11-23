@@ -14,10 +14,6 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -65,9 +61,6 @@ const validationSchema = Yup.object({
     .max(20, 'Le numéro de téléphone ne peut pas dépasser 20 caractères'),
 
   notifications_enabled: Yup.boolean(),
-
-  relationship: Yup.string()
-    .oneOf(['self', 'child', 'spouse', 'partner', 'parent', 'sibling', 'grandparent', 'grandchild', 'managed', 'other'], 'Relation invalide'),
 
   // Numérologie
   tronc: Yup.number()
@@ -151,8 +144,6 @@ export const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({
     email: beneficiary?.email || '',
     phone: beneficiary?.phone || '',
     notifications_enabled: beneficiary?.notifications_enabled || false,
-    // Convertir 'owner' en 'self' pour compatibilité
-    relationship: beneficiary?.relationship === 'owner' ? 'self' : (beneficiary?.relationship || 'other'),
     tronc: beneficiary?.tronc || null,
     racine_1: beneficiary?.racine_1 || null,
     racine_2: beneficiary?.racine_2 || null,
@@ -365,36 +356,6 @@ export const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({
                       helperText={touched.phone && errors.phone}
                       disabled={isSubmitting || loading}
                     />
-                  </Grid>
-
-                  <Grid item xs={12} sm={6}>
-                    <FormControl fullWidth error={touched.relationship && Boolean(errors.relationship)}>
-                      <InputLabel>Relation</InputLabel>
-                      <Select
-                        name="relationship"
-                        value={values.relationship}
-                        onChange={handleChange}
-                        onBlur={handleBlur}
-                        label="Relation"
-                        disabled={isSubmitting || loading}
-                      >
-                        <MenuItem value="self">Moi-même</MenuItem>
-                        <MenuItem value="child">Enfant</MenuItem>
-                        <MenuItem value="spouse">Conjoint(e)</MenuItem>
-                        <MenuItem value="partner">Partenaire</MenuItem>
-                        <MenuItem value="parent">Parent</MenuItem>
-                        <MenuItem value="sibling">Frère/Sœur</MenuItem>
-                        <MenuItem value="grandparent">Grand-parent</MenuItem>
-                        <MenuItem value="grandchild">Petit-enfant</MenuItem>
-                        <MenuItem value="managed">Géré</MenuItem>
-                        <MenuItem value="other">Autre</MenuItem>
-                      </Select>
-                      {touched.relationship && errors.relationship && (
-                        <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.5 }}>
-                          {errors.relationship}
-                        </Typography>
-                      )}
-                    </FormControl>
                   </Grid>
 
                   {values.email && (
