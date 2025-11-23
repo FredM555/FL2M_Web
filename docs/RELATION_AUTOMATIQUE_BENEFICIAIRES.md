@@ -2,6 +2,8 @@
 
 ## 📋 Fonctionnement
 
+
+
 Lors de la création d'un bénéficiaire, la relation est **automatiquement définie** :
 
 ### 1️⃣ Premier bénéficiaire
