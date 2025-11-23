@@ -4,14 +4,12 @@ import {
   Box,
   Autocomplete,
   TextField,
-  Button,
   Chip,
   Typography,
   Avatar,
-  Paper,
   Alert,
 } from '@mui/material';
-import { Add as AddIcon, CakeOutlined as CakeIcon } from '@mui/icons-material';
+import { CakeOutlined as CakeIcon } from '@mui/icons-material';
 import { BeneficiaryWithAccess } from '../../types/beneficiary';
 import { calculateAge } from '../../types/beneficiary';
 
@@ -161,23 +159,6 @@ export const BeneficiarySelector: React.FC<BeneficiarySelectorProps> = ({
             );
           })
         }
-        PaperComponent={({ children }) => (
-          <Paper>
-            {children}
-            {allowCreate && onCreateNew && (
-              <Box sx={{ borderTop: 1, borderColor: 'divider', p: 1 }}>
-                <Button
-                  fullWidth
-                  startIcon={<AddIcon />}
-                  onClick={onCreateNew}
-                  sx={{ justifyContent: 'flex-start', textTransform: 'none' }}
-                >
-                  Créer un nouveau bénéficiaire
-                </Button>
-              </Box>
-            )}
-          </Paper>
-        )}
       />
 
       {/* Alertes de limite */}

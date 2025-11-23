@@ -27,11 +27,14 @@ import {
   Checkbox,
   FormControlLabel,
   Dialog,
-  DialogContent
+  DialogContent,
+  DialogTitle,
+  DialogActions
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import AddIcon from '@mui/icons-material/Add';
 import {
   getServices,
   getPractitioners,
@@ -45,7 +48,8 @@ import { BeneficiaryWithAccess, CreateBeneficiaryData, UpdateBeneficiaryData } f
 import {
   getUserBeneficiaries,
   createBeneficiary,
-  addBeneficiaryToAppointment
+  addBeneficiaryToAppointment,
+  checkDuplicateBeneficiary
 } from '../services/beneficiaries';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { Service, Practitioner, Appointment } from '../services/supabase';
@@ -120,6 +124,11 @@ const AppointmentBookingPage: React.FC = () => {
   const [showBeneficiaryDialog, setShowBeneficiaryDialog] = useState(false);
   const [notes, setNotes] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
+
+  // Gestion de la confirmation de doublon
+  const [duplicateConfirmationOpen, setDuplicateConfirmationOpen] = useState(false);
+  const [pendingBeneficiaryData, setPendingBeneficiaryData] = useState<CreateBeneficiaryData | null>(null);
+  const [existingBeneficiaries, setExistingBeneficiaries] = useState<any[]>([]);
   
   // Charger les catégories et services initiaux
   useEffect(() => {
@@ -257,8 +266,17 @@ const AppointmentBookingPage: React.FC = () => {
       return;
     }
 
-    if (selectedBeneficiaryIds.length === 0) {
-      setError('Veuillez sélectionner au moins un bénéficiaire pour ce rendez-vous.');
+    // Validation du nombre de bénéficiaires selon le service
+    const minBeneficiaries = selectedService?.min_beneficiaries || 1;
+    const maxBeneficiaries = selectedService?.max_beneficiaries || 1;
+
+    if (selectedBeneficiaryIds.length < minBeneficiaries) {
+      setError(`Ce service nécessite au moins ${minBeneficiaries} bénéficiaire${minBeneficiaries > 1 ? 's' : ''}.`);
+      return;
+    }
+
+    if (selectedBeneficiaryIds.length > maxBeneficiaries) {
+      setError(`Ce service autorise au maximum ${maxBeneficiaries} bénéficiaire${maxBeneficiaries > 1 ? 's' : ''}.`);
       return;
     }
 
@@ -353,7 +371,38 @@ const AppointmentBookingPage: React.FC = () => {
   const handleCreateBeneficiary = async (data: CreateBeneficiaryData | UpdateBeneficiaryData) => {
     try {
       setLoading(true);
-      const { data: newBeneficiary, error: createError } = await createBeneficiary(data as CreateBeneficiaryData);
+      const beneficiaryData = data as CreateBeneficiaryData;
+
+      // Vérifier si un bénéficiaire existe déjà avec la même date de naissance
+      if (beneficiaryData.birth_date) {
+        const { exists, beneficiaries } = await checkDuplicateBeneficiary(beneficiaryData.birth_date);
+
+        if (exists && beneficiaries.length > 0) {
+          // Afficher la confirmation de doublon
+          setPendingBeneficiaryData(beneficiaryData);
+          setExistingBeneficiaries(beneficiaries);
+          setDuplicateConfirmationOpen(true);
+          setLoading(false);
+          return; // Attendre la confirmation de l'utilisateur
+        }
+      }
+
+      // Pas de doublon ou pas de date de naissance, créer directement
+      await confirmCreateBeneficiary(beneficiaryData);
+    } catch (err: any) {
+      console.error('Erreur lors de la création du bénéficiaire:', err);
+      setError(err.message || 'Erreur lors de la création du bénéficiaire');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Créer le bénéficiaire après confirmation (ou directement si pas de doublon)
+  const confirmCreateBeneficiary = async (beneficiaryData: CreateBeneficiaryData) => {
+    try {
+      setLoading(true);
+      const { data: newBeneficiary, error: createError } = await createBeneficiary(beneficiaryData);
 
       if (createError) throw createError;
 
@@ -362,11 +411,19 @@ const AppointmentBookingPage: React.FC = () => {
         const { data: updatedBeneficiaries } = await getUserBeneficiaries();
         setUserBeneficiaries(updatedBeneficiaries || []);
 
-        // Sélectionner automatiquement le nouveau bénéficiaire
-        setSelectedBeneficiaryIds([newBeneficiary.id]);
+        // Ajouter automatiquement le nouveau bénéficiaire à la sélection (en respectant le max)
+        const maxBeneficiaries = selectedService?.max_beneficiaries || 1;
+        if (selectedBeneficiaryIds.length < maxBeneficiaries) {
+          setSelectedBeneficiaryIds([...selectedBeneficiaryIds, newBeneficiary.id]);
+        } else {
+          // Si on a atteint le max, remplacer le dernier
+          setSelectedBeneficiaryIds([...selectedBeneficiaryIds.slice(0, -1), newBeneficiary.id]);
+        }
 
-        // Fermer le dialog
+        // Fermer les dialogs
         setShowBeneficiaryDialog(false);
+        setDuplicateConfirmationOpen(false);
+        setPendingBeneficiaryData(null);
       }
     } catch (err: any) {
       console.error('Erreur lors de la création du bénéficiaire:', err);
@@ -375,6 +432,13 @@ const AppointmentBookingPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Annuler la création après détection de doublon
+  const handleCancelDuplicate = () => {
+    setDuplicateConfirmationOpen(false);
+    setPendingBeneficiaryData(null);
+    setExistingBeneficiaries([]);
   };
   
   // Si l'utilisateur n'est pas connecté, le rediriger vers la page de connexion
@@ -770,14 +834,48 @@ const AppointmentBookingPage: React.FC = () => {
         </Typography>
         
         <Box sx={{ mb: 3 }}>
-          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500 }}>
-            Bénéficiaire(s) du rendez-vous *
-          </Typography>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 500 }}>
+              Bénéficiaire(s) du rendez-vous *
+            </Typography>
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={() => setShowBeneficiaryDialog(true)}
+              sx={{
+                background: 'linear-gradient(45deg, #345995, #1D3461)',
+                color: 'white',
+                textTransform: 'none',
+                fontWeight: 600,
+                px: 2,
+                py: 1,
+                borderRadius: 2,
+                boxShadow: '0 4px 12px rgba(52, 89, 149, 0.3)',
+                '&:hover': {
+                  background: 'linear-gradient(45deg, #1D3461, #345995)',
+                  boxShadow: '0 6px 16px rgba(52, 89, 149, 0.4)',
+                  transform: 'translateY(-2px)',
+                },
+                transition: 'all 0.3s ease',
+              }}
+            >
+              Créer un bénéficiaire
+            </Button>
+          </Box>
+          {selectedService && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              {selectedService.min_beneficiaries === selectedService.max_beneficiaries ? (
+                `Ce service nécessite exactement ${selectedService.min_beneficiaries} bénéficiaire${selectedService.min_beneficiaries > 1 ? 's' : ''}.`
+              ) : (
+                `Ce service nécessite entre ${selectedService.min_beneficiaries} et ${selectedService.max_beneficiaries} bénéficiaires.`
+              )}
+            </Alert>
+          )}
           <BeneficiarySelector
             value={selectedBeneficiaryIds}
             onChange={setSelectedBeneficiaryIds}
             beneficiaries={userBeneficiaries}
-            maxBeneficiaries={1}
+            maxBeneficiaries={selectedService?.max_beneficiaries || 1}
             allowCreate={true}
             onCreateNew={() => setShowBeneficiaryDialog(true)}
           />
@@ -1071,6 +1169,111 @@ const AppointmentBookingPage: React.FC = () => {
               loading={loading}
             />
           </DialogContent>
+        </Dialog>
+
+        {/* Dialog de confirmation de doublon */}
+        <Dialog
+          open={duplicateConfirmationOpen}
+          onClose={handleCancelDuplicate}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ pb: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Typography variant="h6" component="span">
+                ⚠️ Bénéficiaire similaire détecté
+              </Typography>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              Un ou plusieurs bénéficiaires existent déjà avec la même date de naissance pour votre compte.
+            </Alert>
+
+            {existingBeneficiaries.length > 0 && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Bénéficiaire(s) existant(s) :
+                </Typography>
+                {existingBeneficiaries.map((ben, index) => (
+                  <Paper
+                    key={index}
+                    elevation={0}
+                    sx={{
+                      p: 2,
+                      mb: 1,
+                      border: '1px solid',
+                      borderColor: 'warning.light',
+                      backgroundColor: 'warning.lighter',
+                    }}
+                  >
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {ben.first_name} {ben.last_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Date de naissance : {format(parseISO(ben.birth_date), 'dd/MM/yyyy', { locale: fr })}
+                    </Typography>
+                    {ben.email && (
+                      <Typography variant="body2" color="text.secondary">
+                        Email : {ben.email}
+                      </Typography>
+                    )}
+                  </Paper>
+                ))}
+              </Box>
+            )}
+
+            {pendingBeneficiaryData && (
+              <Box>
+                <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+                  Nouveau bénéficiaire à créer :
+                </Typography>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    p: 2,
+                    border: '1px solid',
+                    borderColor: 'primary.light',
+                    backgroundColor: 'primary.lighter',
+                  }}
+                >
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    {pendingBeneficiaryData.first_name} {pendingBeneficiaryData.last_name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    Date de naissance : {format(parseISO(pendingBeneficiaryData.birth_date), 'dd/MM/yyyy', { locale: fr })}
+                  </Typography>
+                  {pendingBeneficiaryData.email && (
+                    <Typography variant="body2" color="text.secondary">
+                      Email : {pendingBeneficiaryData.email}
+                    </Typography>
+                  )}
+                </Paper>
+              </Box>
+            )}
+
+            <Typography variant="body2" sx={{ mt: 2, color: 'text.secondary' }}>
+              Voulez-vous quand même créer ce nouveau bénéficiaire ?
+            </Typography>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button
+              onClick={handleCancelDuplicate}
+              variant="outlined"
+              color="inherit"
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={() => pendingBeneficiaryData && confirmCreateBeneficiary(pendingBeneficiaryData)}
+              variant="contained"
+              color="primary"
+              disabled={loading}
+              startIcon={loading ? <CircularProgress size={20} /> : null}
+            >
+              Oui, créer quand même
+            </Button>
+          </DialogActions>
         </Dialog>
       </Box>
     </Box>

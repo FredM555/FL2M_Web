@@ -35,6 +35,9 @@ export type Service = {
   is_on_demand: boolean;
   created_at: string;
   updated_at: string;
+  // Gestion des bénéficiaires
+  min_beneficiaries: number; // Nombre minimum de bénéficiaires requis
+  max_beneficiaries: number; // Nombre maximum de bénéficiaires autorisés
   // Nouveaux champs
   created_by?: string;
   updated_by?: string;

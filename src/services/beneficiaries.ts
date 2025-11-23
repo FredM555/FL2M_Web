@@ -146,6 +146,40 @@ export const getBeneficiaryById = async (
 };
 
 /**
+ * Vérifier si un bénéficiaire existe déjà avec la même date de naissance
+ */
+export const checkDuplicateBeneficiary = async (
+  birthDate: string,
+  userId?: string
+): Promise<{ exists: boolean; beneficiaries: Beneficiary[]; error: any }> => {
+  try {
+    const currentUserId = userId || (await supabase.auth.getUser()).data.user?.id;
+
+    if (!currentUserId) {
+      throw new Error('Utilisateur non authentifié');
+    }
+
+    // Rechercher les bénéficiaires du même utilisateur avec la même date de naissance
+    const { data, error } = await supabase
+      .from('beneficiaries')
+      .select('*')
+      .eq('owner_id', currentUserId)
+      .eq('birth_date', birthDate);
+
+    if (error) throw error;
+
+    return {
+      exists: data && data.length > 0,
+      beneficiaries: data || [],
+      error: null
+    };
+  } catch (error) {
+    console.error('Erreur lors de la vérification des doublons:', error);
+    return { exists: false, beneficiaries: [], error };
+  }
+};
+
+/**
  * Créer un nouveau bénéficiaire
  */
 export const createBeneficiary = async (

@@ -22,7 +22,7 @@ import {
   Tabs
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
-import { getAppointments, Appointment } from '../services/supabase';
+import { getAppointments, Appointment, getAppointmentDocuments } from '../services/supabase';
 import { cancelAppointment } from '../services/supabase-appointments';
 import { getAppointmentBeneficiaries } from '../services/beneficiaries';
 import { AppointmentBeneficiary } from '../types/beneficiary';
@@ -37,6 +37,7 @@ import CakeIcon from '@mui/icons-material/Cake';
 import BadgeIcon from '@mui/icons-material/Badge';
 import InfoIcon from '@mui/icons-material/Info';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
+import DescriptionIcon from '@mui/icons-material/Description';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { AppointmentDetailsDialog } from '../components/appointments/AppointmentDetailsDialog';
 
@@ -81,6 +82,7 @@ const MyAppointmentsPage = () => {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [appointmentBeneficiaries, setAppointmentBeneficiaries] = useState<Record<string, AppointmentBeneficiary[]>>({});
+  const [documentsCounts, setDocumentsCounts] = useState<Record<string, number>>({});
 
   // Chargement des rendez-vous
   const loadAppointments = async () => {
@@ -92,24 +94,31 @@ const MyAppointmentsPage = () => {
       if (error) throw error;
       setAppointments(data || []);
 
-      // Charger les bénéficiaires pour chaque rendez-vous
+      // Charger les bénéficiaires et documents pour chaque rendez-vous
       if (data && data.length > 0) {
         const beneficiariesMap: Record<string, AppointmentBeneficiary[]> = {};
+        const documentsCountMap: Record<string, number> = {};
 
         await Promise.all(
           data.map(async (appointment) => {
             try {
+              // Charger les bénéficiaires
               const { data: beneficiaries } = await getAppointmentBeneficiaries(appointment.id);
               if (beneficiaries && beneficiaries.length > 0) {
                 beneficiariesMap[appointment.id] = beneficiaries;
               }
+
+              // Charger le compteur de documents
+              const { data: documents } = await getAppointmentDocuments(appointment.id);
+              documentsCountMap[appointment.id] = documents?.length || 0;
             } catch (err) {
-              console.error(`Erreur lors du chargement des bénéficiaires pour le RDV ${appointment.id}:`, err);
+              console.error(`Erreur lors du chargement des données pour le RDV ${appointment.id}:`, err);
             }
           })
         );
 
         setAppointmentBeneficiaries(beneficiariesMap);
+        setDocumentsCounts(documentsCountMap);
       }
     } catch (error: any) {
       setError('Erreur lors du chargement des rendez-vous: ' + error.message);
@@ -427,7 +436,7 @@ const MyAppointmentsPage = () => {
               {(() => {
                 const price = appointment.custom_price ?? appointment.service?.price;
                 return price !== 9999 && (
-                  <Box display="flex" alignItems="center">
+                  <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
                     <PaymentIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
                     <Typography variant="body2" sx={{ fontWeight: 600, color: appointment.custom_price ? 'primary.main' : '#FFA500', fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
                       {price} €{appointment.custom_price ? ' (personnalisé)' : ''}
@@ -435,6 +444,14 @@ const MyAppointmentsPage = () => {
                   </Box>
                 );
               })()}
+
+              {/* Compteur de documents */}
+              <Box display="flex" alignItems="center">
+                <DescriptionIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                  {documentsCounts[appointment.id] || 0} document{(documentsCounts[appointment.id] || 0) > 1 ? 's' : ''}
+                </Typography>
+              </Box>
             </Grid>
           </Grid>
 
