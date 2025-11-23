@@ -56,6 +56,7 @@ import ProfilePage from './pages/ProfilePage';
 import PractitionerProfilePage from './pages/PractitionerProfilePage';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import PractitionerSchedulePage from './pages/Practitioner/PractitionerSchedulePage';
+import { BeneficiariesPage } from './pages/BeneficiariesPage';
 
 
 
@@ -164,7 +165,7 @@ function App() {
   // Vérifier si l'utilisateur tente d'accéder à une route protégée sans être connecté
   if (!user) {
     // Liste des chemins qui nécessitent une authentification
-    const requiresAuth = ['/profile', '/practitioner-profile', '/mes-rendez-vous', '/admin'].some(
+    const requiresAuth = ['/profile', '/practitioner-profile', '/mes-rendez-vous', '/beneficiaries', '/admin'].some(
       path => location.pathname.startsWith(path)
     );
     
@@ -270,6 +271,11 @@ function App() {
             <Route path="mes-rendez-vous" element={
               <ProtectedRoute>
                 <MyAppointmentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="beneficiaries" element={
+              <ProtectedRoute>
+                <BeneficiariesPage />
               </ProtectedRoute>
             } />
             <Route path="intervenant/planning" element={

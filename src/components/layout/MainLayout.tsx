@@ -34,6 +34,7 @@ import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
 import EventIcon from '@mui/icons-material/Event';
 import PhoneIcon from '@mui/icons-material/Phone';
 import InfoIcon from '@mui/icons-material/Info';
+import GroupIcon from '@mui/icons-material/Group';
 import SacredGeometryBackground from '../SacredGeometryBackground';
 import MobileBottomNav from './MobileBottomNav';
 
@@ -495,6 +496,36 @@ const MainLayout: React.FC = () => {
                               📅
                             </Box>
                             <Typography sx={{ fontWeight: 500 }}>Mes rendez-vous</Typography>
+                          </MenuItem>
+                          <MenuItem
+                            component={RouterLink}
+                            to="/beneficiaries"
+                            onClick={handleMenuClose(setUserMenuAnchor)}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                backgroundColor: 'rgba(255, 215, 0, 0.08)',
+                                '& .menu-icon': {
+                                  transform: 'scale(1.1)',
+                                },
+                              },
+                            }}
+                          >
+                            <Box
+                              component="span"
+                              className="menu-icon"
+                              sx={{
+                                mr: 2,
+                                display: 'inline-flex',
+                                fontSize: '1.2rem',
+                                transition: 'all 0.2s ease',
+                              }}
+                            >
+                              👥
+                            </Box>
+                            <Typography sx={{ fontWeight: 500 }}>Mes bénéficiaires</Typography>
                           </MenuItem>
                           {profile?.user_type === 'intervenant' && (
                             <MenuItem
@@ -1196,9 +1227,9 @@ const MainLayout: React.FC = () => {
               <ListItemText primary="Mon profil" />
             </ListItem>
 
-            <ListItem 
-              button 
-              component={RouterLink} 
+            <ListItem
+              button
+              component={RouterLink}
               to="/mes-rendez-vous"
               onClick={toggleMobileMenu}
             >
@@ -1206,6 +1237,18 @@ const MainLayout: React.FC = () => {
                 <EventIcon />
               </ListItemIcon>
               <ListItemText primary="Mes rendez-vous" />
+            </ListItem>
+
+            <ListItem
+              button
+              component={RouterLink}
+              to="/beneficiaries"
+              onClick={toggleMobileMenu}
+            >
+              <ListItemIcon>
+                <GroupIcon />
+              </ListItemIcon>
+              <ListItemText primary="Mes bénéficiaires" />
             </ListItem>
 
             {profile?.user_type === 'intervenant' && (

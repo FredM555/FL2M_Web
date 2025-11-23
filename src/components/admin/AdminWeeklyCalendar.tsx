@@ -79,7 +79,7 @@ interface Appointment {
   service_id: string;
   start_time: string;
   end_time: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed';
   payment_status: 'unpaid' | 'paid' | 'refunded';
   payment_id?: string;
   notes?: string;
@@ -619,20 +619,21 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
     const statusConfig: Record<string, { color: "success" | "warning" | "error" | "default" | "primary" | "info", label: string }> = {
       'pending': { color: 'warning', label: 'En attente' },
       'confirmed': { color: 'success', label: 'Confirmé' },
+      'beneficiaire_confirme': { color: 'info', label: 'Bénéficiaire confirmé' },
       'cancelled': { color: 'error', label: 'Annulé' },
       'completed': { color: 'default', label: 'Terminé' },
       'particuliers': { color: 'primary', label: 'Particuliers' },
       'professionnels': { color: 'info', label: 'Professionnels' },
       'sportifs': { color: 'success', label: 'Sportifs' }
     };
-    
+
     const config = statusConfig[status] || { color: 'default', label: status };
-    
+
     return (
-      <Chip 
-        label={config.label} 
-        color={config.color} 
-        size="small" 
+      <Chip
+        label={config.label}
+        color={config.color}
+        size="small"
       />
     );
   };
@@ -1322,13 +1323,14 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                       value={currentAppointment.status || 'pending'}
                       onChange={(e) => setCurrentAppointment({
                         ...currentAppointment,
-                        status: e.target.value as 'pending' | 'confirmed' | 'cancelled' | 'completed'
+                        status: e.target.value as 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed'
                       })}
                       label="Statut"
                       disabled={isPractitionerView}
                     >
                       <MenuItem value="pending">En attente</MenuItem>
                       <MenuItem value="confirmed">Confirmé</MenuItem>
+                      <MenuItem value="beneficiaire_confirme">Bénéficiaire confirmé</MenuItem>
                       <MenuItem value="cancelled">Annulé</MenuItem>
                       <MenuItem value="completed">Terminé</MenuItem>
                     </Select>

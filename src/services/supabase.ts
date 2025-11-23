@@ -16,7 +16,11 @@ export type Profile = {
   is_active?: boolean;
   created_by?: string;
   updated_by?: string;
-  pseudo?: string; // Nouveau champ ajouté
+  pseudo?: string;
+  // Champs de numérologie
+  racine1?: number; // Chemin de vie
+  racine2?: number; // Expression
+  tronc?: number;   // Objectif de vie
 };
 
 export type Service = {
@@ -63,7 +67,7 @@ export type Appointment = {
   service_id: string;
   start_time: string;
   end_time: string;
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed';
   payment_status: 'unpaid' | 'paid' | 'refunded';
   payment_id?: string;
   notes?: string;
@@ -1741,6 +1745,106 @@ export const getActionTypes = async () => {
   } catch (err) {
     console.error('Erreur lors de la récupération des types d\'action:', err);
     return { data: [], error: err };
+  }
+};
+
+/**
+ * Met à jour les valeurs de numérologie d'un profil
+ * Cette fonction est appelée automatiquement par un trigger, mais peut être appelée manuellement
+ */
+export const updateNumerologyValues = async (userId: string) => {
+  try {
+    // Import dynamique pour éviter les dépendances circulaires
+    const { calculateAllNumerology } = await import('./numerology');
+
+    // Récupérer le profil
+    const { data: profile, error: fetchError } = await supabase
+      .from('profiles')
+      .select('first_name, last_name, birth_date')
+      .eq('id', userId)
+      .single();
+
+    if (fetchError) throw fetchError;
+    if (!profile) throw new Error('Profil non trouvé');
+
+    // Calculer les valeurs numérologiques
+    const numerology = calculateAllNumerology(
+      profile.first_name,
+      profile.last_name,
+      profile.birth_date || ''
+    );
+
+    // Mettre à jour le profil
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({
+        racine1: numerology.racine1,
+        racine2: numerology.racine2,
+        tronc: numerology.tronc
+      })
+      .eq('id', userId);
+
+    if (updateError) throw updateError;
+
+    return { data: numerology, error: null };
+  } catch (err) {
+    console.error('Erreur lors de la mise à jour des valeurs de numérologie:', err);
+    return { data: null, error: err };
+  }
+};
+
+/**
+ * Recalcule les valeurs de numérologie pour tous les profils
+ * Utile pour une migration ou une correction en masse
+ */
+export const recalculateAllNumerology = async () => {
+  try {
+    // Récupérer tous les profils avec date de naissance
+    const { data: profiles, error: fetchError } = await supabase
+      .from('profiles')
+      .select('id, first_name, last_name, birth_date')
+      .not('birth_date', 'is', null);
+
+    if (fetchError) throw fetchError;
+
+    // Import dynamique
+    const { calculateAllNumerology } = await import('./numerology');
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    // Mettre à jour chaque profil
+    for (const profile of profiles || []) {
+      try {
+        const numerology = calculateAllNumerology(
+          profile.first_name,
+          profile.last_name,
+          profile.birth_date || ''
+        );
+
+        await supabase
+          .from('profiles')
+          .update({
+            racine1: numerology.racine1,
+            racine2: numerology.racine2,
+            tronc: numerology.tronc
+          })
+          .eq('id', profile.id);
+
+        successCount++;
+      } catch (err) {
+        console.error(`Erreur pour le profil ${profile.id}:`, err);
+        errorCount++;
+      }
+    }
+
+    return {
+      data: { successCount, errorCount, total: profiles?.length || 0 },
+      error: null
+    };
+  } catch (err) {
+    console.error('Erreur lors du recalcul des valeurs de numérologie:', err);
+    return { data: null, error: err };
   }
 };
 

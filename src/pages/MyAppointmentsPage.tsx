@@ -24,6 +24,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { getAppointments, Appointment } from '../services/supabase';
 import { cancelAppointment } from '../services/supabase-appointments';
+import { getAppointmentBeneficiaries } from '../services/beneficiaries';
+import { AppointmentBeneficiary } from '../types/beneficiary';
 import { format, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import EventIcon from '@mui/icons-material/Event';
@@ -78,6 +80,7 @@ const MyAppointmentsPage = () => {
   const [cancelLoading, setCancelLoading] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [appointmentBeneficiaries, setAppointmentBeneficiaries] = useState<Record<string, AppointmentBeneficiary[]>>({});
 
   // Chargement des rendez-vous
   const loadAppointments = async () => {
@@ -88,6 +91,26 @@ const MyAppointmentsPage = () => {
       const { data, error } = await getAppointments(user.id);
       if (error) throw error;
       setAppointments(data || []);
+
+      // Charger les bénéficiaires pour chaque rendez-vous
+      if (data && data.length > 0) {
+        const beneficiariesMap: Record<string, AppointmentBeneficiary[]> = {};
+
+        await Promise.all(
+          data.map(async (appointment) => {
+            try {
+              const { data: beneficiaries } = await getAppointmentBeneficiaries(appointment.id);
+              if (beneficiaries && beneficiaries.length > 0) {
+                beneficiariesMap[appointment.id] = beneficiaries;
+              }
+            } catch (err) {
+              console.error(`Erreur lors du chargement des bénéficiaires pour le RDV ${appointment.id}:`, err);
+            }
+          })
+        );
+
+        setAppointmentBeneficiaries(beneficiariesMap);
+      }
     } catch (error: any) {
       setError('Erreur lors du chargement des rendez-vous: ' + error.message);
     } finally {
@@ -354,21 +377,51 @@ const MyAppointmentsPage = () => {
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
-                <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                  {appointment.beneficiary_first_name || appointment.client?.first_name}{' '}
-                  {appointment.beneficiary_last_name || appointment.client?.last_name}
-                </Typography>
-              </Box>
+              {/* Affichage des bénéficiaires - nouvelle architecture */}
+              {appointmentBeneficiaries[appointment.id] && appointmentBeneficiaries[appointment.id].length > 0 ? (
+                <>
+                  <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                    <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                      {appointmentBeneficiaries[appointment.id].map(ab => ab.beneficiary ? `${ab.beneficiary.first_name} ${ab.beneficiary.last_name}` : 'Bénéficiaire').join(', ')}
+                    </Typography>
+                    {appointmentBeneficiaries[appointment.id].length > 1 && (
+                      <Chip
+                        label={`${appointmentBeneficiaries[appointment.id].length} personnes`}
+                        size="small"
+                        sx={{ ml: 1, height: '20px', fontSize: '0.7rem' }}
+                      />
+                    )}
+                  </Box>
+                  {appointmentBeneficiaries[appointment.id][0]?.beneficiary?.birth_date && (
+                    <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                      <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                      <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                        {format(parseISO(appointmentBeneficiaries[appointment.id][0]?.beneficiary?.birth_date || ''), 'dd/MM/yyyy', { locale: fr })}
+                      </Typography>
+                    </Box>
+                  )}
+                </>
+              ) : (
+                /* Fallback vers l'ancienne architecture */
+                <>
+                  <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                    <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                      {appointment.beneficiary_first_name || appointment.client?.first_name}{' '}
+                      {appointment.beneficiary_last_name || appointment.client?.last_name}
+                    </Typography>
+                  </Box>
 
-              {(appointment.beneficiary_birth_date || appointment.client?.birth_date) && (
-                <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
-                  <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                  <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                    {format(parseISO(appointment.beneficiary_birth_date || appointment.client!.birth_date!), 'dd/MM/yyyy', { locale: fr })}
-                  </Typography>
-                </Box>
+                  {(appointment.beneficiary_birth_date || appointment.client?.birth_date) && (
+                    <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                      <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                      <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                        {format(parseISO(appointment.beneficiary_birth_date || appointment.client!.birth_date!), 'dd/MM/yyyy', { locale: fr })}
+                      </Typography>
+                    </Box>
+                  )}
+                </>
               )}
 
               {(() => {

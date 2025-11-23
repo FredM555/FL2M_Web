@@ -25,7 +25,9 @@ import {
   useMediaQuery,
   TextField,
   Checkbox,
-  FormControlLabel
+  FormControlLabel,
+  Dialog,
+  DialogContent
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -37,6 +39,14 @@ import {
   getAvailableAppointmentsByWeek,
   bookAppointment
 } from '../services/supabase-appointments';
+import { BeneficiarySelector } from '../components/beneficiaries/BeneficiarySelector';
+import { BeneficiaryForm } from '../components/beneficiaries/BeneficiaryForm';
+import { BeneficiaryWithAccess, CreateBeneficiaryData, UpdateBeneficiaryData } from '../types/beneficiary';
+import {
+  getUserBeneficiaries,
+  createBeneficiary,
+  addBeneficiaryToAppointment
+} from '../services/beneficiaries';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { Service, Practitioner, Appointment } from '../services/supabase';
 import { format, parseISO } from 'date-fns';
@@ -105,10 +115,9 @@ const AppointmentBookingPage: React.FC = () => {
   const [selectedSlot, setSelectedSlot] = useState<AppointmentSlot | null>(null);
   
   // Données du formulaire de confirmation
-  const [beneficiaryIsSelf, setBeneficiaryIsSelf] = useState(true);
-  const [beneficiaryFirstName, setBeneficiaryFirstName] = useState('');
-  const [beneficiaryLastName, setBeneficiaryLastName] = useState('');
-  const [beneficiaryBirthDate, setBeneficiaryBirthDate] = useState('');
+  const [selectedBeneficiaryIds, setSelectedBeneficiaryIds] = useState<string[]>([]);
+  const [userBeneficiaries, setUserBeneficiaries] = useState<BeneficiaryWithAccess[]>([]);
+  const [showBeneficiaryDialog, setShowBeneficiaryDialog] = useState(false);
   const [notes, setNotes] = useState('');
   const [acceptTerms, setAcceptTerms] = useState(false);
   
@@ -242,36 +251,51 @@ const AppointmentBookingPage: React.FC = () => {
       setError('Vous devez être connecté et avoir sélectionné un créneau pour réserver.');
       return;
     }
-    
+
     if (!acceptTerms) {
       setError('Vous devez accepter les conditions générales pour continuer.');
       return;
     }
-    
+
+    if (selectedBeneficiaryIds.length === 0) {
+      setError('Veuillez sélectionner au moins un bénéficiaire pour ce rendez-vous.');
+      return;
+    }
+
     setLoading(true);
     try {
       // Préparer les données additionnelles
       const additionalData: Partial<Appointment> = {
         notes: notes.trim() || undefined
       };
-      
-      // Ajouter les informations du bénéficiaire si différent de l'utilisateur
-      if (!beneficiaryIsSelf) {
-        additionalData.beneficiary_first_name = beneficiaryFirstName;
-        additionalData.beneficiary_last_name = beneficiaryLastName;
-        additionalData.beneficiary_birth_date = beneficiaryBirthDate;
-      }
-      
+
       // Appeler l'API pour réserver
-      const { success: bookingSuccess, error: bookingError } = await bookAppointment(
+      const { success: bookingSuccess, data: appointmentData, error: bookingError } = await bookAppointment(
         selectedSlot.id,
         user.id,
         additionalData
       );
-      
+
       if (bookingError) throw bookingError;
-      
-      if (bookingSuccess) {
+
+      if (bookingSuccess && appointmentData) {
+        // Lier les bénéficiaires au rendez-vous
+        for (let i = 0; i < selectedBeneficiaryIds.length; i++) {
+          const beneficiaryId = selectedBeneficiaryIds[i];
+          try {
+            await addBeneficiaryToAppointment(
+              appointmentData.id,
+              beneficiaryId,
+              selectedBeneficiaryIds.length > 1 ? 'partner' : 'primary',
+              i + 1,
+              true
+            );
+          } catch (linkError) {
+            console.error('Erreur lors de la liaison du bénéficiaire:', linkError);
+            // Ne pas bloquer si la liaison échoue, juste logger
+          }
+        }
+
         setSuccess(true);
         // Rediriger vers la page des rendez-vous après 3 secondes
         setTimeout(() => {
@@ -324,6 +348,34 @@ const AppointmentBookingPage: React.FC = () => {
   const handleSlotSelect = (slot: AppointmentSlot) => {
     setSelectedSlot(slot);
   };
+
+  // Gestion de la création d'un nouveau bénéficiaire
+  const handleCreateBeneficiary = async (data: CreateBeneficiaryData | UpdateBeneficiaryData) => {
+    try {
+      setLoading(true);
+      const { data: newBeneficiary, error: createError } = await createBeneficiary(data as CreateBeneficiaryData);
+
+      if (createError) throw createError;
+
+      if (newBeneficiary) {
+        // Rafraîchir la liste des bénéficiaires
+        const { data: updatedBeneficiaries } = await getUserBeneficiaries();
+        setUserBeneficiaries(updatedBeneficiaries || []);
+
+        // Sélectionner automatiquement le nouveau bénéficiaire
+        setSelectedBeneficiaryIds([newBeneficiary.id]);
+
+        // Fermer le dialog
+        setShowBeneficiaryDialog(false);
+      }
+    } catch (err: any) {
+      console.error('Erreur lors de la création du bénéficiaire:', err);
+      setError(err.message || 'Erreur lors de la création du bénéficiaire');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
   
   // Si l'utilisateur n'est pas connecté, le rediriger vers la page de connexion
   useEffect(() => {
@@ -331,18 +383,22 @@ const AppointmentBookingPage: React.FC = () => {
       navigate('/login', { state: { from: '/prendre-rendez-vous' } });
     }
   }, [user, loading, navigate]);
-  
-  // Pré-remplir le formulaire avec les données du profil connecté
+
+  // Charger les bénéficiaires de l'utilisateur
   useEffect(() => {
-    if (profile) {
-      setBeneficiaryFirstName(profile.first_name || '');
-      setBeneficiaryLastName(profile.last_name || '');
-      // Formater la date de naissance si disponible
-      if (profile.birth_date) {
-        setBeneficiaryBirthDate(profile.birth_date.split('T')[0]);
+    const loadUserBeneficiaries = async () => {
+      if (!user) return;
+
+      try {
+        const { data } = await getUserBeneficiaries();
+        setUserBeneficiaries(data || []);
+      } catch (err) {
+        console.error('Erreur lors du chargement des bénéficiaires:', err);
       }
-    }
-  }, [profile]);
+    };
+
+    loadUserBeneficiaries();
+  }, [user]);
   
   // Rendu des étapes
   const renderStepContent = () => {
@@ -714,50 +770,17 @@ const AppointmentBookingPage: React.FC = () => {
         </Typography>
         
         <Box sx={{ mb: 3 }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={beneficiaryIsSelf}
-                onChange={(e) => setBeneficiaryIsSelf(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="Je suis le bénéficiaire du rendez-vous"
+          <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500 }}>
+            Bénéficiaire(s) du rendez-vous *
+          </Typography>
+          <BeneficiarySelector
+            value={selectedBeneficiaryIds}
+            onChange={setSelectedBeneficiaryIds}
+            beneficiaries={userBeneficiaries}
+            maxBeneficiaries={1}
+            allowCreate={true}
+            onCreateNew={() => setShowBeneficiaryDialog(true)}
           />
-
-          <Grid container spacing={2} sx={{ mt: 1 }}>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Prénom du bénéficiaire"
-                fullWidth
-                required
-                value={beneficiaryFirstName}
-                onChange={(e) => setBeneficiaryFirstName(e.target.value)}
-                disabled={beneficiaryIsSelf}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Nom du bénéficiaire"
-                fullWidth
-                required
-                value={beneficiaryLastName}
-                onChange={(e) => setBeneficiaryLastName(e.target.value)}
-                disabled={beneficiaryIsSelf}
-              />
-            </Grid>
-            <Grid item xs={12} sm={6}>
-              <TextField
-                label="Date de naissance *"
-                type="date"
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                value={beneficiaryBirthDate}
-                onChange={(e) => setBeneficiaryBirthDate(e.target.value)}
-                disabled={beneficiaryIsSelf}
-              />
-            </Grid>
-          </Grid>
         </Box>
         
         <TextField
@@ -1030,6 +1053,25 @@ const AppointmentBookingPage: React.FC = () => {
           </Container>
         </Box>
         </Container>
+
+        {/* Dialog pour créer un nouveau bénéficiaire */}
+        <Dialog
+          open={showBeneficiaryDialog}
+          onClose={() => setShowBeneficiaryDialog(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogContent>
+            <Typography variant="h6" sx={{ mb: 3 }}>
+              Créer un nouveau bénéficiaire
+            </Typography>
+            <BeneficiaryForm
+              onSave={handleCreateBeneficiary}
+              onCancel={() => setShowBeneficiaryDialog(false)}
+              loading={loading}
+            />
+          </DialogContent>
+        </Dialog>
       </Box>
     </Box>
   );
