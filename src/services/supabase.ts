@@ -85,6 +85,8 @@ export type Appointment = {
   meeting_link?: string;
   // Prix personnalisé (si NULL, utilise service.price)
   custom_price?: number;
+  // Code unique pour facturation et communication
+  unique_code?: string;
   created_at: string;
   updated_at: string;
   // Relations

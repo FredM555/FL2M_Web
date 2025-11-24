@@ -148,6 +148,30 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                 {currentAppointment.service?.name}
               </Typography>
 
+              {currentAppointment.unique_code && (
+                <Box sx={{
+                  display: 'inline-block',
+                  px: 1.5,
+                  py: 0.5,
+                  bgcolor: 'rgba(52, 89, 149, 0.1)',
+                  borderRadius: 1,
+                  border: '1px solid rgba(52, 89, 149, 0.3)',
+                  mt: 0.5
+                }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#345995',
+                      fontWeight: 700,
+                      fontFamily: 'monospace',
+                      fontSize: { xs: '0.7rem', sm: '0.8rem' }
+                    }}
+                  >
+                    Code: {currentAppointment.unique_code}
+                  </Typography>
+                </Box>
+              )}
+
               <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2, fontSize: { xs: '0.75rem', sm: '0.875rem' } }}>
                 Date et heure
               </Typography>

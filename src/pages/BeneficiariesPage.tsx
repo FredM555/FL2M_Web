@@ -6,14 +6,17 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
+  DialogActions,
   Snackbar,
   Alert,
   Tabs,
   Tab,
   Typography,
   IconButton,
+  Button,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
+import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { BeneficiaryList } from '../components/beneficiaries/BeneficiaryList';
 import { BeneficiaryForm } from '../components/beneficiaries/BeneficiaryForm';
 import { BeneficiaryHistory } from '../components/beneficiaries/BeneficiaryHistory';
@@ -46,6 +49,10 @@ export const BeneficiariesPage: React.FC = () => {
   const [dialogMode, setDialogMode] = useState<DialogMode>(null);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<BeneficiaryWithAccess | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // État du dialog de confirmation de suppression
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [beneficiaryToDelete, setBeneficiaryToDelete] = useState<BeneficiaryWithAccess | null>(null);
 
   // État snackbar
   const [snackbar, setSnackbar] = useState<{
@@ -98,7 +105,7 @@ export const BeneficiariesPage: React.FC = () => {
     setDialogMode('view');
   };
 
-  const handleDelete = async (beneficiary: BeneficiaryWithAccess) => {
+  const handleDelete = (beneficiary: BeneficiaryWithAccess) => {
     if (!beneficiary || !beneficiary.id) {
       setSnackbar({
         open: true,
@@ -108,12 +115,15 @@ export const BeneficiariesPage: React.FC = () => {
       return;
     }
 
-    if (!confirm(`Êtes-vous sûr de vouloir supprimer ${beneficiary.first_name} ${beneficiary.last_name} ?`)) {
-      return;
-    }
+    setBeneficiaryToDelete(beneficiary);
+    setDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    if (!beneficiaryToDelete) return;
 
     try {
-      const { success, error } = await deleteBeneficiary(beneficiary.id);
+      const { success, error } = await deleteBeneficiary(beneficiaryToDelete.id);
 
       if (!success || error) {
         throw error;
@@ -132,7 +142,15 @@ export const BeneficiariesPage: React.FC = () => {
         message: err?.message || 'Erreur lors de la suppression du bénéficiaire',
         severity: 'error',
       });
+    } finally {
+      setDeleteDialogOpen(false);
+      setBeneficiaryToDelete(null);
     }
+  };
+
+  const cancelDelete = () => {
+    setDeleteDialogOpen(false);
+    setBeneficiaryToDelete(null);
   };
 
   const handleSave = async (data: CreateBeneficiaryData | UpdateBeneficiaryData) => {
@@ -317,6 +335,91 @@ export const BeneficiariesPage: React.FC = () => {
               </Box>
             )}
           </DialogContent>
+        </Dialog>
+
+        {/* Dialog de confirmation de suppression */}
+        <Dialog
+          open={deleteDialogOpen}
+          onClose={cancelDelete}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1, pb: 1 }}>
+            <WarningAmberIcon color="warning" sx={{ fontSize: 32 }} />
+            <Typography variant="h6" component="span" sx={{ fontWeight: 600 }}>
+              Confirmer la suppression
+            </Typography>
+          </DialogTitle>
+          <DialogContent>
+            {beneficiaryToDelete && (
+              <Box>
+                <Alert severity="warning" sx={{ mb: 2 }}>
+                  Cette action est irréversible et entraînera la suppression définitive de toutes les données associées.
+                </Alert>
+                <Typography variant="body1" sx={{ mb: 2 }}>
+                  Êtes-vous sûr de vouloir supprimer le bénéficiaire suivant ?
+                </Typography>
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: 'grey.50',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: 'grey.300',
+                  }}
+                >
+                  <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>
+                    {beneficiaryToDelete.first_name} {beneficiaryToDelete.last_name}
+                  </Typography>
+                  {beneficiaryToDelete.email && (
+                    <Typography variant="body2" color="text.secondary">
+                      Email : {beneficiaryToDelete.email}
+                    </Typography>
+                  )}
+                  {beneficiaryToDelete.birth_date && (
+                    <Typography variant="body2" color="text.secondary">
+                      Date de naissance : {new Date(beneficiaryToDelete.birth_date).toLocaleDateString('fr-FR')}
+                    </Typography>
+                  )}
+                </Box>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 2, fontStyle: 'italic' }}>
+                  Les données suivantes seront également supprimées :
+                </Typography>
+                <Box component="ul" sx={{ mt: 1, pl: 2 }}>
+                  <Typography component="li" variant="body2" color="text.secondary">
+                    Historique des rendez-vous
+                  </Typography>
+                  <Typography component="li" variant="body2" color="text.secondary">
+                    Documents associés
+                  </Typography>
+                  <Typography component="li" variant="body2" color="text.secondary">
+                    Accès partagés
+                  </Typography>
+                </Box>
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 2 }}>
+            <Button
+              onClick={cancelDelete}
+              variant="outlined"
+              color="inherit"
+              sx={{ textTransform: 'none' }}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={confirmDelete}
+              variant="contained"
+              color="error"
+              sx={{
+                textTransform: 'none',
+                fontWeight: 600,
+              }}
+            >
+              Supprimer définitivement
+            </Button>
+          </DialogActions>
         </Dialog>
 
         {/* Snackbar de notification */}

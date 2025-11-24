@@ -705,6 +705,31 @@ const AppointmentBookingPage: React.FC = () => {
     );
   };
   
+  // Fonction helper pour vérifier si le nombre de bénéficiaires est valide
+  const isBeneficiariesCountValid = () => {
+    if (!selectedService) return false;
+    const minBeneficiaries = selectedService.min_beneficiaries || 1;
+    const maxBeneficiaries = selectedService.max_beneficiaries || 1;
+    const count = selectedBeneficiaryIds.length;
+    return count >= minBeneficiaries && count <= maxBeneficiaries;
+  };
+
+  // Fonction pour obtenir le message d'erreur des bénéficiaires
+  const getBeneficiariesErrorMessage = () => {
+    if (!selectedService) return null;
+    const minBeneficiaries = selectedService.min_beneficiaries || 1;
+    const maxBeneficiaries = selectedService.max_beneficiaries || 1;
+    const count = selectedBeneficiaryIds.length;
+
+    if (count < minBeneficiaries) {
+      return `Vous devez sélectionner au moins ${minBeneficiaries} bénéficiaire${minBeneficiaries > 1 ? 's' : ''}.`;
+    }
+    if (count > maxBeneficiaries) {
+      return `Vous ne pouvez pas sélectionner plus de ${maxBeneficiaries} bénéficiaire${maxBeneficiaries > 1 ? 's' : ''}.`;
+    }
+    return null;
+  };
+
   // Étape 3: Confirmation et paiement
   const renderConfirmation = () => {
     if (!selectedService || !selectedSlot) {
@@ -722,6 +747,7 @@ const AppointmentBookingPage: React.FC = () => {
     const endTime = format(parseISO(selectedSlot.end_time), 'HH:mm', { locale: fr });
 
     const colors = getCategoryColors(selectedCategory);
+    const beneficiariesError = getBeneficiariesErrorMessage();
 
     return (
       <Box sx={{ mb: 4 }}>
@@ -879,8 +905,18 @@ const AppointmentBookingPage: React.FC = () => {
             allowCreate={true}
             onCreateNew={() => setShowBeneficiaryDialog(true)}
           />
+          {beneficiariesError && (
+            <Alert severity="error" sx={{ mt: 2 }}>
+              {beneficiariesError}
+            </Alert>
+          )}
+          {!beneficiariesError && selectedBeneficiaryIds.length > 0 && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              ✓ Nombre de bénéficiaires valide ({selectedBeneficiaryIds.length} sélectionné{selectedBeneficiaryIds.length > 1 ? 's' : ''})
+            </Alert>
+          )}
         </Box>
-        
+
         <TextField
           label="Notes ou informations supplémentaires"
           multiline
@@ -1118,7 +1154,7 @@ const AppointmentBookingPage: React.FC = () => {
                 disabled={
                   (activeStep === 0 && !selectedService) ||
                   (activeStep === 1 && !selectedSlot) ||
-                  (activeStep === 2 && !acceptTerms) ||
+                  (activeStep === 2 && (!acceptTerms || !isBeneficiariesCountValid())) ||
                   loading ||
                   success
                 }

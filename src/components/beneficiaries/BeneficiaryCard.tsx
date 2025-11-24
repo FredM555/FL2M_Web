@@ -219,11 +219,15 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
               {beneficiary.first_name} {beneficiary.last_name}
             </Typography>
 
-            {/* Âge */}
+            {/* Âge et date de naissance */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <CakeIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
               <Typography variant="body2" color="text.secondary">
-                {age} ans
+                {age} ans ({new Date(beneficiary.birth_date).toLocaleDateString('fr-FR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric'
+                })})
               </Typography>
             </Box>
           </Box>

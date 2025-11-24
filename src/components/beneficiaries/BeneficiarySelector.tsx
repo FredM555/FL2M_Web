@@ -74,6 +74,24 @@ export const BeneficiarySelector: React.FC<BeneficiarySelectorProps> = ({
     return `${beneficiary.first_name} ${beneficiary.last_name}`;
   };
 
+  // Traduire les relations en français
+  const translateRelationship = (relationship: string): string => {
+    const translations: Record<string, string> = {
+      owner: 'Moi',
+      self: 'Moi',
+      child: 'Enfant',
+      spouse: 'Conjoint(e)',
+      partner: 'Partenaire',
+      parent: 'Parent',
+      sibling: 'Frère/Sœur',
+      grandparent: 'Grand-parent',
+      grandchild: 'Petit-enfant',
+      managed: 'Géré',
+      other: 'Autre',
+    };
+    return translations[relationship] || relationship;
+  };
+
   // Vérifier si on peut encore ajouter des bénéficiaires
   const canAddMore = !maxBeneficiaries || selectedBeneficiaries.length < maxBeneficiaries;
 
@@ -97,9 +115,11 @@ export const BeneficiarySelector: React.FC<BeneficiarySelectorProps> = ({
         onInputChange={(_event, newInputValue) => setInputValue(newInputValue)}
         options={beneficiaries}
         getOptionLabel={getOptionLabel}
-        disabled={disabled || !canAddMore}
+        disabled={disabled}
         isOptionEqualToValue={(option, val) => option.id === val.id}
         noOptionsText="Aucun bénéficiaire trouvé"
+        limitTags={maxBeneficiaries}
+        disableCloseOnSelect={maxBeneficiaries !== 1}
         renderInput={(params) => (
           <TextField
             {...params}
@@ -134,8 +154,8 @@ export const BeneficiarySelector: React.FC<BeneficiarySelectorProps> = ({
                     <CakeIcon sx={{ fontSize: 14 }} />
                     {calculateAge(beneficiary.birth_date)} ans
                   </Typography>
-                  {beneficiary.relationship !== 'owner' && beneficiary.relationship !== 'self' && (
-                    <Chip label={beneficiary.relationship} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
+                  {beneficiary.relationship && beneficiary.relationship !== 'owner' && (
+                    <Chip label={translateRelationship(beneficiary.relationship)} size="small" sx={{ height: 18, fontSize: '0.7rem' }} />
                   )}
                 </Box>
               </Box>

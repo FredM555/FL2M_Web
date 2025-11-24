@@ -330,9 +330,25 @@ const MyAppointmentsPage = () => {
               mb: 2
             }}
           >
-            <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a2e', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-              {appointment.service?.name}
-            </Typography>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a2e', fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                {appointment.service?.name}
+              </Typography>
+              {appointment.unique_code && (
+                <Chip
+                  label={`Code: ${appointment.unique_code}`}
+                  size="small"
+                  sx={{
+                    mt: 0.5,
+                    backgroundColor: 'rgba(52, 89, 149, 0.1)',
+                    color: '#345995',
+                    fontWeight: 600,
+                    fontSize: '0.75rem',
+                    fontFamily: 'monospace'
+                  }}
+                />
+              )}
+            </Box>
             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
               <Chip
                 label={getStatusLabel(appointment.status)}
