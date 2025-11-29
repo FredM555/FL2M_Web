@@ -147,6 +147,10 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   const [timeSlots, setTimeSlots] = useState<{hour: number, label: string}[]>([]);
   const [appointmentsByDayAndHour, setAppointmentsByDayAndHour] = useState<Record<string, Record<number, Appointment[]>>>({});
   const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
+  const [isDuplicateMode, setIsDuplicateMode] = useState<boolean>(false);
+
+  // Timer pour la navigation automatique pendant le drag
+  const dragNavigationTimerRef = useRef<NodeJS.Timeout | null>(null);
   
   // États pour le dialogue
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -269,15 +273,42 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   // Changer de semaine
   const handleWeekChange = (direction: 'prev' | 'next') => {
     const newWeekStart = new Date(currentWeekStart);
-    
+
     if (direction === 'prev') {
       newWeekStart.setDate(newWeekStart.getDate() - 7);
     } else {
       newWeekStart.setDate(newWeekStart.getDate() + 7);
     }
-    
+
     setCurrentWeekStart(newWeekStart);
     generateWeekDays(newWeekStart);
+  };
+
+  // Nettoyer le timer de navigation pendant le drag
+  const clearDragNavigationTimer = () => {
+    if (dragNavigationTimerRef.current) {
+      clearTimeout(dragNavigationTimerRef.current);
+      dragNavigationTimerRef.current = null;
+    }
+  };
+
+  // Gérer le survol des boutons de navigation pendant un drag
+  const handleNavigationDragOver = (direction: 'prev' | 'next', event: React.DragEvent) => {
+    event.preventDefault();
+
+    // Si un rendez-vous est en cours de drag et qu'il n'y a pas de timer actif
+    if (draggedAppointment && !dragNavigationTimerRef.current) {
+      // Démarrer un timer pour changer de semaine après 800ms de survol
+      dragNavigationTimerRef.current = setTimeout(() => {
+        handleWeekChange(direction);
+        dragNavigationTimerRef.current = null;
+      }, 800);
+    }
+  };
+
+  // Gérer la sortie du survol des boutons de navigation
+  const handleNavigationDragLeave = () => {
+    clearDragNavigationTimer();
   };
   
   // Afficher les détails d'un rendez-vous
@@ -674,25 +705,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
            appointmentsByDayAndHour[day][hour].length > 0;
   };
   
-  // Filtrer les heures qui ont des rendez-vous
-  const getActiveTimeSlots = () => {
-    const activeHours = new Set<number>();
-    
-    Object.keys(appointmentsByDayAndHour).forEach(day => {
-      Object.keys(appointmentsByDayAndHour[day]).forEach(hour => {
-        if (appointmentsByDayAndHour[day][Number(hour)].length > 0) {
-          activeHours.add(Number(hour));
-        }
-      });
-    });
-    
-    // Si aucune heure active, retourner toutes les heures
-    if (activeHours.size === 0) {
-      return timeSlots;
-    }
-    
-    return timeSlots.filter(slot => activeHours.has(slot.hour)).sort((a, b) => a.hour - b.hour);
-  };
+  // Note: On affiche toutes les heures pour faciliter le drag and drop
   
   // Filtrer les jours qui ont des rendez-vous
   const getActiveDays = () => {
@@ -708,46 +721,81 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   const handleDragStart = (appointment: Appointment, event: React.DragEvent) => {
     event.dataTransfer.setData('text/plain', appointment.id);
     setDraggedAppointment(appointment);
+    // Détecter si la touche Ctrl est pressée pour activer le mode duplication
+    setIsDuplicateMode(event.ctrlKey);
+    // Indiquer visuellement le mode (copie vs déplacement)
+    event.dataTransfer.effectAllowed = event.ctrlKey ? 'copy' : 'move';
   };
   
   // Gérer le drop d'un rendez-vous
   const handleDrop = async (day: string, hour: number, event: React.DragEvent) => {
     event.preventDefault();
     const appointmentId = event.dataTransfer.getData('text/plain');
-    
+
     if (!draggedAppointment || draggedAppointment.id !== appointmentId) return;
-    
+
     try {
       // Créer la nouvelle date de début
       const originalDate = parseISO(draggedAppointment.start_time);
       const newDate = new Date(day);
       newDate.setHours(hour, originalDate.getMinutes(), 0, 0);
-      
+
       // Calculer la durée du rendez-vous
       const originalDuration = parseISO(draggedAppointment.end_time).getTime() - originalDate.getTime();
-      
+
       // Calculer la nouvelle date de fin
       const newEndDate = new Date(newDate.getTime() + originalDuration);
-      
-      // Mettre à jour le rendez-vous
-      const { error } = await supabase
-        .from('appointments')
-        .update({
+
+      if (isDuplicateMode) {
+        // Mode duplication (Ctrl pressé) : créer une copie du rendez-vous
+        const appointmentData: any = {
+          practitioner_id: draggedAppointment.practitioner_id,
+          service_id: draggedAppointment.service_id,
           start_time: newDate.toISOString(),
           end_time: newEndDate.toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', appointmentId);
-      
-      if (error) throw error;
-      
+          status: 'pending',
+          payment_status: 'unpaid',
+          notes: draggedAppointment.notes,
+        };
+
+        // Ajouter le prix personnalisé si défini
+        if (draggedAppointment.custom_price !== null && draggedAppointment.custom_price !== undefined) {
+          appointmentData.custom_price = draggedAppointment.custom_price;
+        }
+
+        const { error } = await createAppointment(appointmentData);
+
+        if (error) {
+          if (error.code === 'APPOINTMENT_CONFLICT') {
+            if (setError) setError(error.message);
+            return;
+          }
+          throw error;
+        }
+      } else {
+        // Mode déplacement (sans Ctrl) : mettre à jour le rendez-vous existant
+        const { error } = await supabase
+          .from('appointments')
+          .update({
+            start_time: newDate.toISOString(),
+            end_time: newEndDate.toISOString(),
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', appointmentId);
+
+        if (error) throw error;
+      }
+
       // Rafraîchir les données
       notifyAppointmentChange();
 
     } catch (err: any) {
-      if (setError) setError(`Erreur lors du déplacement du rendez-vous : ${err.message}`);
+      const action = isDuplicateMode ? 'la duplication' : 'le déplacement';
+      if (setError) setError(`Erreur lors de ${action} du rendez-vous : ${err.message}`);
     } finally {
       setDraggedAppointment(null);
+      setIsDuplicateMode(false);
+      clearDragNavigationTimer();
     }
   };
   
@@ -768,22 +816,42 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
     
     return categoryColors[category] || 'text.primary';
   };
-  
-  const activeTimeSlots = getActiveTimeSlots();
-  
+
   return (
     <Box sx={{ mb: 4 }}>
       {/* En-tête du calendrier avec navigation et filtres */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <IconButton onClick={() => handleWeekChange('prev')} disabled={loading}>
+        <IconButton
+          onClick={() => handleWeekChange('prev')}
+          disabled={loading}
+          onDragOver={(e) => handleNavigationDragOver('prev', e)}
+          onDragLeave={handleNavigationDragLeave}
+          sx={{
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              backgroundColor: draggedAppointment ? 'rgba(0, 0, 0, 0.1)' : undefined
+            }
+          }}
+        >
           <ArrowBackIcon />
         </IconButton>
-        
+
         <Typography variant="h6" sx={{ textAlign: 'center', flex: 1 }}>
           Semaine du {format(currentWeekStart, 'd MMMM yyyy', { locale: fr })} au {format(addDays(currentWeekStart, 6), 'd MMMM yyyy', { locale: fr })}
         </Typography>
-        
-        <IconButton onClick={() => handleWeekChange('next')} disabled={loading}>
+
+        <IconButton
+          onClick={() => handleWeekChange('next')}
+          disabled={loading}
+          onDragOver={(e) => handleNavigationDragOver('next', e)}
+          onDragLeave={handleNavigationDragLeave}
+          sx={{
+            transition: 'background-color 0.2s',
+            '&:hover': {
+              backgroundColor: draggedAppointment ? 'rgba(0, 0, 0, 0.1)' : undefined
+            }
+          }}
+        >
           <ArrowForwardIcon />
         </IconButton>
       </Box>
@@ -870,12 +938,9 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
               
               {/* Lignes pour chaque créneau horaire */}
               {timeSlots.map((timeSlot) => (
-                <Grid container key={timeSlot.hour} sx={{ 
-                  borderBottom: 1, 
+                <Grid container key={timeSlot.hour} sx={{
+                  borderBottom: 1,
                   borderColor: 'divider',
-                  display: activeTimeSlots.some(slot => slot.hour === timeSlot.hour) || timeSlots.length <= 8
-                    ? 'flex' 
-                    : 'none',
                   '&:last-child': {
                     borderBottom: 0
                   }
@@ -953,6 +1018,11 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                                   }}
                                   draggable
                                   onDragStart={(e) => handleDragStart(appointment, e)}
+                                  onDragEnd={() => {
+                                    clearDragNavigationTimer();
+                                    setDraggedAppointment(null);
+                                    setIsDuplicateMode(false);
+                                  }}
                                 >
                                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                     <Typography variant="body2" fontWeight="bold">

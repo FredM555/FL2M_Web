@@ -29,7 +29,9 @@ import {
   TableRow,
   Avatar,
   Switch,
-  FormControlLabel
+  FormControlLabel,
+  Chip,
+  Tooltip
 } from '@mui/material';
 import { supabase, Practitioner, Profile } from '../../services/supabase';
 import EditIcon from '@mui/icons-material/Edit';
@@ -37,11 +39,22 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import HistoryIcon from '@mui/icons-material/History';
+import DescriptionIcon from '@mui/icons-material/Description';
+import EventIcon from '@mui/icons-material/Event';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { useAuth } from '../../context/AuthContext';
+import { ContractsService } from '../../services/contracts';
+import { PractitionerContract, getContractTypeLabel } from '../../types/payments';
+import ContractHistory from '../../components/admin/ContractHistory';
+import CreateAppointmentModal from '../../components/admin/CreateAppointmentModal';
+import ManageContractModal from '../../components/admin/ManageContractModal';
+import EditIbanModal from '../../components/admin/EditIbanModal';
 
 // Type étendu pour inclure le profil complet
 interface EnhancedPractitioner extends Practitioner {
   profile?: Profile;
+  activeContract?: PractitionerContract | null;
 }
 
 const AdminPractitionersPage: React.FC = () => {
@@ -54,7 +67,15 @@ const AdminPractitionersPage: React.FC = () => {
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedPractitionerForHistory, setSelectedPractitionerForHistory] = useState<string | null>(null);
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+  const [selectedPractitionerForAppointment, setSelectedPractitionerForAppointment] = useState<{id: string, name: string} | null>(null);
+  const [contractDialogOpen, setContractDialogOpen] = useState(false);
+  const [selectedPractitionerForContract, setSelectedPractitionerForContract] = useState<{id: string, name: string, contract: PractitionerContract | null} | null>(null);
+  const [ibanDialogOpen, setIbanDialogOpen] = useState(false);
+  const [selectedPractitionerForIban, setSelectedPractitionerForIban] = useState<{id: string, name: string, currentIban: string | null} | null>(null);
+
   // Champs de formulaire
   const [bioText, setBioText] = useState('');
   const [priority, setPriority] = useState<number>(0);
@@ -81,19 +102,39 @@ const AdminPractitionersPage: React.FC = () => {
         .order('priority', { ascending: false });
 
       if (practitionersError) throw practitionersError;
-      
+
+      // Chargement des contrats actifs pour chaque praticien
+      const practitionersWithContracts = await Promise.all(
+        (practitionersData || []).map(async (practitioner) => {
+          try {
+            const activeContract = await ContractsService.getActiveContract(practitioner.id);
+            return {
+              ...practitioner,
+              activeContract
+            };
+          } catch (contractError) {
+            // Si le chargement du contrat échoue, continuer sans contrat
+            console.warn(`Impossible de charger le contrat pour le praticien ${practitioner.id}:`, contractError);
+            return {
+              ...practitioner,
+              activeContract: null
+            };
+          }
+        })
+      );
+
       // Chargement des profils qui ne sont pas déjà consultants
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('*');
-        
+
       if (profilesError) throw profilesError;
-      
+
       // Filtrer les profils qui ne sont pas déjà des intervenants
-      const practitionerUserIds = practitionersData?.map(p => p.user_id) || [];
+      const practitionerUserIds = practitionersWithContracts.map(p => p.user_id) || [];
       const availableProfiles = profilesData?.filter(p => !practitionerUserIds.includes(p.id)) || [];
-      
-      setPractitioners(practitionersData || []);
+
+      setPractitioners(practitionersWithContracts);
       setAvailableUsers(availableProfiles);
     } catch (err: any) {
       setError(`Erreur lors du chargement des données: ${err.message}`);
@@ -257,6 +298,53 @@ const AdminPractitionersPage: React.FC = () => {
     setError(null);
   };
 
+  // Gestionnaire pour ouvrir l'historique des contrats
+  const handleOpenHistory = (practitionerId: string) => {
+    setSelectedPractitionerForHistory(practitionerId);
+    setHistoryDialogOpen(true);
+  };
+
+  // Gestionnaire pour ouvrir le modal de création de rendez-vous
+  const handleOpenAppointmentDialog = (practitionerId: string, practitionerName: string) => {
+    setSelectedPractitionerForAppointment({ id: practitionerId, name: practitionerName });
+    setAppointmentDialogOpen(true);
+  };
+
+  // Gestionnaire de succès de création de rendez-vous
+  const handleAppointmentSuccess = () => {
+    setSuccess('Rendez-vous créé avec succès !');
+    setAppointmentDialogOpen(false);
+    setSelectedPractitionerForAppointment(null);
+  };
+
+  // Gestionnaire pour ouvrir le modal de gestion de contrat
+  const handleOpenContractDialog = (practitionerId: string, practitionerName: string, contract: PractitionerContract | null) => {
+    setSelectedPractitionerForContract({ id: practitionerId, name: practitionerName, contract });
+    setContractDialogOpen(true);
+  };
+
+  // Gestionnaire de succès de gestion de contrat
+  const handleContractSuccess = () => {
+    setSuccess('Contrat créé/modifié avec succès !');
+    setContractDialogOpen(false);
+    setSelectedPractitionerForContract(null);
+    loadData(); // Recharger les données pour afficher le nouveau contrat
+  };
+
+  // Gestionnaire pour ouvrir le modal de configuration IBAN
+  const handleOpenIbanDialog = (practitionerId: string, practitionerName: string, currentIban: string | null) => {
+    setSelectedPractitionerForIban({ id: practitionerId, name: practitionerName, currentIban });
+    setIbanDialogOpen(true);
+  };
+
+  // Gestionnaire de succès de configuration IBAN
+  const handleIbanSuccess = () => {
+    setSuccess('IBAN mis à jour avec succès !');
+    setIbanDialogOpen(false);
+    setSelectedPractitionerForIban(null);
+    loadData(); // Recharger les données
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>
@@ -290,8 +378,8 @@ const AdminPractitionersPage: React.FC = () => {
             <TableHead>
               <TableRow>
                 <TableCell>Consultant</TableCell>
-                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Titre</TableCell>
-                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Résumé</TableCell>
+                <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Contrat</TableCell>
+                <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Titre</TableCell>
                 <TableCell align="center" sx={{ display: { xs: 'none', md: 'table-cell' } }}>Priorité</TableCell>
                 <TableCell align="center">Statut</TableCell>
                 <TableCell align="right">Actions</TableCell>
@@ -316,7 +404,6 @@ const AdminPractitionersPage: React.FC = () => {
                       <Box>
                         <Typography variant="subtitle2">
                           {practitioner.display_name || `${practitioner.profile?.first_name || ''} ${practitioner.profile?.last_name || ''}`}
-                          {practitioner.title && ` - ${practitioner.title}`}
                         </Typography>
                         <Typography variant="body2" color="textSecondary">
                           {practitioner.profile?.email}
@@ -325,18 +412,88 @@ const AdminPractitionersPage: React.FC = () => {
                     </Box>
                   </TableCell>
                   <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>
-                    <Typography variant="body2">
-                      {practitioner.title || "—"}
-                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {practitioner.activeContract ? (
+                        <>
+                          <Chip
+                            label={getContractTypeLabel(practitioner.activeContract.contract_type)}
+                            size="small"
+                            color={
+                              practitioner.activeContract.contract_type === 'premium' ? 'success' :
+                              practitioner.activeContract.contract_type === 'pro' ? 'secondary' :
+                              practitioner.activeContract.contract_type === 'starter' ? 'primary' : 'default'
+                            }
+                          />
+                          <Box sx={{ display: 'flex', gap: 0.5 }}>
+                            <Tooltip title="Modifier le contrat">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleOpenContractDialog(
+                                  practitioner.id,
+                                  practitioner.display_name || `${practitioner.profile?.first_name || ''} ${practitioner.profile?.last_name || ''}`.trim(),
+                                  practitioner.activeContract ?? null
+                                )}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Voir l'historique">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleOpenHistory(practitioner.id)}
+                              >
+                                <HistoryIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Créer un RDV">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleOpenAppointmentDialog(
+                                  practitioner.id,
+                                  practitioner.display_name || `${practitioner.profile?.first_name || ''} ${practitioner.profile?.last_name || ''}`.trim()
+                                )}
+                              >
+                                <EventIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title={practitioner.iban ? "Modifier l'IBAN" : "Configurer l'IBAN"}>
+                              <IconButton
+                                size="small"
+                                color={practitioner.iban ? "success" : "default"}
+                                onClick={() => handleOpenIbanDialog(
+                                  practitioner.id,
+                                  practitioner.display_name || `${practitioner.profile?.first_name || ''} ${practitioner.profile?.last_name || ''}`.trim(),
+                                  practitioner.iban || null
+                                )}
+                              >
+                                <AccountBalanceIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Box>
+                        </>
+                      ) : (
+                        <>
+                          <Chip label="Aucun contrat" size="small" color="warning" />
+                          <Button
+                            size="small"
+                            variant="outlined"
+                            onClick={() => handleOpenContractDialog(
+                              practitioner.id,
+                              practitioner.display_name || `${practitioner.profile?.first_name || ''} ${practitioner.profile?.last_name || ''}`.trim(),
+                              null
+                            )}
+                            sx={{ fontSize: '0.75rem', py: 0.25 }}
+                          >
+                            Créer Contrat
+                          </Button>
+                        </>
+                      )}
+                    </Box>
                   </TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
-                    <Typography variant="body2" sx={{
-                      maxWidth: 250,
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}>
-                      {practitioner.summary || practitioner.bio || "—"}
+                    <Typography variant="body2">
+                      {practitioner.title || "—"}
                     </Typography>
                   </TableCell>
                   <TableCell align="center" sx={{ display: { xs: 'none', md: 'table-cell' } }}>
@@ -486,10 +643,67 @@ const AdminPractitionersPage: React.FC = () => {
         </DialogActions>
       </Dialog>
 
+      {/* Dialog de l'historique des contrats */}
+      <Dialog
+        open={historyDialogOpen}
+        onClose={() => setHistoryDialogOpen(false)}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: { borderRadius: 3 }
+        }}
+      >
+        <DialogTitle sx={{ background: 'linear-gradient(135deg, #345995 0%, #1D3461 100%)', color: 'white' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <HistoryIcon sx={{ mr: 1 }} />
+            Historique des Contrats
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ mt: 3 }}>
+          {selectedPractitionerForHistory && (
+            <ContractHistory practitionerId={selectedPractitionerForHistory} />
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setHistoryDialogOpen(false)}>
+            Fermer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Modal de création de rendez-vous */}
+      {selectedPractitionerForAppointment && (
+        <CreateAppointmentModal
+          open={appointmentDialogOpen}
+          onClose={() => {
+            setAppointmentDialogOpen(false);
+            setSelectedPractitionerForAppointment(null);
+          }}
+          practitionerId={selectedPractitionerForAppointment.id}
+          practitionerName={selectedPractitionerForAppointment.name}
+          onSuccess={handleAppointmentSuccess}
+        />
+      )}
+
+      {/* Modal de gestion de contrat */}
+      {selectedPractitionerForContract && (
+        <ManageContractModal
+          open={contractDialogOpen}
+          onClose={() => {
+            setContractDialogOpen(false);
+            setSelectedPractitionerForContract(null);
+          }}
+          practitionerId={selectedPractitionerForContract.id}
+          practitionerName={selectedPractitionerForContract.name}
+          currentContract={selectedPractitionerForContract.contract}
+          onSuccess={handleContractSuccess}
+        />
+      )}
+
       {/* Notifications */}
-      <Snackbar 
-        open={!!success} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={!!success}
+        autoHideDuration={6000}
         onClose={handleCloseAlert}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
@@ -498,9 +712,9 @@ const AdminPractitionersPage: React.FC = () => {
         </Alert>
       </Snackbar>
 
-      <Snackbar 
-        open={!!error} 
-        autoHideDuration={6000} 
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
         onClose={handleCloseAlert}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >

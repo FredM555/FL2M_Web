@@ -1,4 +1,4 @@
-# FLM Services - Application de gestion de rendez-vous
+# FL²M Services - Application de gestion de rendez-vous
 
 Application web et mobile de gestion de rendez-vous pour services d'accompagnement et de coaching.
 

@@ -47,7 +47,15 @@
       "Bash(findstr:*)",
       "Bash(node create_beneficiary_documents_table.js:*)",
       "Bash(node create_beneficiary_documents_table.cjs:*)",
-      "Bash(move:*)"
+      "Bash(move:*)",
+      "Bash(npm run test:*)",
+      "Bash(powershell -Command \"(Get-Content ''C:\\FLM\\flm-services-new\\src\\pages\\Admin\\PractitionersPage.tsx'' | Measure-Object -Line).Lines\")",
+      "Bash(powershell -Command \"Get-Date -Format ''yyyyMMddHHmmss''\")",
+      "Bash(node apply_migration_temp.js:*)",
+      "Bash(node apply_migration_temp.cjs:*)",
+      "Bash(test:*)",
+      "Bash(powershell:*)",
+      "Bash(del nul)"
     ],
     "deny": [],
     "ask": []

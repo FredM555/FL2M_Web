@@ -1,5 +1,5 @@
 -- ============================================================================
--- SCHÉMA DE BASE DE DONNÉES COMPLET - FLM Services
+-- SCHÉMA DE BASE DE DONNÉES COMPLET - FL²M Services
 -- Date de création : 22 janvier 2025
 -- Description : Structure complète de la base de données avec architecture
 --               bénéficiaires, numérologie, documents et rendez-vous

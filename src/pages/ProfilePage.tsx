@@ -1,13 +1,11 @@
 // src/pages/ProfilePage.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Avatar,
   Box,
   Button,
   Container,
-  Divider,
   Grid,
-  Paper,
   TextField,
   Typography,
   Alert,
@@ -16,10 +14,16 @@ import {
   Tooltip,
   Card,
   CardContent,
-  Chip
+  Chip,
+  CircularProgress,
+  List,
+  ListItem,
+  ListItemIcon,
+  ListItemText
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../services/supabase';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import EmailIcon from '@mui/icons-material/Email';
@@ -28,9 +32,15 @@ import PersonIcon from '@mui/icons-material/Person';
 import CakeIcon from '@mui/icons-material/Cake';
 import SaveIcon from '@mui/icons-material/Save';
 import WorkIcon from '@mui/icons-material/Work';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { UserRoleBadge } from '../components/profile/UserRoleBadge';
 import BecomePractitionerCard from '../components/practitioner/BecomePractitionerCard';
+import { getUserBeneficiaries, createBeneficiary, updateBeneficiary } from '../services/beneficiaries';
+import type { BeneficiaryWithAccess } from '../types/beneficiary';
+import { getBeneficiaryDocuments, getSignedBeneficiaryDocumentUrl, DOCUMENT_TYPE_LABELS } from '../services/beneficiaryDocuments';
+import type { BeneficiaryDocument } from '../services/beneficiaryDocuments';
 
 const ProfilePage = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -50,13 +60,98 @@ const ProfilePage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Snackbar pour les messages de bénéficiaire
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error' | 'info';
+  }>({
+    open: false,
+    message: '',
+    severity: 'success',
+  });
+
+  // Bénéficiaire "Moi"
+  const [myBeneficiary, setMyBeneficiary] = useState<BeneficiaryWithAccess | null>(null);
+  const [loadingBeneficiary, setLoadingBeneficiary] = useState(true);
+
+  // Documents du bénéficiaire
+  const [documents, setDocuments] = useState<BeneficiaryDocument[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+
+  // Charger le bénéficiaire "Moi" au chargement de la page
+  useEffect(() => {
+    loadMyBeneficiary();
+  }, [user]);
+
+  // Fonction pour charger le bénéficiaire "Moi"
+  const loadMyBeneficiary = async () => {
+    if (!user?.id) return;
+
+    setLoadingBeneficiary(true);
+    try {
+      // Utiliser le service pour récupérer les bénéficiaires de l'utilisateur
+      const { data: beneficiaries, error } = await getUserBeneficiaries(user.id);
+
+      if (error) {
+        console.error('Erreur lors du chargement des bénéficiaires:', error);
+      } else if (beneficiaries && beneficiaries.length > 0) {
+        // Trouver le bénéficiaire avec relationship = 'self'
+        const selfBeneficiary = beneficiaries.find(b => b.relationship === 'self');
+
+        if (selfBeneficiary) {
+          setMyBeneficiary(selfBeneficiary);
+          // Charger les documents du bénéficiaire
+          loadDocuments(selfBeneficiary.id);
+        }
+      }
+    } catch (err) {
+      console.error('Erreur:', err);
+    } finally {
+      setLoadingBeneficiary(false);
+    }
+  };
+
+  // Fonction pour charger les documents du bénéficiaire
+  const loadDocuments = async (beneficiaryId: string) => {
+    setLoadingDocuments(true);
+    try {
+      const { data, error } = await getBeneficiaryDocuments(beneficiaryId);
+      if (error) {
+        console.error('Erreur lors du chargement des documents:', error);
+      } else if (data) {
+        setDocuments(data);
+      }
+    } catch (err) {
+      console.error('Erreur:', err);
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  // Fonction pour ouvrir un document PDF
+  const handleOpenDocument = async (document: BeneficiaryDocument) => {
+    try {
+      const url = await getSignedBeneficiaryDocumentUrl(document.file_path);
+      window.open(url, '_blank');
+    } catch (err) {
+      console.error('Erreur lors de l\'ouverture du document:', err);
+      setSnackbar({
+        open: true,
+        message: 'Impossible d\'ouvrir le document. Veuillez réessayer.',
+        severity: 'error'
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-    
+
     try {
-      const { error } = await updateProfile({
+      // 1. Mettre à jour le profil
+      const { error: profileError } = await updateProfile({
         first_name: firstName,
         last_name: lastName,
         pseudo: pseudo,
@@ -64,9 +159,37 @@ const ProfilePage = () => {
         email: email || user?.email,
         birth_date: birthDate || undefined
       });
-      
-      if (error) throw error;
-      
+
+      if (profileError) throw profileError;
+
+      // 2. Créer ou mettre à jour automatiquement le bénéficiaire "moi"
+      if (firstName && lastName && birthDate && user?.id) {
+        const beneficiaryData = {
+          first_name: firstName,
+          last_name: lastName,
+          birth_date: birthDate,
+          email: user.email,
+          notifications_enabled: true
+        };
+
+        if (myBeneficiary) {
+          // Mettre à jour le bénéficiaire existant
+          const { error: beneficiaryError } = await updateBeneficiary(myBeneficiary.id, beneficiaryData, user.id);
+          if (beneficiaryError) {
+            console.error('Erreur lors de la mise à jour du bénéficiaire:', beneficiaryError);
+          }
+        } else {
+          // Créer un nouveau bénéficiaire
+          const { error: beneficiaryError } = await createBeneficiary(beneficiaryData, user.id);
+          if (beneficiaryError) {
+            console.error('Erreur lors de la création du bénéficiaire:', beneficiaryError);
+          }
+        }
+
+        // Recharger le bénéficiaire pour mettre à jour l'affichage
+        await loadMyBeneficiary();
+      }
+
       setSuccess(true);
     } catch (error: any) {
       setError('Erreur lors de la mise à jour du profil: ' + error.message);
@@ -511,10 +634,170 @@ const ProfilePage = () => {
                         },
                       }}
                     />
+
+                    {/* Statut et boutons du bénéficiaire "Moi" */}
+                    <Box
+                      sx={{
+                        mt: 2,
+                        p: 2,
+                        borderRadius: '12px',
+                        background: myBeneficiary
+                          ? 'rgba(76, 175, 80, 0.1)'
+                          : 'rgba(33, 150, 243, 0.1)',
+                        border: `2px solid ${myBeneficiary ? 'rgba(76, 175, 80, 0.3)' : 'rgba(33, 150, 243, 0.3)'}`,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="subtitle1" sx={{ fontWeight: 600, color: '#1D3461' }}>
+                            Bénéficiaire "Moi"
+                          </Typography>
+                          <Chip
+                            label={myBeneficiary ? 'Créé' : 'Sera créé automatiquement'}
+                            size="small"
+                            sx={{
+                              background: myBeneficiary ? '#4CAF50' : '#2196F3',
+                              color: 'white',
+                              fontWeight: 600,
+                            }}
+                          />
+                        </Box>
+                      </Box>
+
+                      <Typography variant="body2" sx={{ color: '#666', mb: 2 }}>
+                        {myBeneficiary
+                          ? 'Votre profil de bénéficiaire est synchronisé avec vos informations de profil.'
+                          : 'Votre profil de bénéficiaire sera créé automatiquement lors de l\'enregistrement de vos modifications.'
+                        }
+                      </Typography>
+
+                      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<VisibilityIcon />}
+                          onClick={() => navigate('/beneficiaries')}
+                          sx={{
+                            borderColor: '#345995',
+                            color: '#345995',
+                            '&:hover': {
+                              borderColor: '#FFA500',
+                              background: 'rgba(255, 165, 0, 0.1)',
+                            },
+                          }}
+                        >
+                          Voir tous mes bénéficiaires
+                        </Button>
+                      </Box>
+                    </Box>
                   </Box>
                 </CardContent>
               </Card>
             </Grid>
+
+            {/* Documents du bénéficiaire "Moi" */}
+            {myBeneficiary && (
+              <Grid item xs={12}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    borderRadius: '16px',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+                    border: '2px solid rgba(52, 89, 149, 0.2)',
+                  }}
+                >
+                  <CardContent sx={{ p: 4 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: '12px',
+                          background: 'linear-gradient(135deg, #345995, #1D3461)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          mr: 2,
+                        }}
+                      >
+                        <PictureAsPdfIcon sx={{ color: '#FFD700', fontSize: '1.5rem' }} />
+                      </Box>
+                      <Typography
+                        variant="h5"
+                        component="h2"
+                        sx={{
+                          fontWeight: 700,
+                          color: '#1D3461',
+                        }}
+                      >
+                        Mes documents
+                      </Typography>
+                    </Box>
+
+                    {loadingDocuments ? (
+                      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                        <CircularProgress />
+                      </Box>
+                    ) : documents.length > 0 ? (
+                      <List>
+                        {documents.map((doc) => (
+                          <ListItem
+                            key={doc.id}
+                            sx={{
+                              borderRadius: '12px',
+                              mb: 1,
+                              background: 'rgba(52, 89, 149, 0.05)',
+                              '&:hover': {
+                                background: 'rgba(52, 89, 149, 0.1)',
+                                cursor: 'pointer',
+                              },
+                            }}
+                            onClick={() => handleOpenDocument(doc)}
+                          >
+                            <ListItemIcon>
+                              <PictureAsPdfIcon sx={{ color: '#d32f2f' }} />
+                            </ListItemIcon>
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+                                    {doc.file_name}
+                                  </Typography>
+                                  <Chip
+                                    label={DOCUMENT_TYPE_LABELS[doc.document_type]}
+                                    size="small"
+                                    sx={{
+                                      background: '#345995',
+                                      color: 'white',
+                                      fontSize: '0.75rem',
+                                    }}
+                                  />
+                                </Box>
+                              }
+                              secondary={
+                                doc.description ||
+                                `Ajouté le ${new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}`
+                              }
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      <Alert
+                        severity="info"
+                        sx={{
+                          borderRadius: '12px',
+                          background: 'rgba(52, 89, 149, 0.1)',
+                          border: '1px solid rgba(52, 89, 149, 0.3)',
+                        }}
+                      >
+                        Aucun document disponible pour le moment. Vos documents seront ajoutés par vos intervenants.
+                      </Alert>
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
 
             {/* Bouton d'enregistrement */}
             <Grid item xs={12}>
@@ -570,6 +853,7 @@ const ProfilePage = () => {
         </Container>
       </Box>
 
+      {/* Snackbar pour le profil */}
       <Snackbar
         open={success}
         autoHideDuration={6000}
@@ -586,6 +870,27 @@ const ProfilePage = () => {
           }}
         >
           Profil mis à jour avec succès
+        </Alert>
+      </Snackbar>
+
+      {/* Snackbar pour le bénéficiaire */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={snackbar.severity === 'success' ? 8000 : 6000}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{
+            borderRadius: '12px',
+            boxShadow: '0 8px 24px rgba(120, 190, 32, 0.2)',
+            fontWeight: 500,
+            maxWidth: '500px',
+          }}
+        >
+          {snackbar.message}
         </Alert>
       </Snackbar>
     </Box>

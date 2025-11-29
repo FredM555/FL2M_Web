@@ -43,6 +43,7 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import WorkIcon from '@mui/icons-material/Work';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import PromotePractitionerModal from '../../components/admin/PromotePractitionerModal';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -76,6 +77,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
   const [actionType, setActionType] = useState<'approve' | 'reject' | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [actionLoading, setActionLoading] = useState(false);
+  const [promotionModalOpen, setPromotionModalOpen] = useState(false);
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
     message: string;
@@ -117,7 +119,34 @@ const AdminPractitionerRequestsPage: React.FC = () => {
     setSelectedRequest(request);
     setActionType(action);
     setAdminNotes('');
-    setActionDialogOpen(true);
+
+    // Si c'est une approbation, ouvrir le modal de promotion avec contrat
+    if (action === 'approve') {
+      setPromotionModalOpen(true);
+    } else {
+      setActionDialogOpen(true);
+    }
+  };
+
+  const handlePromotionSuccess = async () => {
+    if (!selectedRequest) return;
+
+    setActionLoading(true);
+    try {
+      // Approuver la demande après que le contrat a été créé
+      const { error } = await approvePractitionerRequest(selectedRequest.id, adminNotes || undefined);
+
+      if (error) throw error;
+
+      showSnackbar('Praticien promu avec succès ! Le contrat a été créé.', 'success');
+      setPromotionModalOpen(false);
+      await fetchRequests();
+    } catch (err: any) {
+      console.error('Erreur lors de l\'approbation:', err);
+      showSnackbar(err.message || 'Erreur lors de l\'approbation de la demande', 'error');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const handleAction = async () => {
@@ -125,6 +154,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
 
     setActionLoading(true);
     try {
+      // Note: actionType sera toujours 'reject' ici car 'approve' utilise handlePromotionSuccess
       const actionFn = actionType === 'approve' ? approvePractitionerRequest : rejectPractitionerRequest;
       const { error } = await actionFn(selectedRequest.id, adminNotes || undefined);
 
@@ -599,6 +629,17 @@ const AdminPractitionerRequestsPage: React.FC = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Modal de promotion avec création de contrat */}
+      {selectedRequest && (
+        <PromotePractitionerModal
+          open={promotionModalOpen}
+          onClose={() => setPromotionModalOpen(false)}
+          practitionerId={selectedRequest.user_id}
+          practitionerName={`${selectedRequest.user?.first_name} ${selectedRequest.user?.last_name}`}
+          onSuccess={handlePromotionSuccess}
+        />
+      )}
 
       {/* Snackbar */}
       <Snackbar

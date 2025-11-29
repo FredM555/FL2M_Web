@@ -182,7 +182,7 @@ const AdminLayout: React.FC = () => {
           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Typography variant="h6" noWrap component="div" sx={{ mr: 2 }}>
-                Administration FLM
+                Administration FL²M
               </Typography>
               
               <IconButton

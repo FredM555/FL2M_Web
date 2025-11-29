@@ -1,3 +1,40 @@
+# 🚨 ACTION IMMÉDIATE - Correction CORS
+
+**Problème :** Erreur CORS lors de l'envoi d'email de contact
+**Solution :** Headers CORS ajoutés au code
+**Action requise :** Redéployer la fonction (5 min)
+
+---
+
+## 🎯 À Faire MAINTENANT (5 minutes)
+
+### Étape 1 : Ouvrir Supabase Dashboard (1 min)
+
+1. Allez sur : [https://supabase.com/dashboard](https://supabase.com/dashboard)
+2. Connectez-vous
+3. Sélectionnez votre projet
+4. Cliquez sur **Edge Functions** dans le menu de gauche
+
+### Étape 2 : Éditer la Fonction (2 min)
+
+1. Trouvez `send-contact-email` dans la liste
+2. Cliquez dessus
+3. Cliquez sur **Edit** ou l'icône ✏️
+
+### Étape 3 : Copier le Nouveau Code (1 min)
+
+**Option A - Copier depuis le fichier local :**
+1. Ouvrez : `C:\FLM\flm-services-new\supabase\functions\send-contact-email\index.ts`
+2. Sélectionnez tout (Ctrl+A)
+3. Copiez (Ctrl+C)
+4. Collez dans l'éditeur Supabase
+
+**Option B - Le code est ci-dessous :**
+
+<details>
+<summary>👉 Cliquez pour voir le code complet à copier</summary>
+
+```typescript
 // supabase/functions/send-contact-email/index.ts
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 
@@ -14,7 +51,7 @@ interface ContactMessage {
 
 interface RequestBody {
   message: ContactMessage;
-  adminEmail?: string; // Email de destination (par défaut contact@fl2m.fr)
+  adminEmail?: string;
 }
 
 // Headers CORS pour permettre les requêtes depuis le frontend
@@ -43,7 +80,6 @@ serve(async (req) => {
   }
 
   try {
-    // Extraire les données de la requête
     const { message, adminEmail }: RequestBody = await req.json();
 
     if (!message || !message.email) {
@@ -83,27 +119,27 @@ serve(async (req) => {
           </div>
           <div class="content">
             <div class="info-row">
-              <span class="label">De :</span> ${message.first_name} ${message.last_name}
+              <span class="label">De :</span> \${message.first_name} \${message.last_name}
             </div>
             <div class="info-row">
-              <span class="label">Email :</span> <a href="mailto:${message.email}">${message.email}</a>
+              <span class="label">Email :</span> <a href="mailto:\${message.email}">\${message.email}</a>
             </div>
-            ${message.phone ? `
+            \${message.phone ? \`
             <div class="info-row">
-              <span class="label">Téléphone :</span> ${message.phone}
+              <span class="label">Téléphone :</span> \${message.phone}
             </div>
-            ` : ''}
+            \` : ''}
             <div class="info-row">
-              <span class="label">Sujet :</span> ${message.subject}
+              <span class="label">Sujet :</span> \${message.subject}
             </div>
-            ${message.module ? `
+            \${message.module ? \`
             <div class="info-row">
-              <span class="label">Module concerné :</span> ${message.module}
+              <span class="label">Module concerné :</span> \${message.module}
             </div>
-            ` : ''}
+            \` : ''}
             <div class="message-box">
               <div class="label">Message :</div>
-              <p>${message.message.replace(/\n/g, '<br>')}</p>
+              <p>\${message.message.replace(/\\n/g, '<br>')}</p>
             </div>
             <p style="color: #666; font-size: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
               Ce message a été envoyé depuis le formulaire de contact du site FL²M Services.<br>
@@ -135,17 +171,17 @@ serve(async (req) => {
             <h2 style="margin: 0; color: white;">✓ Message bien reçu</h2>
           </div>
           <div class="content">
-            <p>Bonjour ${message.first_name} ${message.last_name},</p>
+            <p>Bonjour \${message.first_name} \${message.last_name},</p>
 
-            <p>Nous avons bien reçu votre message concernant : <strong>${message.subject}</strong></p>
+            <p>Nous avons bien reçu votre message concernant : <strong>\${message.subject}</strong></p>
 
-            ${message.module ? `
-            <p>Module concerné : <strong>${message.module}</strong></p>
-            ` : ''}
+            \${message.module ? \`
+            <p>Module concerné : <strong>\${message.module}</strong></p>
+            \` : ''}
 
             <div class="message-box">
               <p style="margin: 0; color: #666; font-style: italic;">Votre message :</p>
-              <p style="margin-top: 10px;">${message.message.replace(/\n/g, '<br>')}</p>
+              <p style="margin-top: 10px;">\${message.message.replace(/\\n/g, '<br>')}</p>
             </div>
 
             <p>Notre équipe va l'examiner attentivement et vous répondra dans les plus brefs délais, généralement sous 24 heures ouvrées.</p>
@@ -170,13 +206,13 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${resendApiKey}`
+        'Authorization': \`Bearer \${resendApiKey}\`
       },
       body: JSON.stringify({
         from: 'FL²M Services <noreply@fl2m.fr>',
         to: [adminEmail || 'contact@fl2m.fr'],
-        reply_to: message.email, // IMPORTANT : Email du client pour pouvoir répondre
-        subject: `Nouveau message de contact : ${message.subject}`,
+        reply_to: message.email,
+        subject: \`Nouveau message de contact : \${message.subject}\`,
         html: adminEmailHtml
       })
     });
@@ -184,7 +220,7 @@ serve(async (req) => {
     if (!adminResponse.ok) {
       const errorText = await adminResponse.text();
       console.error('Resend admin email error:', errorText);
-      throw new Error(`Failed to send admin email: ${errorText}`);
+      throw new Error(\`Failed to send admin email: \${errorText}\`);
     }
 
     const adminResult = await adminResponse.json();
@@ -195,7 +231,7 @@ serve(async (req) => {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${resendApiKey}`
+        'Authorization': \`Bearer \${resendApiKey}\`
       },
       body: JSON.stringify({
         from: 'FL²M Services <noreply@fl2m.fr>',
@@ -208,7 +244,6 @@ serve(async (req) => {
     if (!clientResponse.ok) {
       const errorText = await clientResponse.text();
       console.error('Resend client email error:', errorText);
-      // Ne pas faire échouer si l'accusé de réception échoue
     } else {
       const clientResult = await clientResponse.json();
       console.log('Client confirmation email sent successfully:', clientResult);
@@ -238,3 +273,77 @@ serve(async (req) => {
     });
   }
 });
+```
+
+</details>
+
+### Étape 4 : Déployer (1 min)
+
+1. Cliquez sur **Deploy** (bouton en haut à droite)
+2. Attendez quelques secondes (vous verrez une barre de progression)
+3. Message de succès : "Function deployed successfully" ✅
+
+### Étape 5 : Tester (30 secondes)
+
+1. Retournez sur votre site : `http://localhost:5173/contact`
+2. Rechargez la page (Ctrl+R ou F5)
+3. Remplissez le formulaire
+4. Envoyez un message test
+5. **Ça devrait fonctionner !** 🎉
+
+---
+
+## ✅ Vérification
+
+**Si ça fonctionne :**
+- ✅ Pas d'erreur CORS dans la console
+- ✅ Message "Votre message a été envoyé avec succès"
+- ✅ Email reçu à contact@fl2m.fr
+- ✅ Vous pouvez cliquer sur "Répondre" et l'email du client est pré-rempli
+
+**Si ça ne fonctionne toujours pas :**
+1. Vider le cache du navigateur (Ctrl+Shift+R)
+2. Vérifier que la fonction est bien déployée dans le Dashboard
+3. Regarder les logs : Dashboard → Edge Functions → send-contact-email → Logs
+
+---
+
+## 🎯 Changement Effectué
+
+**Ce qui a été ajouté :**
+
+```typescript
+// Headers CORS (ligne 20-23)
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type'
+};
+
+// Gestion des requêtes OPTIONS (ligne 26-31)
+if (req.method === 'OPTIONS') {
+  return new Response('ok', {
+    headers: corsHeaders
+  });
+}
+
+// Headers CORS ajoutés à TOUTES les réponses
+headers: {
+  ...corsHeaders,  // ← Ajouté partout
+  'Content-Type': 'application/json'
+}
+```
+
+---
+
+## 📱 Support
+
+**Si problème :**
+- Regardez les logs Supabase : Dashboard → Edge Functions → Logs
+- Vérifiez la console navigateur (F12)
+- Lisez `REDEPLOYER_FONCTION.md` pour plus de détails
+
+---
+
+**⏰ Temps total : 5 minutes**
+
+**🎯 Une fois fait, le formulaire de contact fonctionnera parfaitement !**

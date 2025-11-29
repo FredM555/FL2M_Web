@@ -127,75 +127,12 @@ const ContactPage = () => {
       
       if (insertError) throw insertError;
       
-      // Récupérer tous les administrateurs
-      const { data: admins, error: adminsError } = await supabase
-        .from('profiles')
-        .select('id, email')
-        .eq('user_type', 'admin');
-      
-      if (adminsError) throw adminsError;
-      
-      // Envoyer un email de notification à contact@fl2m.fr
+      // Envoyer l'email via la fonction Supabase qui utilise Resend
       try {
-        const emailHtml = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #345995 0%, #1D3461 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
-              .content { background: #f8f9fa; padding: 20px; border-radius: 0 0 8px 8px; }
-              .info-row { margin: 10px 0; padding: 10px; background: white; border-radius: 4px; }
-              .label { font-weight: bold; color: #345995; }
-              .message-box { background: white; padding: 15px; border-left: 4px solid #FFD700; margin: 15px 0; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h2 style="margin: 0;">📧 Nouveau message de contact</h2>
-              </div>
-              <div class="content">
-                <div class="info-row">
-                  <span class="label">De :</span> ${formData.first_name} ${formData.last_name}
-                </div>
-                <div class="info-row">
-                  <span class="label">Email :</span> <a href="mailto:${formData.email}">${formData.email}</a>
-                </div>
-                ${formData.phone ? `
-                <div class="info-row">
-                  <span class="label">Téléphone :</span> ${formData.phone}
-                </div>
-                ` : ''}
-                <div class="info-row">
-                  <span class="label">Sujet :</span> ${formData.subject}
-                </div>
-                ${formData.module ? `
-                <div class="info-row">
-                  <span class="label">Module concerné :</span> ${formData.module}
-                </div>
-                ` : ''}
-                <div class="message-box">
-                  <div class="label">Message :</div>
-                  <p>${formData.message.replace(/\n/g, '<br>')}</p>
-                </div>
-                <p style="color: #666; font-size: 12px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd;">
-                  Ce message a été envoyé depuis le formulaire de contact du site FL²M Services.
-                </p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `;
-
-        const { data: emailData, error: emailError } = await supabase.functions.invoke('send-email', {
+        const { data: emailData, error: emailError } = await supabase.functions.invoke('send-contact-email', {
           body: {
-            to: 'contact@fl2m.fr',
-            replyTo: formData.email, // L'adresse de réponse sera celle de l'utilisateur
-            subject: `Nouveau message de contact : ${formData.subject}`,
-            html: emailHtml,
-            emailType: 'contact'
+            message: newMessage,
+            adminEmail: 'contact@fl2m.fr' // Email de destination
           }
         });
 
@@ -203,71 +140,7 @@ const ContactPage = () => {
           console.error('Erreur lors de l\'envoi de l\'email:', emailError);
           // Ne pas bloquer l'envoi si l'email échoue
         } else {
-          console.log('Email envoyé avec succès:', emailData);
-        }
-
-        // Envoyer un accusé de réception au client
-        const confirmationHtml = `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <style>
-              body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-              .header { background: linear-gradient(135deg, #345995 0%, #1D3461 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }
-              .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
-              .message-box { background: white; padding: 20px; border-left: 4px solid #FFD700; margin: 20px 0; border-radius: 4px; }
-              .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #FFD700; }
-              .btn { display: inline-block; padding: 12px 30px; background: linear-gradient(45deg, #FFD700, #FFA500); color: #1a1a2e; text-decoration: none; border-radius: 25px; font-weight: bold; margin-top: 20px; }
-            </style>
-          </head>
-          <body>
-            <div class="container">
-              <div class="header">
-                <h2 style="margin: 0; color: white;">✓ Message bien reçu</h2>
-              </div>
-              <div class="content">
-                <p>Bonjour ${formData.first_name} ${formData.last_name},</p>
-
-                <p>Nous avons bien reçu votre message concernant : <strong>${formData.subject}</strong></p>
-
-                ${formData.module ? `
-                <p>Module concerné : <strong>${formData.module}</strong></p>
-                ` : ''}
-
-                <div class="message-box">
-                  <p style="margin: 0; color: #666; font-style: italic;">Votre message :</p>
-                  <p style="margin-top: 10px;">${formData.message.replace(/\n/g, '<br>')}</p>
-                </div>
-
-                <p>Notre équipe va l'examiner attentivement et vous répondra dans les plus brefs délais, généralement sous 24 heures ouvrées.</p>
-
-                <div class="footer">
-                  <p style="margin: 0; color: #345995; font-weight: bold;">FL²M Services</p>
-                  <p style="margin: 5px 0; color: #666;">123 Avenue des Essences, 75001 Paris</p>
-                  <p style="margin: 5px 0; color: #666;">contact@fl2m.fr | +33 (0)1 23 45 67 89</p>
-                </div>
-
-                <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
-                  Ceci est un message automatique, merci de ne pas y répondre directement.
-                </p>
-              </div>
-            </div>
-          </body>
-          </html>
-        `;
-
-        const { error: confirmationError } = await supabase.functions.invoke('send-email', {
-          body: {
-            to: formData.email,
-            subject: 'Confirmation de réception de votre message - FL²M Services',
-            html: confirmationHtml,
-            emailType: 'contact'
-          }
-        });
-
-        if (confirmationError) {
-          console.error('Erreur lors de l\'envoi de l\'accusé de réception:', confirmationError);
+          console.log('Email envoyé avec succès via Resend:', emailData);
         }
       } catch (emailErr) {
         console.error('Erreur lors de l\'envoi de l\'email:', emailErr);
@@ -436,21 +309,6 @@ const ContactPage = () => {
                 </Typography>
               </Box>
 
-              <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <PhoneIcon sx={{ mr: 2, color: '#FFA500' }} />
-                <Typography>
-                  <strong>Téléphone:</strong> +33 (0)1 23 45 67 89
-                </Typography>
-              </Box>
-
-              <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                <LocationOnIcon sx={{ mr: 2, color: '#FFA500' }} />
-                <Typography>
-                  <strong>Adresse:</strong><br />
-                  123 Avenue des Essences<br />
-                  75001 Paris, France
-                </Typography>
-              </Box>
             </Box>
             
             <Typography variant="body2" color="text.secondary" sx={{ mt: 4 }}>

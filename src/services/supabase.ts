@@ -61,6 +61,8 @@ export type Practitioner = {
   // Domaines d'expertise et qualifications
   expertise_domains?: string[];
   qualifications?: string[];
+  // IBAN pour les virements manuels
+  iban?: string;
 };
 
 export type Appointment = {

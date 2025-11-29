@@ -17,6 +17,7 @@ import {
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
+import { useLocation } from 'react-router-dom';
 import { BeneficiaryList } from '../components/beneficiaries/BeneficiaryList';
 import { BeneficiaryForm } from '../components/beneficiaries/BeneficiaryForm';
 import { BeneficiaryHistory } from '../components/beneficiaries/BeneficiaryHistory';
@@ -41,6 +42,7 @@ type DialogMode = 'create' | 'edit' | 'view' | null;
  */
 export const BeneficiariesPage: React.FC = () => {
   const { user, profile } = useAuth();
+  const location = useLocation();
   const [beneficiaries, setBeneficiaries] = useState<BeneficiaryWithAccess[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +76,22 @@ export const BeneficiariesPage: React.FC = () => {
       loadBeneficiaries();
     }
   }, [user?.id]); // Utiliser user?.id au lieu de user pour éviter les re-renders inutiles
+
+  // Ouvrir automatiquement le dialog si un bénéficiaire est passé dans l'état de navigation
+  useEffect(() => {
+    const state = location.state as { openBeneficiary?: string; mode?: 'view' | 'edit' } | null;
+    if (state?.openBeneficiary && beneficiaries.length > 0) {
+      const beneficiary = beneficiaries.find(b => b.id === state.openBeneficiary);
+      if (beneficiary) {
+        setSelectedBeneficiary(beneficiary);
+        setDetailTab(0);
+        setDialogMode(state.mode || 'view');
+
+        // Nettoyer l'état pour éviter de rouvrir à chaque render
+        window.history.replaceState({}, document.title);
+      }
+    }
+  }, [location.state, beneficiaries]);
 
   const loadBeneficiaries = async () => {
     try {
