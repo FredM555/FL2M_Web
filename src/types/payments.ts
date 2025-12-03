@@ -9,7 +9,7 @@ export type ContractType = 'free' | 'starter' | 'pro' | 'premium';
 /**
  * Statut d'un contrat praticien
  */
-export type ContractStatus = 'active' | 'suspended' | 'terminated';
+export type ContractStatus = 'pending_payment' | 'active' | 'suspended' | 'terminated';
 
 /**
  * Statut d'une transaction

@@ -5,19 +5,23 @@ import {
   Typography,
   Paper,
   Grid,
-  Divider,
   Chip,
   Button,
   CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  Alert,
+  Snackbar,
 } from '@mui/material';
 import {
   Person as PersonIcon,
   Cake as CakeIcon,
-  Numbers as NumbersIcon,
   Note as NoteIcon,
   Description as DescriptionIcon,
+  Edit as EditIcon,
 } from '@mui/icons-material';
-import { BeneficiaryWithAccess, formatBirthDate, calculateAge } from '../../types/beneficiary';
+import { BeneficiaryWithAccess, formatBirthDate, calculateAge, BeneficiaryRelationship, getRelationshipLabel } from '../../types/beneficiary';
 import {
   BeneficiaryDocument,
   DOCUMENT_TYPE_LABELS,
@@ -27,11 +31,13 @@ import {
   getBeneficiaryDocumentUrl,
   downloadBeneficiaryDocument
 } from '../../services/beneficiaryDocuments';
+import { updateBeneficiaryRelationship } from '../../services/beneficiaries';
 import { PDFViewer } from '../appointments/PDFViewer';
 
 interface BeneficiaryDetailsProps {
   beneficiary: BeneficiaryWithAccess;
   userType?: 'admin' | 'intervenant' | 'client';
+  onRelationshipUpdate?: () => void;
 }
 
 /**
@@ -41,6 +47,7 @@ interface BeneficiaryDetailsProps {
 export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
   beneficiary,
   userType = 'client',
+  onRelationshipUpdate,
 }) => {
   // Vérifier si l'utilisateur peut voir les données sensibles
   const canViewSensitiveData = userType === 'admin' || userType === 'intervenant';
@@ -53,6 +60,14 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
   // États pour le PDF viewer
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
   const [viewerDocument, setViewerDocument] = useState<BeneficiaryDocument | null>(null);
+
+  // États pour la modification de la relation
+  const [isEditingRelationship, setIsEditingRelationship] = useState(false);
+  const [currentRelationship, setCurrentRelationship] = useState<BeneficiaryRelationship | 'owner'>(beneficiary.relationship);
+  const [savingRelationship, setSavingRelationship] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
 
   // Charger les documents pour les raccourcis
   useEffect(() => {
@@ -136,6 +151,54 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
     }
   };
 
+  // Gérer le changement de relation
+  const handleRelationshipChange = (newRelationship: BeneficiaryRelationship | 'owner') => {
+    setCurrentRelationship(newRelationship);
+  };
+
+  // Sauvegarder la nouvelle relation
+  const handleSaveRelationship = async () => {
+    if (!beneficiary.is_owner || currentRelationship === 'owner') {
+      setSnackbarMessage('Vous ne pouvez modifier que vos propres bénéficiaires');
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+      return;
+    }
+
+    setSavingRelationship(true);
+    try {
+      const { error } = await updateBeneficiaryRelationship(
+        beneficiary.id,
+        currentRelationship as BeneficiaryRelationship
+      );
+
+      if (error) throw error;
+
+      setSnackbarMessage('Type de relation mis à jour avec succès');
+      setSnackbarSeverity('success');
+      setSnackbarOpen(true);
+      setIsEditingRelationship(false);
+
+      // Notifier le parent pour rafraîchir les données
+      if (onRelationshipUpdate) {
+        onRelationshipUpdate();
+      }
+    } catch (err: any) {
+      console.error('Erreur lors de la mise à jour de la relation:', err);
+      setSnackbarMessage('Erreur lors de la mise à jour: ' + (err.message || 'Erreur inconnue'));
+      setSnackbarSeverity('error');
+      setSnackbarOpen(true);
+    } finally {
+      setSavingRelationship(false);
+    }
+  };
+
+  // Annuler la modification
+  const handleCancelRelationship = () => {
+    setCurrentRelationship(beneficiary.relationship);
+    setIsEditingRelationship(false);
+  };
+
   // Trouver les documents par type
   const arbreDoc = documents.find(doc => doc.document_type === 'arbre');
   const arbreDetailDoc = documents.find(doc => doc.document_type === 'arbre_detail');
@@ -184,22 +247,92 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
             </Typography>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <Typography variant="body2" color="text.secondary" gutterBottom>
-              Date de naissance
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <CakeIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {formatBirthDate(beneficiary.birth_date)}
-              </Typography>
-              <Chip
-                label={`${calculateAge(beneficiary.birth_date)} ans`}
-                size="small"
-                color="primary"
-                sx={{ ml: 1 }}
-              />
-            </Box>
+          <Grid item xs={12}>
+            <Grid container spacing={3}>
+              {/* Date de naissance */}
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Date de naissance
+                </Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CakeIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    {formatBirthDate(beneficiary.birth_date)}
+                  </Typography>
+                  <Chip
+                    label={`${calculateAge(beneficiary.birth_date)} ans`}
+                    size="small"
+                    color="primary"
+                    sx={{ ml: 1 }}
+                  />
+                </Box>
+              </Grid>
+
+              {/* Type de relation */}
+              <Grid item xs={12} sm={6}>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Type de relation
+                </Typography>
+                {!isEditingRelationship ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Chip
+                      label={getRelationshipLabel(beneficiary.relationship)}
+                      color="secondary"
+                      size="small"
+                    />
+                    {beneficiary.is_owner && (
+                      <Button
+                        size="small"
+                        startIcon={<EditIcon />}
+                        onClick={() => setIsEditingRelationship(true)}
+                        sx={{ ml: 1 }}
+                      >
+                        Modifier
+                      </Button>
+                    )}
+                  </Box>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <FormControl size="small" fullWidth>
+                      <Select
+                        value={currentRelationship}
+                        onChange={(e) => handleRelationshipChange(e.target.value as BeneficiaryRelationship)}
+                        disabled={savingRelationship}
+                      >
+                        <MenuItem value="self">1 - Moi-même</MenuItem>
+                        <MenuItem value="spouse">2 - Conjoint(e)</MenuItem>
+                        <MenuItem value="child">3 - Enfant</MenuItem>
+                        <MenuItem value="parent">4 - Parent</MenuItem>
+                        <MenuItem value="sibling">5 - Frère/Sœur</MenuItem>
+                        <MenuItem value="grandparent">6 - Grand-parent</MenuItem>
+                        <MenuItem value="grandchild">7 - Petit-enfant</MenuItem>
+                        <MenuItem value="other">8 - Autre</MenuItem>
+                      </Select>
+                    </FormControl>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={handleSaveRelationship}
+                        disabled={savingRelationship || currentRelationship === beneficiary.relationship}
+                        fullWidth
+                      >
+                        {savingRelationship ? <CircularProgress size={20} /> : 'Enregistrer'}
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={handleCancelRelationship}
+                        disabled={savingRelationship}
+                        fullWidth
+                      >
+                        Annuler
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+              </Grid>
+            </Grid>
           </Grid>
         </Grid>
       </Paper>
@@ -501,6 +634,22 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
           onDownload={() => handleDownloadDocument(viewerDocument)}
         />
       )}
+
+      {/* Snackbar pour les notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: '100%' }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

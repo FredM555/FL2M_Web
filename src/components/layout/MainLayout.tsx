@@ -88,6 +88,31 @@ const MainLayout: React.FC = () => {
     return () => clearInterval(interval);
   }, [slogans.length]);
 
+  // Vérifier si l'utilisateur a une demande pre_approved et le rediriger vers la page d'onboarding
+  React.useEffect(() => {
+    const checkPendingOnboarding = async () => {
+      // Vérifier uniquement si l'utilisateur est connecté et pas déjà sur la page d'onboarding
+      if (!user || location.pathname === '/practitioner-onboarding') return;
+
+      try {
+        const { getAllPractitionerRequests } = await import('../../services/supabase');
+        const { data } = await getAllPractitionerRequests();
+
+        const userRequest = data?.find(
+          r => r.user_id === user.id && r.status === 'pre_approved'
+        );
+
+        if (userRequest) {
+          navigate('/practitioner-onboarding');
+        }
+      } catch (error) {
+        console.error('Erreur lors de la vérification de l\'onboarding:', error);
+      }
+    };
+
+    checkPendingOnboarding();
+  }, [user, location.pathname, navigate]);
+
   // Hauteur totale du bandeau pour décaler le contenu principal
   const headerHeight = isMobile ? '56px' : '108px'; // Hauteur réduite du header
 

@@ -58,6 +58,7 @@ export type Practitioner = {
   title?: string;
   summary?: string;
   is_active: boolean;
+  profile_visible: boolean;
   // Domaines d'expertise et qualifications
   expertise_domains?: string[];
   qualifications?: string[];
@@ -83,6 +84,7 @@ export type Appointment = {
   beneficiary_email?: string;
   beneficiary_phone?: string;
   beneficiary_notifications_enabled?: boolean;
+  beneficiary_relationship?: string;
   // Lien de visioconférence
   meeting_link?: string;
   // Prix personnalisé (si NULL, utilise service.price)
@@ -122,7 +124,7 @@ export type PractitionerRequest = {
   proposed_title?: string;
   proposed_bio?: string;
   proposed_summary?: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'pre_approved' | 'approved' | 'rejected';
   admin_notes?: string;
   reviewed_by?: string;
   reviewed_at?: string;
@@ -328,7 +330,9 @@ export const getPractitioners = (onlyActive: boolean = false) => {
 
   // Filtrer sur les actifs si demandé
   if (onlyActive) {
-    query = query.eq('is_active', true);
+    query = query
+      .eq('is_active', true)
+      .eq('profile_visible', true); // Aussi filtrer sur la visibilité du profil
   }
 
   return query.order('priority', { ascending: false });
@@ -394,6 +398,7 @@ export const updateMyPractitionerProfile = async (
     summary?: string;
     expertise_domains?: string[];
     qualifications?: string[];
+    profile_visible?: boolean;
   }
 ) => {
   const { data: { user } } = await supabase.auth.getUser();
@@ -408,7 +413,8 @@ export const updateMyPractitionerProfile = async (
     title: updates.title,
     summary: updates.summary,
     expertise_domains: updates.expertise_domains,
-    qualifications: updates.qualifications
+    qualifications: updates.qualifications,
+    profile_visible: updates.profile_visible
   };
 
   // Supprimer les champs undefined
@@ -1569,6 +1575,57 @@ export const approvePractitionerRequest = async (
     request_id: requestId,
     admin_id: user.id,
     notes: adminNotes || null
+  });
+};
+
+/**
+ * Activer le parcours intervenant (pré-approbation - admin uniquement)
+ * L'intervenant pourra ensuite finaliser lui-même son inscription
+ */
+export const preApprovePractitionerRequest = async (
+  requestId: string,
+  adminNotes?: string
+) => {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { data: null, error: new Error('User not authenticated') };
+  }
+
+  return supabase.rpc('pre_approve_practitioner_request', {
+    p_request_id: requestId,
+    p_admin_id: user.id,
+    p_admin_notes: adminNotes || null
+  });
+};
+
+/**
+ * Finaliser l'inscription intervenant (appelé par l'intervenant lui-même)
+ */
+export const completePractitionerOnboarding = async (
+  requestId: string,
+  contractType: 'free' | 'starter' | 'pro' | 'premium',
+  contractDocumentUrl?: string,
+  startDate?: string
+) => {
+  return supabase.rpc('complete_practitioner_onboarding', {
+    p_request_id: requestId,
+    p_contract_type: contractType,
+    p_contract_document_url: contractDocumentUrl || null,
+    p_start_date: startDate || new Date().toISOString().split('T')[0]
+  });
+};
+
+/**
+ * Activer un contrat après paiement validé sur Stripe
+ */
+export const activateContractAfterPayment = async (
+  contractId: string,
+  stripePaymentIntentId: string
+) => {
+  return supabase.rpc('activate_contract_after_payment', {
+    p_contract_id: contractId,
+    p_stripe_payment_intent_id: stripePaymentIntentId
   });
 };
 

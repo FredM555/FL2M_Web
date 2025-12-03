@@ -35,7 +35,7 @@ interface BeneficiaryListProps {
   userType?: 'admin' | 'intervenant' | 'client';
 }
 
-type SortOption = 'name_asc' | 'name_desc' | 'age_asc' | 'age_desc' | 'rdv_desc';
+type SortOption = 'relationship' | 'name_asc' | 'name_desc' | 'age_asc' | 'age_desc' | 'rdv_desc';
 type RelationFilter = 'all' | 'owner' | 'self' | 'child' | 'spouse' | 'partner' | 'other';
 
 /**
@@ -54,7 +54,7 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [relationFilter, setRelationFilter] = useState<RelationFilter>('all');
-  const [sortBy, setSortBy] = useState<SortOption>('name_asc');
+  const [sortBy, setSortBy] = useState<SortOption>('relationship');
   const [showFilters, setShowFilters] = useState(false);
 
   // Fonction de tri
@@ -65,6 +65,24 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
     const sorted = [...list];
 
     switch (sortOption) {
+      case 'relationship':
+        // Trier par type de relation
+        const relationshipOrder: Record<string, number> = {
+          'owner': 0,
+          'self': 1,
+          'spouse': 2,
+          'child': 3,
+          'parent': 4,
+          'sibling': 5,
+          'grandparent': 6,
+          'grandchild': 7,
+          'other': 8,
+        };
+        return sorted.sort((a, b) => {
+          const orderA = relationshipOrder[a.relationship] ?? 999;
+          const orderB = relationshipOrder[b.relationship] ?? 999;
+          return orderA - orderB;
+        });
       case 'name_asc':
         return sorted.sort((a, b) =>
           `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`)
@@ -422,6 +440,7 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
                 label="Trier par"
                 onChange={(e) => setSortBy(e.target.value as SortOption)}
               >
+                <MenuItem value="relationship">Type de relation</MenuItem>
                 <MenuItem value="name_asc">Nom (A-Z)</MenuItem>
                 <MenuItem value="name_desc">Nom (Z-A)</MenuItem>
                 <MenuItem value="age_asc">Âge (croissant)</MenuItem>

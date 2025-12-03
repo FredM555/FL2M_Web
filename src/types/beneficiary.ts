@@ -169,6 +169,7 @@ export interface CreateBeneficiaryData {
   middle_names?: string;
   last_name: string;
   birth_date: string; // Format ISO date
+  relationship?: BeneficiaryRelationship; // Type de relation (optionnel, par défaut 'other')
 
   // Contact (optionnel)
   email?: string;

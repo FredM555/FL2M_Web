@@ -216,9 +216,14 @@ export const createBeneficiary = async (
     console.log('[CREATE_BENEFICIARY] Succès:', data);
 
     // Créer automatiquement l'accès pour le propriétaire
-    // avec la relation "self" si c'est le premier, sinon "other"
-    const { hasSelf } = await hasSelfBeneficiary(currentUserId);
-    const relationship = hasSelf ? 'other' : 'self';
+    // Utiliser le relationship fourni dans les données, sinon détecter automatiquement
+    let relationship = beneficiaryData.relationship;
+
+    if (!relationship) {
+      // Si pas de relationship fourni, avec la relation "self" si c'est le premier, sinon "other"
+      const { hasSelf } = await hasSelfBeneficiary(currentUserId);
+      relationship = hasSelf ? 'other' : 'self';
+    }
 
     console.log('[CREATE_BENEFICIARY] Création de l\'accès avec relationship:', relationship);
 

@@ -54,6 +54,8 @@ import ModuleTeam from './pages/Sportifs/ModuleTeam';
 // Pages protégées (nécessitent une connexion)
 import ProfilePage from './pages/ProfilePage';
 import PractitionerProfilePage from './pages/PractitionerProfilePage';
+import PractitionerOnboardingPage from './pages/PractitionerOnboardingPage';
+import PractitionerPaymentPage from './pages/PractitionerPaymentPage';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import PractitionerSchedulePage from './pages/Practitioner/PractitionerSchedulePage';
 import { BeneficiariesPage } from './pages/BeneficiariesPage';
@@ -266,6 +268,16 @@ function App() {
             <Route path="practitioner-profile" element={
               <ProtectedRoute>
                 <PractitionerProfilePage />
+              </ProtectedRoute>
+            } />
+            <Route path="practitioner-onboarding" element={
+              <ProtectedRoute>
+                <PractitionerOnboardingPage />
+              </ProtectedRoute>
+            } />
+            <Route path="practitioner-payment" element={
+              <ProtectedRoute>
+                <PractitionerPaymentPage />
               </ProtectedRoute>
             } />
             <Route path="mes-rendez-vous" element={

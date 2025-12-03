@@ -11,7 +11,11 @@ import {
   CircularProgress,
   Snackbar,
   FormControlLabel,
-  Checkbox
+  Checkbox,
+  Select,
+  MenuItem,
+  FormControl,
+  Chip
 } from '@mui/material';
 import SaveIcon from '@mui/icons-material/Save';
 import PersonIcon from '@mui/icons-material/Person';
@@ -19,8 +23,10 @@ import CakeIcon from '@mui/icons-material/Cake';
 import EditIcon from '@mui/icons-material/Edit';
 import CancelIcon from '@mui/icons-material/Cancel';
 import EmailIcon from '@mui/icons-material/Email';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import { Appointment, updateAppointmentBeneficiary } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { BeneficiaryRelationship, getRelationshipLabel } from '../../types/beneficiary';
 
 interface AppointmentBeneficiaryProps {
   appointment: Appointment;
@@ -43,6 +49,7 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
   const [birthDate, setBirthDate] = useState('');
   const [email, setEmail] = useState('');
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [relationship, setRelationship] = useState<BeneficiaryRelationship>('other');
 
   // Déterminer si l'utilisateur peut modifier
   const canEdit = React.useMemo(() => {
@@ -71,6 +78,7 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
     setBirthDate(appointment.beneficiary_birth_date || '');
     setEmail(appointment.beneficiary_email || '');
     setNotificationsEnabled(appointment.beneficiary_notifications_enabled || false);
+    setRelationship((appointment.beneficiary_relationship as BeneficiaryRelationship) || 'other');
   }, [appointment]);
 
   const handleSave = async () => {
@@ -107,7 +115,8 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
         beneficiary_last_name: lastName.trim(),
         beneficiary_birth_date: birthDate,
         beneficiary_email: email.trim() || null,
-        beneficiary_notifications_enabled: notificationsEnabled
+        beneficiary_notifications_enabled: notificationsEnabled,
+        beneficiary_relationship: relationship
       };
 
       console.log('🔵 Données à enregistrer:', beneficiaryData);
@@ -141,9 +150,9 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
       if (onUpdate && data) {
         onUpdate(data);
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('❌ Erreur lors de la mise à jour:', err);
-      setError(err.message || 'Erreur lors de la mise à jour des informations');
+      setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour des informations');
     } finally {
       setLoading(false);
     }
@@ -156,6 +165,7 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
     setBirthDate(appointment.beneficiary_birth_date || '');
     setEmail(appointment.beneficiary_email || '');
     setNotificationsEnabled(appointment.beneficiary_notifications_enabled || false);
+    setRelationship((appointment.beneficiary_relationship as BeneficiaryRelationship) || 'other');
     setIsEditing(false);
     setError(null);
   };
@@ -295,31 +305,70 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
             )}
           </Grid>
 
-          <Grid item xs={12} sm={6}>
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <CakeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
-              <Typography variant="subtitle2" color="text.secondary">
-                Date de naissance
-              </Typography>
-            </Box>
-            {isEditing ? (
-              <TextField
-                fullWidth
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                disabled={loading}
-                required
-                size="small"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            ) : (
-              <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                {birthDate ? new Date(birthDate).toLocaleDateString('fr-FR') : '-'}
-              </Typography>
-            )}
+          <Grid item xs={12}>
+            <Grid container spacing={3}>
+              {/* Date de naissance */}
+              <Grid item xs={12} sm={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <CakeIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Date de naissance
+                  </Typography>
+                </Box>
+                {isEditing ? (
+                  <TextField
+                    fullWidth
+                    type="date"
+                    value={birthDate}
+                    onChange={(e) => setBirthDate(e.target.value)}
+                    disabled={loading}
+                    required
+                    size="small"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                  />
+                ) : (
+                  <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                    {birthDate ? new Date(birthDate).toLocaleDateString('fr-FR') : '-'}
+                  </Typography>
+                )}
+              </Grid>
+
+              {/* Type de relation */}
+              <Grid item xs={12} sm={6}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+                  <FamilyRestroomIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 20 }} />
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Type de relation
+                  </Typography>
+                </Box>
+                {isEditing ? (
+                  <FormControl fullWidth size="small">
+                    <Select
+                      value={relationship}
+                      onChange={(e) => setRelationship(e.target.value as BeneficiaryRelationship)}
+                      disabled={loading}
+                    >
+                      <MenuItem value="self">1 - Moi-même</MenuItem>
+                      <MenuItem value="spouse">2 - Conjoint(e)</MenuItem>
+                      <MenuItem value="child">3 - Enfant</MenuItem>
+                      <MenuItem value="parent">4 - Parent</MenuItem>
+                      <MenuItem value="sibling">5 - Frère/Sœur</MenuItem>
+                      <MenuItem value="grandparent">6 - Grand-parent</MenuItem>
+                      <MenuItem value="grandchild">7 - Petit-enfant</MenuItem>
+                      <MenuItem value="other">8 - Autre</MenuItem>
+                    </Select>
+                  </FormControl>
+                ) : (
+                  <Chip
+                    label={getRelationshipLabel(relationship)}
+                    color="secondary"
+                    size="small"
+                  />
+                )}
+              </Grid>
+            </Grid>
           </Grid>
 
           <Grid item xs={12} sm={6}>

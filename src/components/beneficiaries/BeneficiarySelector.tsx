@@ -1,5 +1,5 @@
 // src/components/beneficiaries/BeneficiarySelector.tsx
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Box,
   Autocomplete,
@@ -47,8 +47,29 @@ export const BeneficiarySelector: React.FC<BeneficiarySelectorProps> = ({
 }) => {
   const [inputValue, setInputValue] = useState('');
 
+  // Trier les bénéficiaires par ordre de type de relation
+  const sortedBeneficiaries = useMemo(() => {
+    const relationshipOrder: Record<string, number> = {
+      'owner': 0,
+      'self': 1,  // Moi-même
+      'spouse': 2, // Conjoint(e)
+      'child': 3, // Enfant
+      'parent': 4,
+      'sibling': 5,
+      'grandparent': 6,
+      'grandchild': 7,
+      'other': 8,
+    };
+
+    return [...beneficiaries].sort((a, b) => {
+      const orderA = relationshipOrder[a.relationship] ?? 999;
+      const orderB = relationshipOrder[b.relationship] ?? 999;
+      return orderA - orderB;
+    });
+  }, [beneficiaries]);
+
   // Convertir les IDs en objets bénéficiaires
-  const selectedBeneficiaries = beneficiaries.filter((b) => value.includes(b.id));
+  const selectedBeneficiaries = sortedBeneficiaries.filter((b) => value.includes(b.id));
 
   // Gérer le changement de sélection
   const handleChange = (
@@ -113,7 +134,7 @@ export const BeneficiarySelector: React.FC<BeneficiarySelectorProps> = ({
         onChange={handleChange}
         inputValue={inputValue}
         onInputChange={(_event, newInputValue) => setInputValue(newInputValue)}
-        options={beneficiaries}
+        options={sortedBeneficiaries}
         getOptionLabel={getOptionLabel}
         disabled={disabled}
         isOptionEqualToValue={(option, val) => option.id === val.id}

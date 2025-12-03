@@ -6,10 +6,16 @@ import {
   Paper,
   Alert,
   CircularProgress,
-  Button
+  Button,
+  Tabs,
+  Tab
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
+import PersonIcon from '@mui/icons-material/Person';
+import PaymentIcon from '@mui/icons-material/Payment';
+import ReceiptIcon from '@mui/icons-material/Receipt';
+import PreviewIcon from '@mui/icons-material/Preview';
 import { useAuth } from '../context/AuthContext';
 import { PractitionerProfileForm } from '../components/practitioner/PractitionerProfileForm';
 import { UserRoleBadge } from '../components/profile/UserRoleBadge';
@@ -19,6 +25,30 @@ import {
   updateMyPractitionerProfile
 } from '../services/supabase';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
+import SubscriptionManagement from '../components/practitioner/SubscriptionManagement';
+import PractitionerTransactions from '../components/practitioner/PractitionerTransactions';
+import PractitionerProfilePreview from '../components/practitioner/PractitionerProfilePreview';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`tabpanel-${index}`}
+      aria-labelledby={`tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
+    </div>
+  );
+}
 
 const PractitionerProfilePage: React.FC = () => {
   const { profile } = useAuth();
@@ -26,6 +56,7 @@ const PractitionerProfilePage: React.FC = () => {
   const [practitioner, setPractitioner] = useState<Practitioner | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tabValue, setTabValue] = useState(0);
 
   useEffect(() => {
     loadPractitionerProfile();
@@ -61,6 +92,7 @@ const PractitionerProfilePage: React.FC = () => {
     display_name?: string;
     title?: string;
     summary?: string;
+    profile_visible?: boolean;
   }) => {
     const { data, error: updateError } = await updateMyPractitionerProfile(updates);
 
@@ -251,11 +283,10 @@ const PractitionerProfilePage: React.FC = () => {
             </Button>
           </Box>
 
-          {/* Informations du profil */}
+          {/* Onglets */}
           <Paper
             elevation={0}
             sx={{
-              p: 3,
               background: 'white',
               border: '2px solid rgba(255, 215, 0, 0.3)',
               borderRadius: 3,
@@ -273,16 +304,60 @@ const PractitionerProfilePage: React.FC = () => {
               mb: 3,
             }}
           >
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Vous pouvez modifier votre nom d'affichage, titre, résumé et biographie. Les autres informations
-              (nom, prénom, email, statut) sont gérées par les administrateurs.
-            </Alert>
+            <Tabs
+              value={tabValue}
+              onChange={(_, newValue) => setTabValue(newValue)}
+              sx={{
+                borderBottom: 1,
+                borderColor: 'divider',
+                px: 2,
+                '& .MuiTab-root': {
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontSize: '1rem',
+                  minHeight: 64,
+                  '&.Mui-selected': {
+                    color: '#FFA500',
+                  },
+                },
+                '& .MuiTabs-indicator': {
+                  backgroundColor: '#FFA500',
+                  height: 3,
+                },
+              }}
+            >
+              <Tab icon={<PersonIcon />} label="Mon Profil" iconPosition="start" />
+              <Tab icon={<PreviewIcon />} label="Aperçu" iconPosition="start" />
+              <Tab icon={<PaymentIcon />} label="Mon Abonnement" iconPosition="start" />
+              <Tab icon={<ReceiptIcon />} label="Mes Transactions" iconPosition="start" />
+            </Tabs>
 
-            <PractitionerProfileForm
-              practitioner={practitioner}
-              onSave={handleSave}
-              loading={loading}
-            />
+            <Box sx={{ p: 3 }}>
+              <TabPanel value={tabValue} index={0}>
+                <Alert severity="info" sx={{ mb: 3 }}>
+                  Vous pouvez modifier votre nom d'affichage, titre, résumé et biographie. Les autres informations
+                  (nom, prénom, email, statut) sont gérées par les administrateurs.
+                </Alert>
+
+                <PractitionerProfileForm
+                  practitioner={practitioner}
+                  onSave={handleSave}
+                  loading={loading}
+                />
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={1}>
+                <PractitionerProfilePreview practitioner={practitioner} />
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={2}>
+                <SubscriptionManagement practitionerId={practitioner.id} />
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={3}>
+                <PractitionerTransactions practitionerId={practitioner.id} />
+              </TabPanel>
+            </Box>
           </Paper>
         </Container>
       </Box>

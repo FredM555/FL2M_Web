@@ -226,13 +226,18 @@ COMMENT ON COLUMN profiles.beneficiary_id IS 'Lien vers le bénéficiaire repré
 
 -- ============================================================================
 -- MODIFICATION TABLE APPOINTMENTS
--- Description : Ajout email bénéficiaire
+-- Description : Ajout email bénéficiaire et type de relation
 -- ============================================================================
 
 ALTER TABLE appointments
 ADD COLUMN IF NOT EXISTS beneficiary_email TEXT;
 
 COMMENT ON COLUMN appointments.beneficiary_email IS 'Email du bénéficiaire (peut être différent de l''email du client)';
+
+ALTER TABLE appointments
+ADD COLUMN IF NOT EXISTS beneficiary_relationship TEXT DEFAULT 'other';
+
+COMMENT ON COLUMN appointments.beneficiary_relationship IS 'Type de relation du bénéficiaire (self, child, spouse, parent, sibling, grandparent, grandchild, other)';
 
 -- ============================================================================
 -- FONCTIONS : NUMÉROLOGIE

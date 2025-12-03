@@ -31,6 +31,7 @@ import {
 import {
   getAllPractitionerRequests,
   approvePractitionerRequest,
+  preApprovePractitionerRequest,
   rejectPractitionerRequest,
   deletePractitionerRequest,
   PractitionerRequest
@@ -41,6 +42,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import WorkIcon from '@mui/icons-material/Work';
+import HowToRegIcon from '@mui/icons-material/HowToReg';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import PromotePractitionerModal from '../../components/admin/PromotePractitionerModal';
@@ -174,6 +177,24 @@ const AdminPractitionerRequestsPage: React.FC = () => {
     }
   };
 
+  const handlePreApprove = async (request: PractitionerRequest) => {
+    if (!confirm(`Activer le parcours intervenant pour ${request.user?.first_name} ${request.user?.last_name} ?\n\nL'intervenant pourra ensuite finaliser son inscription lui-même.`)) {
+      return;
+    }
+
+    try {
+      const { error } = await preApprovePractitionerRequest(request.id);
+
+      if (error) throw error;
+
+      showSnackbar('Parcours intervenant activé avec succès !', 'success');
+      await fetchRequests();
+    } catch (err: any) {
+      console.error('Erreur lors de la pré-approbation:', err);
+      showSnackbar(err.message || 'Erreur lors de l\'activation du parcours', 'error');
+    }
+  };
+
   const handleDelete = async (requestId: string) => {
     if (!confirm('Êtes-vous sûr de vouloir supprimer cette demande ?')) return;
 
@@ -192,6 +213,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
   const getStatusChip = (status: PractitionerRequest['status']) => {
     const statusConfig = {
       pending: { label: 'En attente', color: 'warning' as const, icon: <HourglassEmptyIcon fontSize="small" /> },
+      pre_approved: { label: 'En cours de finalisation', color: 'info' as const, icon: <PendingActionsIcon fontSize="small" /> },
       approved: { label: 'Approuvée', color: 'success' as const, icon: <CheckCircleIcon fontSize="small" /> },
       rejected: { label: 'Rejetée', color: 'error' as const, icon: <CancelIcon fontSize="small" /> }
     };
@@ -212,7 +234,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
       return (
         <Box sx={{ textAlign: 'center', py: 8 }}>
           <Typography variant="body1" color="text.secondary">
-            Aucune demande {status === 'pending' ? 'en attente' : status === 'approved' ? 'approuvée' : status === 'rejected' ? 'rejetée' : ''}
+            Aucune demande {status === 'pending' ? 'en attente' : status === 'pre_approved' ? 'en cours de finalisation' : status === 'approved' ? 'approuvée' : status === 'rejected' ? 'rejetée' : ''}
           </Typography>
         </Box>
       );
@@ -246,6 +268,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
                     size="small"
                     onClick={() => handleViewDetails(request)}
                     color="primary"
+                    title="Voir les détails"
                   >
                     <VisibilityIcon />
                   </IconButton>
@@ -253,15 +276,17 @@ const AdminPractitionerRequestsPage: React.FC = () => {
                     <>
                       <IconButton
                         size="small"
-                        onClick={() => handleOpenActionDialog(request, 'approve')}
-                        color="success"
+                        onClick={() => handlePreApprove(request)}
+                        color="info"
+                        title="Activer le parcours intervenant"
                       >
-                        <CheckCircleIcon />
+                        <HowToRegIcon />
                       </IconButton>
                       <IconButton
                         size="small"
                         onClick={() => handleOpenActionDialog(request, 'reject')}
                         color="error"
+                        title="Rejeter la demande"
                       >
                         <CancelIcon />
                       </IconButton>
@@ -271,6 +296,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
                     size="small"
                     onClick={() => handleDelete(request.id)}
                     color="error"
+                    title="Supprimer la demande"
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -284,6 +310,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
   };
 
   const pendingCount = requests.filter(r => r.status === 'pending').length;
+  const preApprovedCount = requests.filter(r => r.status === 'pre_approved').length;
   const approvedCount = requests.filter(r => r.status === 'approved').length;
   const rejectedCount = requests.filter(r => r.status === 'rejected').length;
 
@@ -309,7 +336,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
 
       {/* Statistiques */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -326,7 +353,24 @@ const AdminPractitionerRequestsPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    En finalisation
+                  </Typography>
+                  <Typography variant="h3" sx={{ fontWeight: 700, color: 'info.main' }}>
+                    {preApprovedCount}
+                  </Typography>
+                </Box>
+                <PendingActionsIcon sx={{ fontSize: 48, color: 'info.main', opacity: 0.3 }} />
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -343,7 +387,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
             </CardContent>
           </Card>
         </Grid>
-        <Grid item xs={12} md={4}>
+        <Grid item xs={12} sm={6} md={3}>
           <Card>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -368,9 +412,12 @@ const AdminPractitionerRequestsPage: React.FC = () => {
           value={tabValue}
           onChange={(_, newValue) => setTabValue(newValue)}
           sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}
+          variant="scrollable"
+          scrollButtons="auto"
         >
           <Tab label={`Toutes (${requests.length})`} />
           <Tab label={`En attente (${pendingCount})`} />
+          <Tab label={`En finalisation (${preApprovedCount})`} />
           <Tab label={`Approuvées (${approvedCount})`} />
           <Tab label={`Rejetées (${rejectedCount})`} />
         </Tabs>
@@ -388,9 +435,12 @@ const AdminPractitionerRequestsPage: React.FC = () => {
               {renderRequestsTable('pending')}
             </TabPanel>
             <TabPanel value={tabValue} index={2}>
-              {renderRequestsTable('approved')}
+              {renderRequestsTable('pre_approved')}
             </TabPanel>
             <TabPanel value={tabValue} index={3}>
+              {renderRequestsTable('approved')}
+            </TabPanel>
+            <TabPanel value={tabValue} index={4}>
               {renderRequestsTable('rejected')}
             </TabPanel>
           </>

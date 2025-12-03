@@ -11,9 +11,11 @@ import {
   Grid,
   Chip,
   IconButton,
-  Stack
+  Stack,
+  Switch,
+  FormControlLabel
 } from '@mui/material';
-import { Save as SaveIcon, Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Save as SaveIcon, Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon, Visibility as VisibilityIcon, VisibilityOff as VisibilityOffIcon } from '@mui/icons-material';
 import { Practitioner } from '../../services/supabase';
 
 interface PractitionerProfileFormProps {
@@ -25,6 +27,7 @@ interface PractitionerProfileFormProps {
     summary?: string;
     expertise_domains?: string[];
     qualifications?: string[];
+    profile_visible?: boolean;
   }) => Promise<void>;
   loading?: boolean;
 }
@@ -40,7 +43,8 @@ export const PractitionerProfileForm: React.FC<PractitionerProfileFormProps> = (
     summary: practitioner.summary || '',
     bio: practitioner.bio || '',
     expertise_domains: practitioner.expertise_domains || [],
-    qualifications: practitioner.qualifications || []
+    qualifications: practitioner.qualifications || [],
+    profile_visible: practitioner.profile_visible !== undefined ? practitioner.profile_visible : true
   });
 
   const [newExpertise, setNewExpertise] = useState('');
@@ -85,7 +89,8 @@ export const PractitionerProfileForm: React.FC<PractitionerProfileFormProps> = (
       formData.summary !== (practitioner.summary || '') ||
       formData.bio !== (practitioner.bio || '') ||
       JSON.stringify(formData.expertise_domains) !== JSON.stringify(practitioner.expertise_domains || []) ||
-      JSON.stringify(formData.qualifications) !== JSON.stringify(practitioner.qualifications || [])
+      JSON.stringify(formData.qualifications) !== JSON.stringify(practitioner.qualifications || []) ||
+      formData.profile_visible !== (practitioner.profile_visible !== undefined ? practitioner.profile_visible : true)
     );
   };
 
@@ -154,9 +159,57 @@ export const PractitionerProfileForm: React.FC<PractitionerProfileFormProps> = (
           <Typography variant="h6" gutterBottom>
             Informations Publiques
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Ces informations seront visibles par vos clients
           </Typography>
+
+          {!practitioner.is_active && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                Profil Inactif
+              </Typography>
+              <Typography variant="body2">
+                Votre profil est actuellement inactif. Il ne sera pas visible dans la liste publique des intervenants,
+                indépendamment du paramètre de visibilité ci-dessous. Contactez un administrateur pour réactiver votre profil.
+              </Typography>
+            </Alert>
+          )}
+
+          <Box sx={{ mb: 3, p: 2, bgcolor: formData.profile_visible && practitioner.is_active ? 'rgba(76, 175, 80, 0.1)' : 'rgba(158, 158, 158, 0.1)', borderRadius: 2, border: '1px solid', borderColor: formData.profile_visible && practitioner.is_active ? 'success.light' : 'grey.300' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={formData.profile_visible && practitioner.is_active}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, profile_visible: e.target.checked }));
+                    setError(null);
+                    setSuccess(false);
+                  }}
+                  disabled={loading || saving || !practitioner.is_active}
+                  color="success"
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {formData.profile_visible && practitioner.is_active ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                  <Box>
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      {!practitioner.is_active
+                        ? 'Profil inactif (masqué)'
+                        : formData.profile_visible ? 'Profil visible' : 'Profil masqué'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {!practitioner.is_active
+                        ? 'Profil inactif - invisible pour le public'
+                        : formData.profile_visible
+                        ? 'Votre profil est visible dans la liste des intervenants'
+                        : 'Votre profil est masqué de la liste publique des intervenants'}
+                    </Typography>
+                  </Box>
+                </Box>
+              }
+            />
+          </Box>
 
           {error && (
             <Alert severity="error" sx={{ mb: 3 }}>
@@ -422,7 +475,8 @@ export const PractitionerProfileForm: React.FC<PractitionerProfileFormProps> = (
                   summary: practitioner.summary || '',
                   bio: practitioner.bio || '',
                   expertise_domains: practitioner.expertise_domains || [],
-                  qualifications: practitioner.qualifications || []
+                  qualifications: practitioner.qualifications || [],
+                  profile_visible: practitioner.profile_visible !== undefined ? practitioner.profile_visible : true
                 });
                 setNewExpertise('');
                 setNewQualification('');

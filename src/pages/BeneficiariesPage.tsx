@@ -98,7 +98,27 @@ export const BeneficiariesPage: React.FC = () => {
       setLoading(true);
       setError(null);
       const { data } = await getUserBeneficiaries();
-      setBeneficiaries(data || []);
+
+      // Trier les bénéficiaires par ordre de type de relation
+      const relationshipOrder: Record<string, number> = {
+        'owner': 0, // owner en premier si présent
+        'self': 1,  // Moi-même
+        'spouse': 2, // Conjoint(e)
+        'child': 3, // Enfant
+        'parent': 4,
+        'sibling': 5,
+        'grandparent': 6,
+        'grandchild': 7,
+        'other': 8,
+      };
+
+      const sortedData = (data || []).sort((a, b) => {
+        const orderA = relationshipOrder[a.relationship] ?? 999;
+        const orderB = relationshipOrder[b.relationship] ?? 999;
+        return orderA - orderB;
+      });
+
+      setBeneficiaries(sortedData);
     } catch (err: any) {
       console.error('Erreur lors du chargement des bénéficiaires:', err);
       setError(err.message || 'Erreur lors du chargement des bénéficiaires');
@@ -326,6 +346,7 @@ export const BeneficiariesPage: React.FC = () => {
                     <BeneficiaryDetails
                       beneficiary={selectedBeneficiary}
                       userType={profile?.user_type}
+                      onRelationshipUpdate={loadBeneficiaries}
                     />
                   )}
                   {detailTab === 1 && (

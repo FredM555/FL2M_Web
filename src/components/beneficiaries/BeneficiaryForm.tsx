@@ -14,6 +14,10 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import {
   Save as SaveIcon,
@@ -23,11 +27,11 @@ import {
 } from '@mui/icons-material';
 import { Formik, Form, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
-import { Beneficiary, CreateBeneficiaryData, UpdateBeneficiaryData } from '../../types/beneficiary';
+import { Beneficiary, BeneficiaryWithAccess, CreateBeneficiaryData, UpdateBeneficiaryData, BeneficiaryRelationship } from '../../types/beneficiary';
 import { canModifyBeneficiaryIdentity } from '../../services/beneficiaries';
 
 interface BeneficiaryFormProps {
-  beneficiary?: Beneficiary; // undefined = création, défini = édition
+  beneficiary?: Beneficiary | BeneficiaryWithAccess; // undefined = création, défini = édition
   onSave: (data: CreateBeneficiaryData | UpdateBeneficiaryData) => Promise<void>;
   onCancel: () => void;
   loading?: boolean;
@@ -52,6 +56,10 @@ const validationSchema = Yup.object({
   birth_date: Yup.date()
     .required('La date de naissance est requise')
     .max(new Date(), 'La date de naissance ne peut pas être dans le futur'),
+
+  relationship: Yup.string()
+    .required('Le type de relation est requis')
+    .oneOf(['self', 'child', 'spouse', 'parent', 'sibling', 'grandparent', 'grandchild', 'other'], 'Type de relation invalide'),
 
   email: Yup.string()
     .email('Adresse email invalide')
@@ -107,33 +115,29 @@ export const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({
     'identity', // Section identité toujours ouverte par défaut
   ]);
   const [canModifyIdentity, setCanModifyIdentity] = useState(true);
-  const [checkingPermissions, setCheckingPermissions] = useState(false);
 
   const isEditMode = !!beneficiary;
   const canEditSensitiveData = userType === 'admin' || userType === 'intervenant';
 
   // Vérifier si le bénéficiaire peut être modifié
   useEffect(() => {
+    const checkModificationPermissions = async () => {
+      if (!beneficiary?.id) return;
+
+      try {
+        const { canModify } = await canModifyBeneficiaryIdentity(beneficiary.id);
+        setCanModifyIdentity(canModify);
+      } catch (error) {
+        console.error('Erreur lors de la vérification des permissions:', error);
+        // En cas d'erreur, autoriser la modification par défaut
+        setCanModifyIdentity(true);
+      }
+    };
+
     if (isEditMode && beneficiary?.id) {
       checkModificationPermissions();
     }
   }, [isEditMode, beneficiary?.id]);
-
-  const checkModificationPermissions = async () => {
-    if (!beneficiary?.id) return;
-
-    setCheckingPermissions(true);
-    try {
-      const { canModify } = await canModifyBeneficiaryIdentity(beneficiary.id);
-      setCanModifyIdentity(canModify);
-    } catch (error) {
-      console.error('Erreur lors de la vérification des permissions:', error);
-      // En cas d'erreur, autoriser la modification par défaut
-      setCanModifyIdentity(true);
-    } finally {
-      setCheckingPermissions(false);
-    }
-  };
 
   // Valeurs initiales
   const initialValues = {
@@ -141,6 +145,7 @@ export const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({
     middle_names: beneficiary?.middle_names || '',
     last_name: beneficiary?.last_name || '',
     birth_date: beneficiary?.birth_date || '',
+    relationship: ((beneficiary as BeneficiaryWithAccess)?.relationship as BeneficiaryRelationship) || 'other',
     email: beneficiary?.email || '',
     phone: beneficiary?.phone || '',
     notifications_enabled: beneficiary?.notifications_enabled || false,
@@ -307,6 +312,36 @@ export const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({
                         endAdornment: !canModifyIdentity ? <LockIcon sx={{ color: 'text.disabled' }} /> : undefined
                       }}
                     />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6}>
+                    <FormControl fullWidth>
+                      <InputLabel id="relationship-label">Type de relation *</InputLabel>
+                      <Select
+                        labelId="relationship-label"
+                        name="relationship"
+                        value={values.relationship}
+                        onChange={handleChange}
+                        onBlur={handleBlur}
+                        error={touched.relationship && Boolean(errors.relationship)}
+                        disabled={isSubmitting || loading}
+                        label="Type de relation *"
+                      >
+                        <MenuItem value="self">1 - Moi-même</MenuItem>
+                        <MenuItem value="spouse">2 - Conjoint(e)</MenuItem>
+                        <MenuItem value="child">3 - Enfant</MenuItem>
+                        <MenuItem value="parent">4 - Parent</MenuItem>
+                        <MenuItem value="sibling">5 - Frère/Sœur</MenuItem>
+                        <MenuItem value="grandparent">6 - Grand-parent</MenuItem>
+                        <MenuItem value="grandchild">7 - Petit-enfant</MenuItem>
+                        <MenuItem value="other">8 - Autre</MenuItem>
+                      </Select>
+                      {touched.relationship && errors.relationship && (
+                        <Typography variant="caption" color="error" sx={{ mt: 0.5, ml: 1.75 }}>
+                          {errors.relationship}
+                        </Typography>
+                      )}
+                    </FormControl>
                   </Grid>
                 </Grid>
               </AccordionDetails>

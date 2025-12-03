@@ -180,6 +180,7 @@ export const getPractitioners = () => {
       profile:profiles(*)
     `)
     .eq('is_active', true)
+    .eq('profile_visible', true)
     .order('priority', { ascending: false });
 };
 
