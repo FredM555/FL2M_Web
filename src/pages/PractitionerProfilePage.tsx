@@ -92,9 +92,20 @@ const PractitionerProfilePage: React.FC = () => {
     display_name?: string;
     title?: string;
     summary?: string;
-    profile_visible?: boolean;
   }) => {
     const { data, error: updateError } = await updateMyPractitionerProfile(updates);
+
+    if (updateError) {
+      throw updateError;
+    }
+
+    if (data) {
+      setPractitioner(data);
+    }
+  };
+
+  const handleUpdateVisibility = async (visible: boolean) => {
+    const { data, error: updateError } = await updateMyPractitionerProfile({ profile_visible: visible });
 
     if (updateError) {
       throw updateError;
@@ -347,7 +358,10 @@ const PractitionerProfilePage: React.FC = () => {
               </TabPanel>
 
               <TabPanel value={tabValue} index={1}>
-                <PractitionerProfilePreview practitioner={practitioner} />
+                <PractitionerProfilePreview
+                  practitioner={practitioner}
+                  onUpdateVisibility={handleUpdateVisibility}
+                />
               </TabPanel>
 
               <TabPanel value={tabValue} index={2}>

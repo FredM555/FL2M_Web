@@ -68,29 +68,58 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Récupération du profil sans await
   const fetchUserProfile = (userId: string): Promise<Profile | null> => {
     console.log('[FETCH_PROFILE] Début récupération profil pour ID:', userId);
-    
+
     // Attendre 500ms pour donner le temps aux politiques RLS de s'appliquer
     return new Promise(resolve => setTimeout(resolve, 500))
       .then(() => {
-        // Utiliser une promesse race avec un timeout de 5 secondes
-        return Promise.race([
-          getProfile(userId),
-          createTimeout(5000)
+        // Récupérer le profil et le bénéficiaire "self" en parallèle
+        return Promise.all([
+          Promise.race([
+            getProfile(userId),
+            createTimeout(5000)
+          ]),
+          // Récupérer le bénéficiaire "self" pour les données de numérologie
+          supabase
+            .from('beneficiary_access')
+            .select(`
+              beneficiary:beneficiaries(
+                tronc,
+                racine_1,
+                racine_2,
+                dynamique_de_vie
+              )
+            `)
+            .eq('user_id', userId)
+            .eq('relationship', 'self')
+            .limit(1)
+            .single()
         ]);
       })
-      .then(profileResult => {
+      .then(([profileResult, beneficiaryResult]) => {
         const { data: profileData, error } = profileResult;
-        
+
         if (error) {
           console.error('[FETCH_PROFILE] Erreur récupération profil:', error);
           return null;
         }
-        
+
         if (!profileData) {
           console.warn('[FETCH_PROFILE] Aucun profil trouvé pour l\'utilisateur:', userId);
           return null;
         }
-        
+
+        // Ajouter les données de numérologie du bénéficiaire "self" au profil
+        if (beneficiaryResult.data?.beneficiary) {
+          const beneficiaryData = beneficiaryResult.data.beneficiary;
+          console.log('[FETCH_PROFILE] Données numérologie récupérées:', beneficiaryData);
+          profileData.racine1 = beneficiaryData.racine_1 || undefined;
+          profileData.racine2 = beneficiaryData.racine_2 || undefined;
+          profileData.tronc = beneficiaryData.tronc || undefined;
+          profileData.dynamique_de_vie = beneficiaryData.dynamique_de_vie || undefined;
+        } else {
+          console.log('[FETCH_PROFILE] Aucun bénéficiaire "self" trouvé');
+        }
+
         console.log('[FETCH_PROFILE] Profil récupéré avec succès:', profileData);
         return profileData;
       })

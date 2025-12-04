@@ -30,6 +30,7 @@ import {
   Public as PublicIcon,
   Lock as LockIcon
 } from '@mui/icons-material';
+import { NumerologyTriangleAvatar } from '../profile/NumerologyTriangleAvatar';
 
 interface BeneficiaryCardProps {
   beneficiary: BeneficiaryWithAccess;
@@ -166,18 +167,31 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
       <CardContent sx={{ flexGrow: 1, pb: 1 }}>
         {/* En-tête avec avatar et badges */}
         <Box sx={{ display: 'flex', alignItems: 'flex-start', mb: 2 }}>
-          <Avatar
-            sx={{
-              width: 56,
-              height: 56,
-              bgcolor: getAvatarColor(),
-              fontSize: '1.25rem',
-              fontWeight: 600,
-              mr: 2,
-            }}
-          >
-            {getInitials()}
-          </Avatar>
+          {/* Avatar de numérologie si disponible, sinon avatar classique */}
+          {(beneficiary.tronc || beneficiary.racine_1 || beneficiary.racine_2) ? (
+            <Box sx={{ mr: 2 }}>
+              <NumerologyTriangleAvatar
+                tronc={beneficiary.tronc}
+                racine1={beneficiary.racine_1}
+                racine2={beneficiary.racine_2}
+                dynamique_de_vie={beneficiary.dynamique_de_vie}
+                size={56}
+              />
+            </Box>
+          ) : (
+            <Avatar
+              sx={{
+                width: 56,
+                height: 56,
+                bgcolor: getAvatarColor(),
+                fontSize: '1.25rem',
+                fontWeight: 600,
+                mr: 2,
+              }}
+            >
+              {getInitials()}
+            </Avatar>
+          )}
 
           <Box sx={{ flexGrow: 1 }}>
             {/* Badges */}

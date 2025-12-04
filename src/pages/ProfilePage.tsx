@@ -34,9 +34,11 @@ import SaveIcon from '@mui/icons-material/Save';
 import WorkIcon from '@mui/icons-material/Work';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import LocationOnIcon from '@mui/icons-material/LocationOn';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { UserRoleBadge } from '../components/profile/UserRoleBadge';
 import BecomePractitionerCard from '../components/practitioner/BecomePractitionerCard';
+import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { getUserBeneficiaries, createBeneficiary, updateBeneficiary } from '../services/beneficiaries';
 import type { BeneficiaryWithAccess } from '../types/beneficiary';
 import { getBeneficiaryDocuments, getSignedBeneficiaryDocumentUrl, DOCUMENT_TYPE_LABELS } from '../services/beneficiaryDocuments';
@@ -50,6 +52,8 @@ const ProfilePage = () => {
   const [email, setEmail] = useState(profile?.email || user?.email || '');
   const [pseudo, setPseudo] = useState(profile?.pseudo || '');
   const [phone, setPhone] = useState(profile?.phone || '');
+  const [department, setDepartment] = useState(profile?.department || '');
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || '');
 
   // Information pour la préparation des séances
   const [firstName, setFirstName] = useState(profile?.first_name || '');
@@ -157,7 +161,8 @@ const ProfilePage = () => {
         pseudo: pseudo,
         phone: phone || undefined,
         email: email || user?.email,
-        birth_date: birthDate || undefined
+        birth_date: birthDate || undefined,
+        department: department || undefined
       });
 
       if (profileError) throw profileError;
@@ -270,20 +275,12 @@ const ProfilePage = () => {
                 gap: 2.5,
               }}
             >
-              <Avatar
-                sx={{
-                  width: 80,
-                  height: 80,
-                  background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                  color: '#1D3461',
-                  fontWeight: 700,
-                  fontSize: '2rem',
-                  boxShadow: '0 8px 24px rgba(255, 215, 0, 0.4)',
-                  border: '3px solid rgba(255, 255, 255, 0.2)',
-                }}
-              >
-                {profile?.first_name ? profile.first_name[0].toUpperCase() : <AccountCircleIcon sx={{ fontSize: '2.5rem' }} />}
-              </Avatar>
+              <AvatarUpload
+                currentAvatarUrl={avatarUrl}
+                onUploadSuccess={(url) => setAvatarUrl(url)}
+                onDelete={() => setAvatarUrl('')}
+                size={80}
+              />
               <Box sx={{ flex: 1 }}>
                 <Typography
                   variant="h4"
@@ -465,6 +462,30 @@ const ProfilePage = () => {
                       InputProps={{
                         startAdornment: (
                           <PhoneIcon sx={{ mr: 1, color: '#345995' }} />
+                        ),
+                      }}
+                      sx={{
+                        '& .MuiOutlinedInput-root': {
+                          borderRadius: '12px',
+                          '&:hover fieldset': {
+                            borderColor: '#FFD700',
+                          },
+                          '&.Mui-focused fieldset': {
+                            borderColor: '#FFA500',
+                          },
+                        },
+                      }}
+                    />
+                    <TextField
+                      label="Département"
+                      fullWidth
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      placeholder="Code département (ex: 75, 59, 2A)"
+                      helperText="Pour mieux orienter les intervenants vers votre région"
+                      InputProps={{
+                        startAdornment: (
+                          <LocationOnIcon sx={{ mr: 1, color: '#345995' }} />
                         ),
                       }}
                       sx={{

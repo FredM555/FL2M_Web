@@ -32,6 +32,7 @@ interface Consultant {
   title?: string;
   summary?: string;
   is_active: boolean;
+  profile_visible: boolean;
   expertise_domains?: string[];
   qualifications?: string[];
   profile?: {
@@ -61,6 +62,7 @@ const ConsultantsPage: React.FC = () => {
           profile:profiles(first_name, last_name, email, phone)
         `)
         .eq('is_active', true)
+        .eq('profile_visible', true)
         .order('priority', { ascending: false });
 
       if (error) throw error;
@@ -95,8 +97,12 @@ const ConsultantsPage: React.FC = () => {
 
   // Obtenir la photo de profil si elle existe
   const getProfilePhoto = (consultant: Consultant) => {
+    // Utiliser avatar_url du profil s'il existe
+    if (consultant.profile?.avatar_url) {
+      return consultant.profile.avatar_url;
+    }
+    // Fallback pour Frédéric (ancien système)
     const name = getConsultantName(consultant).toLowerCase();
-    // Vérifier si c'est Frédéric (ou Frederic)
     if (name.includes('frédéric') || name.includes('frederic')) {
       return '/images/Frederic.png';
     }

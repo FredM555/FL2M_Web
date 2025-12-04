@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Card,
@@ -13,21 +13,54 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  Switch,
+  FormControlLabel,
+  CircularProgress,
+  Snackbar
 } from '@mui/material';
 import {
   Email as EmailIcon,
   Phone as PhoneIcon,
-  CheckCircle as CheckCircleIcon
+  CheckCircle as CheckCircleIcon,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon
 } from '@mui/icons-material';
 import { Practitioner } from '../../services/supabase';
+import { UserAvatar } from '../profile/UserAvatar';
 
 interface PractitionerProfilePreviewProps {
   practitioner: Practitioner;
+  onUpdateVisibility: (visible: boolean) => Promise<void>;
 }
 
-const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({ practitioner }) => {
+const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({ practitioner, onUpdateVisibility }) => {
+  const [updating, setUpdating] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showError, setShowError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
   const displayName = practitioner.display_name || `${practitioner.profile?.first_name} ${practitioner.profile?.last_name}`;
+
+  const handleVisibilityChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!practitioner.is_active) return;
+
+    const newValue = event.target.checked;
+    setUpdating(true);
+    setShowError(false);
+
+    try {
+      await onUpdateVisibility(newValue);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (error: any) {
+      console.error('Erreur lors de la mise à jour de la visibilité:', error);
+      setErrorMessage(error.message || 'Une erreur est survenue lors de la mise à jour');
+      setShowError(true);
+    } finally {
+      setUpdating(false);
+    }
+  };
 
   // Si le profil est inactif, afficher un message d'avertissement
   if (!practitioner.is_active) {
@@ -62,8 +95,12 @@ const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({
 
   // Obtenir la photo de profil si elle existe
   const getProfilePhoto = () => {
+    // Utiliser avatar_url du profil s'il existe
+    if (practitioner.profile?.avatar_url) {
+      return practitioner.profile.avatar_url;
+    }
+    // Fallback pour Frédéric (ancien système)
     const name = displayName.toLowerCase();
-    // Vérifier si c'est Frédéric (ou Frederic)
     if (name.includes('frédéric') || name.includes('frederic')) {
       return '/images/Frederic.png';
     }
@@ -88,6 +125,78 @@ const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({
           Voici comment les utilisateurs verront votre profil. Cette mise en page correspond à l'affichage public.
         </Typography>
       </Alert>
+
+      {/* Contrôle de visibilité du profil */}
+      {!practitioner.is_active && (
+        <Alert severity="warning" sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+            Profil Inactif
+          </Typography>
+          <Typography variant="body2">
+            Votre profil est actuellement inactif. Il ne sera pas visible dans la liste publique des intervenants,
+            indépendamment du paramètre de visibilité ci-dessous. Contactez un administrateur pour réactiver votre profil.
+          </Typography>
+        </Alert>
+      )}
+
+      <Card
+        elevation={0}
+        sx={{
+          mb: 3,
+          background: 'white',
+          border: '2px solid rgba(255, 215, 0, 0.3)',
+          borderRadius: 3,
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '4px',
+            background: 'linear-gradient(90deg, #FFD700, #FFA500)',
+          },
+        }}
+      >
+        <CardContent>
+          <Box sx={{ p: 2, bgcolor: practitioner.profile_visible && practitioner.is_active ? 'rgba(76, 175, 80, 0.1)' : 'rgba(158, 158, 158, 0.1)', borderRadius: 2, border: '1px solid', borderColor: practitioner.profile_visible && practitioner.is_active ? 'success.light' : 'grey.300' }}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={practitioner.profile_visible && practitioner.is_active}
+                  onChange={handleVisibilityChange}
+                  disabled={updating || !practitioner.is_active}
+                  color="success"
+                />
+              }
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  {updating ? (
+                    <CircularProgress size={24} sx={{ color: '#FFA500' }} />
+                  ) : (
+                    practitioner.profile_visible && practitioner.is_active ? <VisibilityIcon /> : <VisibilityOffIcon />
+                  )}
+                  <Box>
+                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      {!practitioner.is_active
+                        ? 'Profil inactif (masqué)'
+                        : practitioner.profile_visible ? 'Profil visible' : 'Profil masqué'}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {!practitioner.is_active
+                        ? 'Profil inactif - invisible pour le public'
+                        : practitioner.profile_visible
+                        ? 'Votre profil est visible dans la liste des intervenants'
+                        : 'Votre profil est masqué de la liste publique des intervenants'}
+                    </Typography>
+                  </Box>
+                </Box>
+              }
+            />
+          </Box>
+        </CardContent>
+      </Card>
 
       <Box sx={{ width: '100%', position: 'relative', minHeight: '70vh' }}>
         {/* Image de fond - détail intervenant */}
@@ -168,20 +277,22 @@ const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({
                       borderBottom: '1px solid rgba(255, 215, 0, 0.2)',
                     }}
                   >
-                    <Avatar
-                      src={getProfilePhoto() || undefined}
-                      sx={{
-                        width: 150,
-                        height: 150,
-                        fontSize: '3.5rem',
-                        background: getProfilePhoto() ? 'transparent' : 'linear-gradient(135deg, #FFD700, #FFA500)',
-                        mb: 2,
-                        border: '4px solid white',
-                        boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)',
-                      }}
-                    >
-                      {!getProfilePhoto() && getInitials()}
-                    </Avatar>
+                    <Box sx={{ mb: 2 }}>
+                      <UserAvatar
+                        avatarUrl={practitioner.profile?.avatar_url}
+                        firstName={practitioner.profile?.first_name || practitioner.display_name}
+                        lastName={practitioner.profile?.last_name}
+                        racine1={practitioner.profile?.racine1}
+                        racine2={practitioner.profile?.racine2}
+                        tronc={practitioner.profile?.tronc}
+                        dynamique_de_vie={practitioner.profile?.dynamique_de_vie}
+                        size={150}
+                        sx={{
+                          border: '4px solid white',
+                          boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)',
+                        }}
+                      />
+                    </Box>
                     <Typography variant="h4" align="center" sx={{ color: '#1a1a2e', fontWeight: 600 }}>
                       {displayName}
                     </Typography>
@@ -346,6 +457,29 @@ const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({
           </Container>
         </Box>
       </Box>
+
+      {/* Snackbars pour les notifications */}
+      <Snackbar
+        open={showSuccess}
+        autoHideDuration={3000}
+        onClose={() => setShowSuccess(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="success" sx={{ width: '100%' }} onClose={() => setShowSuccess(false)}>
+          Visibilité du profil mise à jour avec succès !
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={showError}
+        autoHideDuration={6000}
+        onClose={() => setShowError(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity="error" sx={{ width: '100%' }} onClose={() => setShowError(false)}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

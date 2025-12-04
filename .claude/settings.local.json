@@ -59,7 +59,11 @@
       "Bash(node apply_contract_pricing_fix.js:*)",
       "Bash(ren:*)",
       "Bash(node apply_contract_pricing_fix.cjs:*)",
-      "Bash(node check_contracts.cjs:*)"
+      "Bash(node check_contracts.cjs:*)",
+      "Bash(set)",
+      "Bash(node apply_department_migration.cjs:*)",
+      "Bash(node setup_avatar_feature.cjs:*)",
+      "Bash(node:*)"
     ],
     "deny": [],
     "ask": []

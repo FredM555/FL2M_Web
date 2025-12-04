@@ -9,6 +9,8 @@ export type Profile = {
   phone?: string;
   email?: string;
   birth_date?: string;
+  department?: string; // Code département français (ex: 75, 59, 2A)
+  avatar_url?: string; // URL de la photo de profil dans Supabase Storage
   user_type: 'admin' | 'intervenant' | 'client';
   created_at: string;
   updated_at: string;
@@ -21,6 +23,7 @@ export type Profile = {
   racine1?: number; // Chemin de vie
   racine2?: number; // Expression
   tronc?: number;   // Objectif de vie
+  dynamique_de_vie?: number; // Dynamique de vie
 };
 
 export type Service = {

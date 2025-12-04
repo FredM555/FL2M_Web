@@ -13,6 +13,7 @@ import {
   FormControl,
   Alert,
   Snackbar,
+  Avatar,
 } from '@mui/material';
 import {
   Person as PersonIcon,
@@ -33,6 +34,7 @@ import {
 } from '../../services/beneficiaryDocuments';
 import { updateBeneficiaryRelationship } from '../../services/beneficiaries';
 import { PDFViewer } from '../appointments/PDFViewer';
+import { NumerologyTriangleAvatar } from '../profile/NumerologyTriangleAvatar';
 
 interface BeneficiaryDetailsProps {
   beneficiary: BeneficiaryWithAccess;
@@ -217,15 +219,67 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
     return numStr;
   };
 
+  // Fonction pour obtenir les initiales
+  const getInitials = () => {
+    const first = beneficiary.first_name.charAt(0).toUpperCase();
+    const last = beneficiary.last_name.charAt(0).toUpperCase();
+    return `${first}${last}`;
+  };
+
+  // Fonction pour obtenir la couleur de l'avatar
+  const getAvatarColor = () => {
+    const colors = [
+      '#345995',
+      '#1D3461',
+      '#5FA8D3',
+      '#8B7DAB',
+      '#D4A5A5',
+    ];
+    const sum = beneficiary.first_name.charCodeAt(0) + beneficiary.last_name.charCodeAt(0);
+    return colors[sum % colors.length];
+  };
+
   return (
     <Box>
       {/* Informations de base */}
       <Paper sx={{ p: 3, mb: 3 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-          <PersonIcon sx={{ mr: 1, color: 'primary.main' }} />
-          <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Informations personnelles
-          </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+          {/* Avatar de numérologie ou classique */}
+          <Box sx={{ mr: 2 }}>
+            {(beneficiary.tronc || beneficiary.racine_1 || beneficiary.racine_2) ? (
+              <NumerologyTriangleAvatar
+                tronc={beneficiary.tronc}
+                racine1={beneficiary.racine_1}
+                racine2={beneficiary.racine_2}
+                dynamique_de_vie={beneficiary.dynamique_de_vie}
+                size={80}
+              />
+            ) : (
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  bgcolor: getAvatarColor(),
+                  fontSize: '2rem',
+                  fontWeight: 600,
+                }}
+              >
+                {getInitials()}
+              </Avatar>
+            )}
+          </Box>
+
+          <Box sx={{ flexGrow: 1 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
+              <PersonIcon sx={{ mr: 1, color: 'primary.main' }} />
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Informations personnelles
+              </Typography>
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
+              {beneficiary.first_name} {beneficiary.last_name}
+            </Typography>
+          </Box>
         </Box>
 
         <Grid container spacing={2}>

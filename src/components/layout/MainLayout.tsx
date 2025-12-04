@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { Link as RouterLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { UserAvatar } from '../profile/UserAvatar';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LogoutIcon from '@mui/icons-material/Logout';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -304,19 +305,16 @@ const MainLayout: React.FC = () => {
                           },
                         }}
                       >
-                        <Avatar
-                          sx={{
-                            width: 36,
-                            height: 36,
-                            background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                            color: '#1D3461',
-                            fontWeight: 700,
-                            fontSize: '1.1rem',
-                            boxShadow: '0 2px 8px rgba(255, 215, 0, 0.3)',
-                          }}
-                        >
-                          {profile?.first_name ? profile.first_name[0].toUpperCase() : <AccountCircleIcon />}
-                        </Avatar>
+                        <UserAvatar
+                          avatarUrl={profile?.avatar_url}
+                          firstName={profile?.first_name}
+                          lastName={profile?.last_name}
+                          racine1={profile?.racine1}
+                          racine2={profile?.racine2}
+                          tronc={profile?.tronc}
+                          dynamique_de_vie={profile?.dynamique_de_vie}
+                          size={36}
+                        />
                         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
                           <Typography
                             sx={{
@@ -398,19 +396,16 @@ const MainLayout: React.FC = () => {
                           }}
                         >
                           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, position: 'relative', zIndex: 1 }}>
-                            <Avatar
-                              sx={{
-                                width: 48,
-                                height: 48,
-                                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                                color: '#1D3461',
-                                fontWeight: 700,
-                                fontSize: '1.3rem',
-                                boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
-                              }}
-                            >
-                              {profile?.first_name ? profile.first_name[0].toUpperCase() : <AccountCircleIcon />}
-                            </Avatar>
+                            <UserAvatar
+                              avatarUrl={profile?.avatar_url}
+                              firstName={profile?.first_name}
+                              lastName={profile?.last_name}
+                              racine1={profile?.racine1}
+                              racine2={profile?.racine2}
+                              tronc={profile?.tronc}
+                              dynamique_de_vie={profile?.dynamique_de_vie}
+                              size={48}
+                            />
                             <Box sx={{ flex: 1 }}>
                               <Typography
                                 variant="subtitle1"
@@ -1095,11 +1090,18 @@ const MainLayout: React.FC = () => {
         {user ? (
           <Box sx={{ p: 2 }}>
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
-              <Avatar 
-                sx={{ width: 32, height: 32, bgcolor: 'primary.main', mr: 1 }}
-              >
-                {profile?.first_name ? profile.first_name[0].toUpperCase() : <AccountCircleIcon />}
-              </Avatar>
+              <Box sx={{ mr: 1 }}>
+                <UserAvatar
+                  avatarUrl={profile?.avatar_url}
+                  firstName={profile?.first_name}
+                  lastName={profile?.last_name}
+                  racine1={profile?.racine1}
+                  racine2={profile?.racine2}
+                  tronc={profile?.tronc}
+                  dynamique_de_vie={profile?.dynamique_de_vie}
+                  size={32}
+                />
+              </Box>
               <Box>
                 <Typography variant="subtitle2">
                   {profile?.first_name} {profile?.last_name}
