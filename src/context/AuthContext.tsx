@@ -31,13 +31,6 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
-// Fonction utilitaire pour créer un timeout
-const createTimeout = (ms: number): Promise<never> => {
-  return new Promise((_, reject) => 
-    setTimeout(() => reject(new Error(`Opération expirée après ${ms}ms`)), ms)
-  );
-};
-
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -74,10 +67,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       .then(() => {
         // Récupérer le profil et le bénéficiaire "self" en parallèle
         return Promise.all([
-          Promise.race([
-            getProfile(userId),
-            createTimeout(5000)
-          ]),
+          getProfile(userId),
           // Récupérer le bénéficiaire "self" pour les données de numérologie
           supabase
             .from('beneficiary_access')
@@ -216,10 +206,7 @@ const logLoginFailed = (email: string, reason?: string) => {
           safeSetState(setUser, session.user, 'user');
           
           // Récupération du profil
-          return Promise.race([
-            fetchUserProfile(session.user.id),
-            createTimeout(5000)
-          ])
+          return fetchUserProfile(session.user.id)
             .then(profileData => {
               if (!isMounted.current) return;
               
@@ -287,10 +274,7 @@ const logLoginFailed = (email: string, reason?: string) => {
           );
 
           // Récupérer le profil sans await
-          Promise.race([
-            fetchUserProfile(session.user.id),
-            createTimeout(5000)
-          ])
+          fetchUserProfile(session.user.id)
             .then(profileData => {
               if (!isMounted.current) return;
               

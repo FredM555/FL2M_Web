@@ -77,9 +77,11 @@ const ConsultantsPage: React.FC = () => {
       const consultantsWithNumerology = await Promise.all(
         (data || []).map(async (consultant) => {
           try {
-            const { data: numerologyData } = await supabase.rpc('get_public_practitioner_numerology', {
+            const { data: numerologyData, error: numerologyError } = await supabase.rpc('get_public_practitioner_numerology', {
               p_user_id: consultant.user_id
             });
+
+            console.log('[ConsultantsPage] Numérologie pour', consultant.display_name || consultant.profile?.first_name, ':', numerologyData, 'Erreur:', numerologyError);
 
             // Ajouter les données de numérologie au profil si disponibles
             if (numerologyData && numerologyData.length > 0 && consultant.profile) {
@@ -88,13 +90,23 @@ const ConsultantsPage: React.FC = () => {
               consultant.profile.racine1 = numData.racine_1;
               consultant.profile.racine2 = numData.racine_2;
               consultant.profile.dynamique_de_vie = numData.dynamique_de_vie;
+              console.log('[ConsultantsPage] Données ajoutées au profil:', {
+                tronc: consultant.profile.tronc,
+                racine1: consultant.profile.racine1,
+                racine2: consultant.profile.racine2,
+                dynamique_de_vie: consultant.profile.dynamique_de_vie
+              });
+            } else {
+              console.warn('[ConsultantsPage] Pas de données numérologie pour', consultant.display_name || consultant.profile?.first_name);
             }
           } catch (err) {
-            console.warn('Erreur lors de la récupération de la numérologie pour', consultant.user_id, err);
+            console.error('[ConsultantsPage] Exception lors de la récupération de la numérologie pour', consultant.user_id, err);
           }
           return consultant;
         })
       );
+
+      console.log('[ConsultantsPage] Consultants avec numérologie:', consultantsWithNumerology);
 
       setConsultants(consultantsWithNumerology);
     } catch (err: any) {
