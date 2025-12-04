@@ -21,6 +21,7 @@ import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import { UserAvatar } from '../components/profile/UserAvatar';
 
 // Interface pour les intervenants
 interface Consultant {
@@ -40,6 +41,11 @@ interface Consultant {
     last_name: string;
     email: string;
     phone?: string;
+    avatar_url?: string;
+    racine1?: number;
+    racine2?: number;
+    tronc?: number;
+    dynamique_de_vie?: number;
   }
 }
 
@@ -59,14 +65,38 @@ const ConsultantsPage: React.FC = () => {
         .from('practitioners')
         .select(`
           *,
-          profile:profiles(first_name, last_name, email, phone)
+          profile:profiles(first_name, last_name, email, phone, avatar_url)
         `)
         .eq('is_active', true)
         .eq('profile_visible', true)
         .order('priority', { ascending: false });
 
       if (error) throw error;
-      setConsultants(data || []);
+
+      // Récupérer les données de numérologie pour chaque intervenant
+      const consultantsWithNumerology = await Promise.all(
+        (data || []).map(async (consultant) => {
+          try {
+            const { data: numerologyData } = await supabase.rpc('get_public_practitioner_numerology', {
+              p_user_id: consultant.user_id
+            });
+
+            // Ajouter les données de numérologie au profil si disponibles
+            if (numerologyData && numerologyData.length > 0 && consultant.profile) {
+              const numData = numerologyData[0];
+              consultant.profile.tronc = numData.tronc;
+              consultant.profile.racine1 = numData.racine_1;
+              consultant.profile.racine2 = numData.racine_2;
+              consultant.profile.dynamique_de_vie = numData.dynamique_de_vie;
+            }
+          } catch (err) {
+            console.warn('Erreur lors de la récupération de la numérologie pour', consultant.user_id, err);
+          }
+          return consultant;
+        })
+      );
+
+      setConsultants(consultantsWithNumerology);
     } catch (err: any) {
       console.error('Erreur lors du chargement des intervenants:', err);
       setError('Impossible de charger la liste des intervenants. Veuillez réessayer plus tard.');
@@ -340,19 +370,20 @@ const ConsultantsPage: React.FC = () => {
                           transition: 'transform 0.3s ease',
                         }}
                       >
-                        <Avatar
-                          src={getProfilePhoto(consultant) || undefined}
+                        <UserAvatar
+                          avatarUrl={consultant.profile?.avatar_url}
+                          firstName={consultant.profile?.first_name || consultant.display_name}
+                          lastName={consultant.profile?.last_name}
+                          racine1={consultant.profile?.racine1}
+                          racine2={consultant.profile?.racine2}
+                          tronc={consultant.profile?.tronc}
+                          dynamique_de_vie={consultant.profile?.dynamique_de_vie}
+                          size={100}
                           sx={{
-                            width: 100,
-                            height: 100,
-                            fontSize: '2.5rem',
-                            background: getProfilePhoto(consultant) ? 'transparent' : 'linear-gradient(135deg, #FFD700, #FFA500)',
                             border: '4px solid white',
                             boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)',
                           }}
-                        >
-                          {!getProfilePhoto(consultant) && getInitials(consultant)}
-                        </Avatar>
+                        />
                       </IconButton>
                       <Typography variant="h5" component="h2" align="center" sx={{ color: '#1a1a2e', fontWeight: 600 }}>
                         {getConsultantName(consultant)}

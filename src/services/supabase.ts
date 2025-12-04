@@ -414,16 +414,23 @@ export const getMyPractitionerProfile = async () => {
 
       // Ajouter les données de numérologie au profil si disponibles
       if (!beneficiaryError && beneficiaryData?.beneficiary && result.data.profile) {
-        result.data.profile.tronc = beneficiaryData.beneficiary.tronc;
-        result.data.profile.racine1 = beneficiaryData.beneficiary.racine_1;
-        result.data.profile.racine2 = beneficiaryData.beneficiary.racine_2;
-        result.data.profile.dynamique_de_vie = beneficiaryData.beneficiary.dynamique_de_vie;
-        console.log('[getMyPractitionerProfile] Données numérologie ajoutées au profil:', {
-          tronc: result.data.profile.tronc,
-          racine1: result.data.profile.racine1,
-          racine2: result.data.profile.racine2,
-          dynamique_de_vie: result.data.profile.dynamique_de_vie
-        });
+        // beneficiary peut être un objet ou un tableau selon le retour de Supabase
+        const benef = Array.isArray(beneficiaryData.beneficiary)
+          ? beneficiaryData.beneficiary[0]
+          : beneficiaryData.beneficiary;
+
+        if (benef) {
+          result.data.profile.tronc = benef.tronc;
+          result.data.profile.racine1 = benef.racine_1;
+          result.data.profile.racine2 = benef.racine_2;
+          result.data.profile.dynamique_de_vie = benef.dynamique_de_vie;
+          console.log('[getMyPractitionerProfile] Données numérologie ajoutées au profil:', {
+            tronc: result.data.profile.tronc,
+            racine1: result.data.profile.racine1,
+            racine2: result.data.profile.racine2,
+            dynamique_de_vie: result.data.profile.dynamique_de_vie
+          });
+        }
       } else if (beneficiaryError) {
         console.warn('[getMyPractitionerProfile] Erreur récupération bénéficiaire:', beneficiaryError);
       }

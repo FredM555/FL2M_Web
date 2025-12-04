@@ -110,12 +110,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
         // Ajouter les données de numérologie du bénéficiaire "self" au profil
         if (beneficiaryResult.data?.beneficiary) {
-          const beneficiaryData = beneficiaryResult.data.beneficiary;
-          console.log('[FETCH_PROFILE] Données numérologie récupérées:', beneficiaryData);
-          profileData.racine1 = beneficiaryData.racine_1 || undefined;
-          profileData.racine2 = beneficiaryData.racine_2 || undefined;
-          profileData.tronc = beneficiaryData.tronc || undefined;
-          profileData.dynamique_de_vie = beneficiaryData.dynamique_de_vie || undefined;
+          // beneficiary peut être un objet ou un tableau selon le retour de Supabase
+          const beneficiaryData = Array.isArray(beneficiaryResult.data.beneficiary)
+            ? beneficiaryResult.data.beneficiary[0]
+            : beneficiaryResult.data.beneficiary;
+
+          if (beneficiaryData) {
+            console.log('[FETCH_PROFILE] Données numérologie récupérées:', beneficiaryData);
+            profileData.racine1 = beneficiaryData.racine_1 || undefined;
+            profileData.racine2 = beneficiaryData.racine_2 || undefined;
+            profileData.tronc = beneficiaryData.tronc || undefined;
+            profileData.dynamique_de_vie = beneficiaryData.dynamique_de_vie || undefined;
+          }
         } else {
           console.log('[FETCH_PROFILE] Aucun bénéficiaire "self" trouvé');
         }

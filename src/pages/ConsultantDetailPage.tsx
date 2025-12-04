@@ -140,40 +140,30 @@ const ConsultantDetailPage: React.FC = () => {
         throw new Error("Intervenant non trouvé ou profil masqué");
       }
 
-      // Récupérer les données de numérologie du bénéficiaire "self" de l'intervenant
+      // Récupérer les données de numérologie du bénéficiaire "self" de l'intervenant via RPC publique
       if (data.user_id) {
         try {
-          const { data: beneficiaryData, error: beneficiaryError } = await supabase
-            .from('beneficiary_access')
-            .select(`
-              beneficiary:beneficiaries(
-                tronc,
-                racine_1,
-                racine_2,
-                dynamique_de_vie
-              )
-            `)
-            .eq('user_id', data.user_id)
-            .eq('relationship', 'self')
-            .limit(1)
-            .maybeSingle();
+          const { data: numerologyData, error: numerologyError } = await supabase.rpc('get_public_practitioner_numerology', {
+            p_user_id: data.user_id
+          });
 
-          console.log('[ConsultantDetail] Données bénéficiaire récupérées:', beneficiaryData);
+          console.log('[ConsultantDetail] Données numérologie récupérées:', numerologyData);
 
           // Ajouter les données de numérologie au profil si disponibles
-          if (!beneficiaryError && beneficiaryData?.beneficiary && data.profile) {
-            data.profile.tronc = beneficiaryData.beneficiary.tronc;
-            data.profile.racine1 = beneficiaryData.beneficiary.racine_1;
-            data.profile.racine2 = beneficiaryData.beneficiary.racine_2;
-            data.profile.dynamique_de_vie = beneficiaryData.beneficiary.dynamique_de_vie;
+          if (!numerologyError && numerologyData && numerologyData.length > 0 && data.profile) {
+            const numData = numerologyData[0];
+            data.profile.tronc = numData.tronc;
+            data.profile.racine1 = numData.racine_1;
+            data.profile.racine2 = numData.racine_2;
+            data.profile.dynamique_de_vie = numData.dynamique_de_vie;
             console.log('[ConsultantDetail] Données numérologie ajoutées au profil:', {
               tronc: data.profile.tronc,
               racine1: data.profile.racine1,
               racine2: data.profile.racine2,
               dynamique_de_vie: data.profile.dynamique_de_vie
             });
-          } else if (beneficiaryError) {
-            console.warn('[ConsultantDetail] Erreur récupération bénéficiaire:', beneficiaryError);
+          } else if (numerologyError) {
+            console.warn('[ConsultantDetail] Erreur récupération numérologie:', numerologyError);
           }
         } catch (err) {
           console.error('[ConsultantDetail] Exception lors de la récupération des données numérologie:', err);

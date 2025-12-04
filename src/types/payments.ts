@@ -369,6 +369,7 @@ export function getContractTypeLabel(type: ContractType): string {
 
 export function getContractStatusLabel(status: ContractStatus): string {
   const labels: Record<ContractStatus, string> = {
+    pending_payment: 'En attente de paiement',
     active: 'Actif',
     suspended: 'Suspendu',
     terminated: 'Résilié',

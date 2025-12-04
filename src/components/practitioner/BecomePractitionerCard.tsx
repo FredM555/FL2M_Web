@@ -162,6 +162,12 @@ const BecomePractitionerCard: React.FC<BecomePractitionerCardProps> = ({ onReque
         icon: <HourglassEmptyIcon />,
         message: 'Votre demande est en cours d\'examen par notre équipe.'
       },
+      pre_approved: {
+        label: 'Pré-approuvée',
+        color: 'info' as const,
+        icon: <CheckCircleIcon />,
+        message: 'Votre demande est pré-approuvée et en cours de finalisation.'
+      },
       approved: {
         label: 'Approuvée',
         color: 'success' as const,

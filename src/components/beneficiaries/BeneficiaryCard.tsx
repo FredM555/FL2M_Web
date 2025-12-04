@@ -171,10 +171,10 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
           {(beneficiary.tronc || beneficiary.racine_1 || beneficiary.racine_2) ? (
             <Box sx={{ mr: 2 }}>
               <NumerologyTriangleAvatar
-                tronc={beneficiary.tronc}
-                racine1={beneficiary.racine_1}
-                racine2={beneficiary.racine_2}
-                dynamique_de_vie={beneficiary.dynamique_de_vie}
+                tronc={beneficiary.tronc ?? undefined}
+                racine1={beneficiary.racine_1 ?? undefined}
+                racine2={beneficiary.racine_2 ?? undefined}
+                dynamique_de_vie={beneficiary.dynamique_de_vie ?? undefined}
                 size={56}
               />
             </Box>
