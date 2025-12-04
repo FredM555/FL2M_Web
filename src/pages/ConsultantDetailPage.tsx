@@ -32,6 +32,7 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import { UserAvatar } from '../components/profile/UserAvatar';
 
 // Interface pour les intervenants
 interface Consultant {
@@ -51,6 +52,11 @@ interface Consultant {
     last_name: string;
     email: string;
     phone?: string;
+    avatar_url?: string;
+    racine1?: number;
+    racine2?: number;
+    tronc?: number;
+    dynamique_de_vie?: number;
   }
 }
 
@@ -94,7 +100,7 @@ const ConsultantDetailPage: React.FC = () => {
           profile_visible,
           expertise_domains,
           qualifications,
-          profile:profiles!user_id(first_name, last_name, email, phone)
+          profile:profiles!user_id(first_name, last_name, email, phone, avatar_url)
         `)
         .eq('is_active', true)
         .eq('profile_visible', true)
@@ -121,7 +127,7 @@ const ConsultantDetailPage: React.FC = () => {
         .from('practitioners')
         .select(`
           *,
-          profile:profiles(first_name, last_name, email, phone)
+          profile:profiles(first_name, last_name, email, phone, avatar_url)
         `)
         .eq('id', consultantId)
         .eq('is_active', true)
@@ -132,6 +138,46 @@ const ConsultantDetailPage: React.FC = () => {
 
       if (!data) {
         throw new Error("Intervenant non trouvé ou profil masqué");
+      }
+
+      // Récupérer les données de numérologie du bénéficiaire "self" de l'intervenant
+      if (data.user_id) {
+        try {
+          const { data: beneficiaryData, error: beneficiaryError } = await supabase
+            .from('beneficiary_access')
+            .select(`
+              beneficiary:beneficiaries(
+                tronc,
+                racine_1,
+                racine_2,
+                dynamique_de_vie
+              )
+            `)
+            .eq('user_id', data.user_id)
+            .eq('relationship', 'self')
+            .limit(1)
+            .maybeSingle();
+
+          console.log('[ConsultantDetail] Données bénéficiaire récupérées:', beneficiaryData);
+
+          // Ajouter les données de numérologie au profil si disponibles
+          if (!beneficiaryError && beneficiaryData?.beneficiary && data.profile) {
+            data.profile.tronc = beneficiaryData.beneficiary.tronc;
+            data.profile.racine1 = beneficiaryData.beneficiary.racine_1;
+            data.profile.racine2 = beneficiaryData.beneficiary.racine_2;
+            data.profile.dynamique_de_vie = beneficiaryData.beneficiary.dynamique_de_vie;
+            console.log('[ConsultantDetail] Données numérologie ajoutées au profil:', {
+              tronc: data.profile.tronc,
+              racine1: data.profile.racine1,
+              racine2: data.profile.racine2,
+              dynamique_de_vie: data.profile.dynamique_de_vie
+            });
+          } else if (beneficiaryError) {
+            console.warn('[ConsultantDetail] Erreur récupération bénéficiaire:', beneficiaryError);
+          }
+        } catch (err) {
+          console.error('[ConsultantDetail] Exception lors de la récupération des données numérologie:', err);
+        }
       }
 
       setConsultant(data);
@@ -412,20 +458,21 @@ const ConsultantDetailPage: React.FC = () => {
                   borderBottom: '1px solid rgba(255, 215, 0, 0.2)',
                 }}
               >
-                <Avatar
-                  src={getProfilePhoto() || undefined}
+                <UserAvatar
+                  avatarUrl={consultant.profile?.avatar_url}
+                  firstName={consultant.profile?.first_name || consultant.display_name}
+                  lastName={consultant.profile?.last_name}
+                  racine1={consultant.profile?.racine1}
+                  racine2={consultant.profile?.racine2}
+                  tronc={consultant.profile?.tronc}
+                  dynamique_de_vie={consultant.profile?.dynamique_de_vie}
+                  size={150}
                   sx={{
-                    width: 150,
-                    height: 150,
-                    fontSize: '3.5rem',
-                    background: getProfilePhoto() ? 'transparent' : 'linear-gradient(135deg, #FFD700, #FFA500)',
                     mb: 2,
                     border: '4px solid white',
                     boxShadow: '0 4px 15px rgba(255, 215, 0, 0.3)',
                   }}
-                >
-                  {!getProfilePhoto() && getInitials()}
-                </Avatar>
+                />
                 <Typography variant="h4" align="center" sx={{ color: '#1a1a2e', fontWeight: 600 }}>
                   {getConsultantName()}
                 </Typography>

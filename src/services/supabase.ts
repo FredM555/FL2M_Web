@@ -383,7 +383,7 @@ export const getMyPractitionerProfile = async () => {
     return { data: null, error: { message: 'Non authentifié' } };
   }
 
-  return supabase
+  const result = await supabase
     .from('practitioners')
     .select(`
       *,
@@ -391,6 +391,48 @@ export const getMyPractitionerProfile = async () => {
     `)
     .eq('user_id', user.id)
     .single();
+
+  // Si succès, récupérer les données de numérologie du bénéficiaire "self"
+  if (result.data && user.id) {
+    try {
+      const { data: beneficiaryData, error: beneficiaryError } = await supabase
+        .from('beneficiary_access')
+        .select(`
+          beneficiary:beneficiaries(
+            tronc,
+            racine_1,
+            racine_2,
+            dynamique_de_vie
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('relationship', 'self')
+        .limit(1)
+        .maybeSingle();
+
+      console.log('[getMyPractitionerProfile] Données bénéficiaire récupérées:', beneficiaryData);
+
+      // Ajouter les données de numérologie au profil si disponibles
+      if (!beneficiaryError && beneficiaryData?.beneficiary && result.data.profile) {
+        result.data.profile.tronc = beneficiaryData.beneficiary.tronc;
+        result.data.profile.racine1 = beneficiaryData.beneficiary.racine_1;
+        result.data.profile.racine2 = beneficiaryData.beneficiary.racine_2;
+        result.data.profile.dynamique_de_vie = beneficiaryData.beneficiary.dynamique_de_vie;
+        console.log('[getMyPractitionerProfile] Données numérologie ajoutées au profil:', {
+          tronc: result.data.profile.tronc,
+          racine1: result.data.profile.racine1,
+          racine2: result.data.profile.racine2,
+          dynamique_de_vie: result.data.profile.dynamique_de_vie
+        });
+      } else if (beneficiaryError) {
+        console.warn('[getMyPractitionerProfile] Erreur récupération bénéficiaire:', beneficiaryError);
+      }
+    } catch (err) {
+      console.error('[getMyPractitionerProfile] Exception lors de la récupération des données numérologie:', err);
+    }
+  }
+
+  return result;
 };
 
 export const updateMyPractitionerProfile = async (
