@@ -59,6 +59,9 @@ import PractitionerPaymentPage from './pages/PractitionerPaymentPage';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import PractitionerSchedulePage from './pages/Practitioner/PractitionerSchedulePage';
 import { BeneficiariesPage } from './pages/BeneficiariesPage';
+import PractitionerStripeConnectPage from './pages/PractitionerStripeConnectPage';
+import PractitionerStripeConnectSuccessPage from './pages/PractitionerStripeConnectSuccessPage';
+import PractitionerTransactionsPage from './pages/PractitionerTransactionsPage';
 
 
 
@@ -68,6 +71,7 @@ import AdminUsersPage from './pages/Admin/UsersPage';
 import AdminPractitionersPage from './pages/Admin/PractitionersPage';
 import AdminServicesPage from './pages/Admin/ServicesPage';
 import AdminAppointmentsPage from './pages/Admin/AppointmentsPage';
+import AdminTransactionsPage from './pages/Admin/AdminTransactionsPage';
 
 // Import du nouveau composant
 import AdminContactMessagesPage from './pages/Admin/ContactMessagesPage';
@@ -295,6 +299,21 @@ function App() {
                 <PractitionerSchedulePage />
               </ProtectedRoute>
             } />
+            <Route path="intervenant/stripe-connect" element={
+              <ProtectedRoute>
+                <PractitionerStripeConnectPage />
+              </ProtectedRoute>
+            } />
+            <Route path="intervenant/stripe-connect-success" element={
+              <ProtectedRoute>
+                <PractitionerStripeConnectSuccessPage />
+              </ProtectedRoute>
+            } />
+            <Route path="intervenant/transactions" element={
+              <ProtectedRoute>
+                <PractitionerTransactionsPage />
+              </ProtectedRoute>
+            } />
           </Route>
           
           {/* Routes admin avec le nouveau layout */}
@@ -312,6 +331,7 @@ function App() {
             <Route path="demandes-intervenant" element={<AdminPractitionerRequestsPage />} />
             <Route path="prestations" element={<AdminServicesPage />} />
             <Route path="rendez-vous" element={<AdminAppointmentsPage />} />
+            <Route path="transactions" element={<AdminTransactionsPage />} />
             <Route path="messages" element={<AdminContactMessagesPage />} />
             <Route path="journaux-activite" element={<AdminActivityLogsPage />} />
           </Route>

@@ -38,6 +38,7 @@ import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import MessageIcon from '@mui/icons-material/Message';
 import WorkIcon from '@mui/icons-material/Work';
 import HistoryIcon from '@mui/icons-material/History';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 
@@ -158,6 +159,11 @@ const AdminLayout: React.FC = () => {
       text: 'Rendez-vous',
       path: '/admin/rendez-vous',
       icon: <CalendarMonthIcon />
+    },
+    {
+      text: 'Transactions',
+      path: '/admin/transactions',
+      icon: <ReceiptIcon />
     },
     {
       text: 'Messages',

@@ -177,7 +177,7 @@ export interface CreateBeneficiaryData {
   notifications_enabled?: boolean;
 
   // Données de numérologie (optionnelles)
-  chemin_de_vie?: number;
+  tronc?: number; // Objectif de vie (jour + mois) - anciennement chemin_de_vie
   racine_1?: number;
   racine_2?: number;
   dynamique_de_vie?: number;

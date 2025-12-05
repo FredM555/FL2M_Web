@@ -111,11 +111,14 @@ export interface Transaction {
 
   // Statut
   status: TransactionStatus;
+  transfer_status: 'pending' | 'eligible' | 'processing' | 'completed' | 'failed';
 
   // Dates
   payment_date: string | null;
   transfer_date: string | null;
   refund_date: string | null;
+  eligible_for_transfer_at: string | null;
+  transferred_at: string | null;
 
   // Métadonnées
   currency: string;

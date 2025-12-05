@@ -63,16 +63,16 @@ export const NumerologyTriangleAvatar: React.FC<NumerologyTriangleAvatarProps> =
             transform: 'translate(-50%, -50%)',
             fontSize: `${backgroundFontSize}px`,
             fontWeight: 900,
-            opacity: 0.15,
+            opacity: 0.25,
             color: '#1D3461',
-            textShadow: '2px 2px 4px rgba(255, 255, 255, 0.3), -2px -2px 4px rgba(0, 0, 0, 0.1)',
+            textShadow: '3px 3px 6px rgba(255, 255, 255, 0.6), -3px -3px 6px rgba(0, 0, 0, 0.2), 0 0 15px rgba(255, 255, 255, 0.4)',
             zIndex: 0,
           }}
         >
           {dynamique_de_vie}
         </Box>
       )}
-      {/* Tronc en haut/centre */}
+      {/* Tronc en haut/centre - plein bleu foncé */}
       {tronc !== undefined && (
         <Box
           sx={{
@@ -82,8 +82,9 @@ export const NumerologyTriangleAvatar: React.FC<NumerologyTriangleAvatarProps> =
             left: '50%',
             transform: 'translate(-50%, -50%)',
             zIndex: 1,
-            textShadow: '0 0 10px rgba(255, 215, 0, 0.8), 0 0 20px rgba(255, 215, 0, 0.6), 0 0 30px rgba(255, 215, 0, 0.4), 0 0 2px rgba(255, 215, 0, 1)',
             fontWeight: 900,
+            color: '#1D3461',
+            textShadow: '0 0 10px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.3)',
           }}
         >
           {tronc}
@@ -104,14 +105,14 @@ export const NumerologyTriangleAvatar: React.FC<NumerologyTriangleAvatarProps> =
       >
         {/* Racine1 à gauche */}
         {racine1 !== undefined && (
-          <Box sx={{ fontSize: `${fontSize}px` }}>
+          <Box sx={{ fontSize: `${troncFontSize}px`, color: '#345995' }}>
             {racine1}
           </Box>
         )}
 
         {/* Racine2 à droite */}
         {racine2 !== undefined && (
-          <Box sx={{ fontSize: `${fontSize}px` }}>
+          <Box sx={{ fontSize: `${troncFontSize}px`, color: '#345995' }}>
             {racine2}
           </Box>
         )}

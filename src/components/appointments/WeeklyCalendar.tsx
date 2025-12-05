@@ -586,14 +586,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                       de {format(parseISO(selectedAppointmentDetails.start_time), 'HH:mm', { locale: fr })} 
                       à {format(parseISO(selectedAppointmentDetails.end_time), 'HH:mm', { locale: fr })}
                     </Typography>
-                    
-                    <Typography variant="subtitle1" fontWeight="bold">
-                      Service:
-                    </Typography>
-                    <Typography variant="body1" gutterBottom>
-                      {selectedAppointmentDetails.service.name} ({selectedAppointmentDetails.service.duration} min)
-                    </Typography>
-                    
+
                     <Typography variant="subtitle1" fontWeight="bold">
                       Prix:
                     </Typography>
@@ -604,17 +597,7 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                       })()}
                     </Typography>
 
-                    {selectedAppointmentDetails.service.description && (
-                      <>
-                        <Typography variant="subtitle1" fontWeight="bold" sx={{ mt: 2 }}>
-                          Description:
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {selectedAppointmentDetails.service.description}
-                        </Typography>
-                      </>
-                    )}
-                  </Grid>
+                 </Grid>
                   
                   <Grid item xs={12} md={6}>
                     <Typography variant="subtitle1" fontWeight="bold">
@@ -626,13 +609,16 @@ const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
                       {selectedAppointmentDetails.practitioner.title && ` - ${selectedAppointmentDetails.practitioner.title}`}
                     </Typography>
                     
-                    {selectedAppointmentDetails.practitioner.bio && (
+                    <Typography variant="subtitle1" fontWeight="bold">
+                      Service:
+                    </Typography>
+                    <Typography variant="body1" gutterBottom>
+                      {selectedAppointmentDetails.service.name} ({selectedAppointmentDetails.service.duration} min)
+                    </Typography>
+                                        {selectedAppointmentDetails.service.description && (
                       <>
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          À propos de l'intervenant:
-                        </Typography>
-                        <Typography variant="body2">
-                          {selectedAppointmentDetails.practitioner.bio}
+                        <Typography variant="body2" color="text.secondary">
+                          {selectedAppointmentDetails.service.description}
                         </Typography>
                       </>
                     )}

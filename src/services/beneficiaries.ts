@@ -193,8 +193,12 @@ export const createBeneficiary = async (
       throw new Error('Utilisateur non authentifié');
     }
 
+    // Extraire relationship car il n'existe pas dans la table beneficiaries
+    // Il sera utilisé uniquement pour beneficiary_access
+    const { relationship, ...beneficiaryDataWithoutRelationship } = beneficiaryData;
+
     const dataToInsert = {
-      ...beneficiaryData,
+      ...beneficiaryDataWithoutRelationship,
       owner_id: currentUserId,
       created_by: currentUserId,
       updated_by: currentUserId
@@ -217,22 +221,22 @@ export const createBeneficiary = async (
 
     // Créer automatiquement l'accès pour le propriétaire
     // Utiliser le relationship fourni dans les données, sinon détecter automatiquement
-    let relationship = beneficiaryData.relationship;
+    let relationshipToUse = relationship;
 
-    if (!relationship) {
+    if (!relationshipToUse) {
       // Si pas de relationship fourni, avec la relation "self" si c'est le premier, sinon "other"
       const { hasSelf } = await hasSelfBeneficiary(currentUserId);
-      relationship = hasSelf ? 'other' : 'self';
+      relationshipToUse = hasSelf ? 'other' : 'self';
     }
 
-    console.log('[CREATE_BENEFICIARY] Création de l\'accès avec relationship:', relationship);
+    console.log('[CREATE_BENEFICIARY] Création de l\'accès avec relationship:', relationshipToUse);
 
     const { error: accessError } = await supabase
       .from('beneficiary_access')
       .insert([{
         beneficiary_id: data.id,
         user_id: currentUserId,
-        relationship: relationship,
+        relationship: relationshipToUse,
         access_level: 'admin',
         can_view: true,
         can_book: true,
@@ -535,15 +539,18 @@ export const addBeneficiaryToAppointment = async (
   receivesNotifications: boolean = true
 ): Promise<{ data: AppointmentBeneficiary | null; error: any }> => {
   try {
+    // Utiliser upsert pour gérer les doublons
     const { data, error } = await supabase
       .from('appointment_beneficiaries')
-      .insert([{
+      .upsert({
         appointment_id: appointmentId,
         beneficiary_id: beneficiaryId,
         role,
         role_order: roleOrder,
         receives_notifications: receivesNotifications
-      }])
+      }, {
+        onConflict: 'appointment_id,beneficiary_id'
+      })
       .select()
       .single();
 

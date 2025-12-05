@@ -233,11 +233,19 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
       return;
     }
 
-    // Validation du prix personnalisé en mode intervenant
-    if (isPractitionerView && customPrice !== null) {
-      const selectedService = services.find(s => s.id === currentAppointment.service_id);
-      if (selectedService && customPrice < selectedService.price) {
-        setError(`Le prix doit être au minimum ${selectedService.price} €`);
+    // Validation du prix personnalisé
+    if (customPrice !== null) {
+      // Pour les intervenants, le prix doit être >= au prix du service
+      if (isPractitionerView) {
+        const selectedService = services.find(s => s.id === currentAppointment.service_id);
+        if (selectedService && customPrice < selectedService.price) {
+          setError(`Le prix doit être au minimum ${selectedService.price} €`);
+          return;
+        }
+      }
+      // Pour les admins, le prix doit juste être >= 0
+      else if (customPrice < 0) {
+        setError('Le prix ne peut pas être négatif');
         return;
       }
     }
@@ -276,8 +284,8 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
         notes: currentAppointment.notes,
       };
 
-      // Ajouter le prix personnalisé en mode intervenant
-      if (isPractitionerView && customPrice !== null) {
+      // Ajouter le prix personnalisé si défini (pour admin et intervenant)
+      if (customPrice !== null) {
         appointmentData.custom_price = customPrice;
       }
       
@@ -425,6 +433,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
               <TableCell>Date</TableCell>
               <TableCell>Heure</TableCell>
               <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Durée</TableCell>
+              <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>Prix</TableCell>
               <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Catégorie</TableCell>
               <TableCell sx={{ display: { xs: 'none', sm: 'table-cell' } }}>Service</TableCell>
               <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Intervenant</TableCell>
@@ -437,7 +446,7 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
           <TableBody>
             {appointments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={10} align="center">
+                <TableCell colSpan={11} align="center">
                   Aucun rendez-vous trouvé
                 </TableCell>
               </TableRow>
@@ -452,6 +461,15 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                   </TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     {appointment.service?.duration} min
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: 'none', lg: 'table-cell' } }}>
+                    {(() => {
+                      const price = appointment.custom_price ?? appointment.service?.price;
+                      if (price === 0) {
+                        return <Chip label="Gratuit" size="small" color="success" />;
+                      }
+                      return `${price}€`;
+                    })()}
                   </TableCell>
                   <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                     {appointment.service?.category && getStatusChip(appointment.service.category)}
@@ -605,8 +623,8 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
               </FormControl>
             </Grid>
 
-            {/* Champ de prix personnalisé (uniquement en mode intervenant) */}
-            {isPractitionerView && currentAppointment.service_id && (
+            {/* Champ de prix personnalisé */}
+            {currentAppointment.service_id && (
               <Grid item xs={12} md={6}>
                 <TextField
                   label="Prix personnalisé (€)"
@@ -622,8 +640,14 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
 
                     // Valider le prix
                     const selectedService = services.find(s => s.id === currentAppointment.service_id);
-                    if (selectedService && !isNaN(value) && value < selectedService.price) {
+
+                    // Pour les intervenants, le prix doit être >= au prix du service
+                    if (isPractitionerView && selectedService && !isNaN(value) && value < selectedService.price) {
                       setPriceError(`Le prix doit être au minimum ${selectedService.price} €`);
+                    }
+                    // Pour les admins, autoriser 0€ et plus
+                    else if (!isPractitionerView && !isNaN(value) && value < 0) {
+                      setPriceError('Le prix ne peut pas être négatif');
                     } else {
                       setPriceError(null);
                     }
@@ -631,14 +655,25 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                   error={!!priceError}
                   helperText={priceError || (() => {
                     const selectedService = services.find(s => s.id === currentAppointment.service_id);
-                    return selectedService ? `Prix minimum: ${selectedService.price} €` : '';
+                    if (!selectedService) return '';
+
+                    // Messages différents pour admin vs intervenant
+                    if (isPractitionerView) {
+                      return `Prix minimum: ${selectedService.price} €`;
+                    } else {
+                      const currentVal = customPrice !== null ? customPrice : selectedService.price;
+                      if (currentVal === 0) {
+                        return "Prix à 0€ = Affichage 'Gratuit pour découverte'";
+                      }
+                      return `Prix du service: ${selectedService.price} € (vous pouvez mettre 0€ pour un créneau gratuit)`;
+                    }
                   })()}
                   InputProps={{
                     inputProps: {
-                      min: (() => {
+                      min: isPractitionerView ? (() => {
                         const selectedService = services.find(s => s.id === currentAppointment.service_id);
                         return selectedService?.price || 0;
-                      })(),
+                      })() : 0,
                       step: 0.01
                     }
                   }}

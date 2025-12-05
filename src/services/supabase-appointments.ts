@@ -245,8 +245,9 @@ export const bookAppointment = async (
       );
     }
 
-    // Envoyer les emails de confirmation
-    if (data) {
+    // Envoyer les emails de confirmation uniquement si pas de paiement requis
+    // Si paiement requis, l'email sera envoyé après confirmation du paiement via webhook
+    if (data && !data.payment_required) {
       sendAppointmentConfirmationEmails(data).catch(err =>
         console.error('Erreur lors de l\'envoi des emails de confirmation:', err)
       );

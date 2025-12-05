@@ -63,7 +63,10 @@
       "Bash(set)",
       "Bash(node apply_department_migration.cjs:*)",
       "Bash(node setup_avatar_feature.cjs:*)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(supabase db push:*)",
+      "Bash(git reset:*)",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []

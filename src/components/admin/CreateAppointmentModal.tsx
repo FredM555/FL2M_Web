@@ -20,7 +20,9 @@ import {
   StepLabel,
   Divider,
   Chip,
-  Grid
+  Grid,
+  FormControlLabel,
+  Checkbox
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -70,6 +72,8 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
   const [startTime, setStartTime] = useState<Date | null>(new Date());
   const [endTime, setEndTime] = useState<Date | null>(null);
   const [notes, setNotes] = useState('');
+  const [useCustomPrice, setUseCustomPrice] = useState(false);
+  const [customPrice, setCustomPrice] = useState<number>(0);
 
   const steps = ['Service', 'Date et Heure', 'Confirmation'];
 
@@ -125,6 +129,8 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
     setStartTime(new Date());
     setEndTime(null);
     setNotes('');
+    setUseCustomPrice(false);
+    setCustomPrice(0);
     setError(null);
     setSuccess(false);
     onClose();
@@ -161,20 +167,27 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
       }
 
       // Créer le rendez-vous
+      const appointmentData: any = {
+        practitioner_id: practitionerId,
+        service_id: selectedService.id,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        status: 'pending',
+        payment_status: 'unpaid',
+        notes: notes.trim() || null,
+        client_id: null, // Créneau disponible
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      // Ajouter le prix personnalisé si défini
+      if (useCustomPrice) {
+        appointmentData.custom_price = customPrice;
+      }
+
       const { data, error: insertError } = await supabase
         .from('appointments')
-        .insert({
-          practitioner_id: practitionerId,
-          service_id: selectedService.id,
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-          status: 'pending',
-          payment_status: 'unpaid',
-          notes: notes.trim() || null,
-          client_id: null, // Créneau disponible
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
+        .insert(appointmentData)
         .select()
         .single();
 
@@ -368,6 +381,42 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
                     placeholder="Informations complémentaires sur ce créneau..."
                   />
                 </Grid>
+
+                <Grid item xs={12}>
+                  <Divider sx={{ my: 2 }} />
+                  <FormControlLabel
+                    control={
+                      <Checkbox
+                        checked={useCustomPrice}
+                        onChange={(e) => {
+                          setUseCustomPrice(e.target.checked);
+                          if (!e.target.checked) {
+                            setCustomPrice(0);
+                          }
+                        }}
+                        color="primary"
+                      />
+                    }
+                    label="Définir un prix personnalisé pour ce créneau"
+                  />
+                </Grid>
+
+                {useCustomPrice && (
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Prix personnalisé (€)"
+                      type="number"
+                      fullWidth
+                      value={customPrice}
+                      onChange={(e) => setCustomPrice(parseFloat(e.target.value) || 0)}
+                      inputProps={{
+                        min: 0,
+                        step: 0.01
+                      }}
+                      helperText={customPrice === 0 ? "Prix à 0€ = Affichage 'Gratuit pour découverte'" : `Prix du service par défaut: ${selectedService?.price}€`}
+                    />
+                  </Grid>
+                )}
               </Grid>
             </Box>
           )}
@@ -403,7 +452,11 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
                       {selectedService?.name}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
-                      <Chip label={`${selectedService?.price}€`} size="small" color="primary" />
+                      <Chip
+                        label={useCustomPrice ? (customPrice === 0 ? 'Gratuit pour découverte' : `${customPrice}€`) : `${selectedService?.price}€`}
+                        size="small"
+                        color={useCustomPrice && customPrice === 0 ? 'success' : 'primary'}
+                      />
                       <Chip label={`${selectedService?.duration} min`} size="small" />
                     </Box>
                   </Grid>

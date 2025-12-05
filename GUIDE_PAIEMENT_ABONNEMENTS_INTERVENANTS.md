@@ -96,9 +96,9 @@ STRIPE_WEBHOOK_SECRET_LIVE=whsec_...
 
 ```env
 # Stripe Price IDs
-VITE_STRIPE_PRICE_STARTER=price_xxx
-VITE_STRIPE_PRICE_PRO=price_xxx
-VITE_STRIPE_PRICE_PREMIUM=price_xxx
+STRIPE_STARTER_PRICE_ID=price_xxx
+STRIPE_PRO_PRICE_ID=price_xxx
+STRIPE_PREMIUM_PRICE_ID=price_xxx
 ```
 
 ---
@@ -124,9 +124,9 @@ export const getStripe = () => {
 };
 
 export const STRIPE_PRICE_IDS = {
-  starter: import.meta.env.VITE_STRIPE_PRICE_STARTER,
-  pro: import.meta.env.VITE_STRIPE_PRICE_PRO,
-  premium: import.meta.env.VITE_STRIPE_PRICE_PREMIUM
+  starter: import.meta.env.STRIPE_STARTER_PRICE_ID,
+  pro: import.meta.env.STRIPE_PRO_PRICE_ID,
+  premium: import.meta.env.STRIPE_PREMIUM_PRICE_ID
 };
 
 export const createSubscriptionCheckout = async (

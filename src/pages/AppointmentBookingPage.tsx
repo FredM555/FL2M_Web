@@ -42,6 +42,7 @@ import {
   getAvailableAppointmentsByWeek,
   bookAppointment
 } from '../services/supabase-appointments';
+import { createAppointmentCheckout, redirectToCheckout } from '../services/stripe';
 import { BeneficiarySelector } from '../components/beneficiaries/BeneficiarySelector';
 import { BeneficiaryForm } from '../components/beneficiaries/BeneficiaryForm';
 import { BeneficiaryWithAccess, CreateBeneficiaryData, UpdateBeneficiaryData } from '../types/beneficiary';
@@ -255,6 +256,52 @@ const AppointmentBookingPage: React.FC = () => {
   };
   
   // Réserver le rendez-vous
+  // Fonction pour calculer l'âge d'un bénéficiaire
+  const calculateAge = (birthDate: string): number => {
+    const today = new Date();
+    const birth = new Date(birthDate);
+    let age = today.getFullYear() - birth.getFullYear();
+    const monthDiff = today.getMonth() - birth.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  // Fonction pour valider l'âge des bénéficiaires selon le module
+  const validateBeneficiariesAge = (): { valid: boolean; error?: string } => {
+    if (!selectedService) return { valid: true };
+
+    const subcategory = selectedService.subcategory?.toLowerCase();
+
+    for (const beneficiaryId of selectedBeneficiaryIds) {
+      const beneficiary = userBeneficiaries.find(b => b.id === beneficiaryId);
+      if (!beneficiary) continue;
+
+      const age = calculateAge(beneficiary.birth_date);
+
+      // Seul le module "enfants" autorise les mineurs
+      if (subcategory === 'enfants') {
+        if (age >= 18) {
+          return {
+            valid: false,
+            error: `Le module Enfants est réservé aux bénéficiaires mineurs. ${beneficiary.first_name} ${beneficiary.last_name} est majeur (${age} ans).`
+          };
+        }
+      } else {
+        // Tous les autres modules nécessitent des bénéficiaires majeurs
+        if (age < 18) {
+          return {
+            valid: false,
+            error: `Ce module nécessite des bénéficiaires majeurs. ${beneficiary.first_name} ${beneficiary.last_name} est mineur (${age} ans). Veuillez utiliser le module Enfants.`
+          };
+        }
+      }
+    }
+
+    return { valid: true };
+  };
+
   const handleBookAppointment = async () => {
     if (!user || !selectedSlot) {
       setError('Vous devez être connecté et avoir sélectionné un créneau pour réserver.');
@@ -280,11 +327,30 @@ const AppointmentBookingPage: React.FC = () => {
       return;
     }
 
+    // Validation de l'âge des bénéficiaires selon le module
+    const ageValidation = validateBeneficiariesAge();
+    if (!ageValidation.valid) {
+      setError(ageValidation.error || 'Erreur de validation de l\'âge des bénéficiaires.');
+      return;
+    }
+
+    // Validation du contexte pour les services "sur consultation"
+    const price = selectedSlot.custom_price ?? selectedService?.price ?? 0;
+    if (price === 9999 && notes.trim() === '') {
+      setError('Veuillez décrire le contexte de votre demande pour les services sur consultation.');
+      return;
+    }
+
     setLoading(true);
     try {
+      // Calculer si un paiement est nécessaire
+      const price = selectedSlot.custom_price ?? selectedService?.price ?? 0;
+      const paymentRequired = price > 0 && price !== 9999; // Paiement requis sauf si gratuit (0) ou sur consultation (9999)
+
       // Préparer les données additionnelles
       const additionalData: Partial<Appointment> = {
-        notes: notes.trim() || undefined
+        notes: notes.trim() || undefined,
+        payment_required: paymentRequired
       };
 
       // Appeler l'API pour réserver
@@ -314,16 +380,87 @@ const AppointmentBookingPage: React.FC = () => {
           }
         }
 
-        setSuccess(true);
-        // Rediriger vers la page des rendez-vous après 3 secondes
-        setTimeout(() => {
-          navigate('/mes-rendez-vous');
-        }, 3000);
+        // Vérifier si un paiement est nécessaire
+        const price = selectedSlot.custom_price ?? selectedService?.price ?? 0;
+
+        // Si le prix est 9999 (sur consultation), envoyer une demande d'information
+        if (price === 9999) {
+          // Envoyer l'email de demande de consultation
+          const serviceName = selectedService?.name || 'Rendez-vous';
+          const practitionerName = selectedSlot.practitioner.display_name ||
+            `${selectedSlot.practitioner.profile.first_name} ${selectedSlot.practitioner.profile.last_name}`;
+
+          const consultationResponse = await fetch(
+            `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-consultation-request`,
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_ANON_KEY}`
+              },
+              body: JSON.stringify({
+                appointmentId: appointmentData.id,
+                clientEmail: user.email || profile?.email,
+                clientName: profile?.first_name && profile?.last_name
+                  ? `${profile.first_name} ${profile.last_name}`
+                  : user.email,
+                serviceName,
+                practitionerName,
+                startTime: selectedSlot.start_time,
+                context: notes || 'Aucune information supplémentaire fournie'
+              })
+            }
+          );
+
+          if (!consultationResponse.ok) {
+            throw new Error('Erreur lors de l\'envoi de la demande de consultation');
+          }
+
+          setSuccess(true);
+          // Rediriger vers la page des rendez-vous après 3 secondes
+          setTimeout(() => {
+            navigate('/mes-rendez-vous');
+          }, 3000);
+        } else if (price === 0) {
+          // Si le prix est 0 (gratuit), pas de paiement nécessaire
+          setSuccess(true);
+          setTimeout(() => {
+            navigate('/mes-rendez-vous');
+          }, 3000);
+        } else {
+          // Créer une session de paiement Stripe et rediriger
+          const serviceName = selectedService?.name || 'Rendez-vous';
+          const practitionerName = selectedSlot.practitioner.display_name ||
+            `${selectedSlot.practitioner.profile.first_name} ${selectedSlot.practitioner.profile.last_name}`;
+
+          // Vérifier que l'utilisateur est bien connecté
+          if (!user?.id) {
+            throw new Error('Utilisateur non connecté');
+          }
+
+          console.log('[PAYMENT] Création du paiement pour:', {
+            appointmentId: appointmentData.id,
+            price,
+            practitionerId: selectedSlot.practitioner.id,
+            clientId: user.id,
+            description: `${serviceName} avec ${practitionerName}`
+          });
+
+          const session = await createAppointmentCheckout(
+            appointmentData.id,
+            price,
+            selectedSlot.practitioner.id,
+            user.id,
+            `${serviceName} avec ${practitionerName}`
+          );
+
+          // Rediriger vers Stripe Checkout
+          await redirectToCheckout(session.url);
+        }
       }
     } catch (err) {
       console.error('Erreur lors de la réservation:', err);
       setError('La réservation a échoué. Veuillez réessayer.');
-    } finally {
       setLoading(false);
     }
   };
@@ -534,18 +671,59 @@ const AppointmentBookingPage: React.FC = () => {
               value={selectedCategory}
               onChange={handleCategoryChange}
               label="Catégorie"
+              sx={{
+                '& .MuiOutlinedInput-notchedOutline': {
+                  borderColor: selectedCategory ? getCategoryColors(selectedCategory).borderSelected : undefined,
+                  borderWidth: selectedCategory ? '2px' : '1px',
+                },
+                '&:hover .MuiOutlinedInput-notchedOutline': {
+                  borderColor: selectedCategory ? getCategoryColors(selectedCategory).primary : undefined,
+                },
+                '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                  borderColor: selectedCategory ? getCategoryColors(selectedCategory).primary : undefined,
+                },
+              }}
             >
-              {serviceCategories.map((category) => (
-                <MenuItem key={category} value={category}>
-                  {category === 'particuliers'
-                    ? 'Particuliers'
-                    : category === 'professionnels'
-                    ? 'Professionnels'
-                    : category === 'sportifs'
-                    ? 'Sportifs'
-                    : category}
-                </MenuItem>
-              ))}
+              {serviceCategories.map((category) => {
+                const categoryColors = getCategoryColors(category);
+                return (
+                  <MenuItem
+                    key={category}
+                    value={category}
+                    sx={{
+                      borderLeft: `4px solid ${categoryColors.primary}`,
+                      paddingLeft: 2,
+                      '&:hover': {
+                        backgroundColor: `${categoryColors.border}`,
+                      },
+                      '&.Mui-selected': {
+                        backgroundColor: `${categoryColors.border}`,
+                        '&:hover': {
+                          backgroundColor: `${categoryColors.shadow}`,
+                        },
+                      },
+                    }}
+                  >
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          width: 12,
+                          height: 12,
+                          borderRadius: '50%',
+                          background: `linear-gradient(135deg, ${categoryColors.primary}, ${categoryColors.secondary})`,
+                        }}
+                      />
+                      {category === 'particuliers'
+                        ? 'Particuliers'
+                        : category === 'professionnels'
+                        ? 'Professionnels'
+                        : category === 'sportifs'
+                        ? 'Sportifs'
+                        : category}
+                    </Box>
+                  </MenuItem>
+                );
+              })}
             </Select>
           </FormControl>
         )}
@@ -599,7 +777,7 @@ const AppointmentBookingPage: React.FC = () => {
                         Durée: {service.duration} min
                       </Typography>
                       <Typography variant="body1" fontWeight="bold" sx={{ color: colors.secondary }}>
-                        {service.price === 9999 ? 'Nous consulter' : `${service.price} €`}
+                        {service.price === 0 ? 'Gratuit' : service.price === 9999 ? 'Nous consulter' : `${service.price} €`}
                       </Typography>
                     </Box>
                   </CardContent>
@@ -795,12 +973,7 @@ const AppointmentBookingPage: React.FC = () => {
                 {selectedService.name} ({selectedService.duration} min)
               </Typography>
               
-              <Typography variant="subtitle1" fontWeight="bold">
-                Date et heure:
-              </Typography>
-              <Typography variant="body1" gutterBottom sx={{ textTransform: 'capitalize' }}>
-                {formattedDate}, de {startTime}  à {endTime}
-              </Typography>
+
               
               <Typography variant="subtitle1" fontWeight="bold">
                 Intervenant:
@@ -813,6 +986,12 @@ const AppointmentBookingPage: React.FC = () => {
             </Grid>
             
             <Grid item xs={12} md={6}>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                Date et heure:
+              </Typography>
+              <Typography variant="body1" gutterBottom sx={{ textTransform: 'capitalize' }}>
+                {formattedDate}, de {startTime}  à {endTime}
+              </Typography>
               <Typography variant="subtitle1" fontWeight="bold">
                 Prix:
               </Typography>
@@ -829,17 +1008,12 @@ const AppointmentBookingPage: React.FC = () => {
               >
                 {(() => {
                   const price = selectedSlot.custom_price ?? selectedService.price;
+                  if (price === 0) return 'Gratuit pour découverte';
                   return price === 9999 ? 'Nous consulter' : `${price} €`;
                 })()}
               </Typography>
 
-              <Box sx={{ mt: 2 }}>
-                <Alert severity="info">
-                  {selectedService.price === 9999
-                    ? 'Veuillez nous contacter pour obtenir un devis personnalisé.'
-                    : 'Le paiement sera à effectuer sur place.'}
-                </Alert>
-              </Box>
+
             </Grid>
           </Grid>
         </Paper>
@@ -917,14 +1091,53 @@ const AppointmentBookingPage: React.FC = () => {
           )}
         </Box>
 
+        {/* Afficher une alerte spéciale pour les services "sur consultation" */}
+        {(() => {
+          const price = selectedSlot.custom_price ?? selectedService.price;
+          if (price === 9999) {
+            return (
+              <Alert severity="info" sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                  Service sur consultation
+                </Typography>
+                <Typography variant="body2">
+                  Ce service nécessite une consultation préalable pour établir un devis personnalisé.
+                  Veuillez décrire ci-dessous votre situation et vos besoins afin que nous puissions vous proposer un tarif adapté.
+                </Typography>
+              </Alert>
+            );
+          }
+          return null;
+        })()}
+
         <TextField
-          label="Notes ou informations supplémentaires"
+          label={(() => {
+            const price = selectedSlot.custom_price ?? selectedService.price;
+            return price === 9999
+              ? "Contexte de votre demande (obligatoire pour les services sur consultation) *"
+              : "Notes ou informations supplémentaires";
+          })()}
           multiline
           rows={4}
           fullWidth
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           sx={{ mb: 3 }}
+          required={(() => {
+            const price = selectedSlot.custom_price ?? selectedService.price;
+            return price === 9999;
+          })()}
+          error={(() => {
+            const price = selectedSlot.custom_price ?? selectedService.price;
+            return price === 9999 && notes.trim() === '';
+          })()}
+          helperText={(() => {
+            const price = selectedSlot.custom_price ?? selectedService.price;
+            if (price === 9999 && notes.trim() === '') {
+              return "Veuillez expliquer le contexte de votre demande pour que nous puissions vous proposer un tarif adapté.";
+            }
+            return "";
+          })()}
         />
         
         <Box

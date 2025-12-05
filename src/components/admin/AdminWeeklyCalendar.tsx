@@ -79,7 +79,7 @@ interface Appointment {
   service_id: string;
   start_time: string;
   end_time: string;
-  status: 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed' | 'pending_quote';
   payment_status: 'unpaid' | 'paid' | 'refunded';
   payment_id?: string;
   notes?: string;

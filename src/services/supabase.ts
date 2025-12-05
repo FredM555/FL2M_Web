@@ -24,6 +24,8 @@ export type Profile = {
   racine2?: number; // Expression
   tronc?: number;   // Objectif de vie
   dynamique_de_vie?: number; // Dynamique de vie
+  // ID du practitioner si user_type = 'intervenant'
+  practitioner_id?: string;
 };
 
 export type Service = {
@@ -76,9 +78,11 @@ export type Appointment = {
   service_id: string;
   start_time: string;
   end_time: string;
-  status: 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed';
+  status: 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed' | 'pending_quote';
   payment_status: 'unpaid' | 'paid' | 'refunded';
   payment_id?: string;
+  payment_required?: boolean;
+  payment_deadline?: string;
   notes?: string;
   // Les champs beneficiary existaient déjà
   beneficiary_first_name?: string;

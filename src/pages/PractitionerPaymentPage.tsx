@@ -22,7 +22,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CONTRACT_CONFIGS, formatAmount } from '../types/payments';
-import { activateContractAfterPayment } from '../services/supabase';
+import { createSubscriptionCheckout, redirectToCheckout } from '../services/stripe';
 
 const PractitionerPaymentPage: React.FC = () => {
   const { user } = useAuth();
@@ -44,37 +44,23 @@ const PractitionerPaymentPage: React.FC = () => {
   }, [contractId, contractType, navigate]);
 
   const handlePayment = async () => {
-    if (!contractId) return;
+    if (!contractId || !contractType) return;
 
     setLoading(true);
     setError(null);
 
     try {
-      // TODO: Intégrer Stripe Payment Intent ici
-      // Pour l'instant, on simule un paiement réussi
-      const mockPaymentIntentId = `pi_mock_${Date.now()}`;
-
-      // Attendre 2 secondes pour simuler le traitement du paiement
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Activer le contrat après paiement
-      const { data, error: activationError } = await activateContractAfterPayment(
+      // Créer la session de paiement Stripe Checkout
+      const session = await createSubscriptionCheckout(
         contractId,
-        mockPaymentIntentId
+        contractType as 'starter' | 'pro' | 'premium'
       );
 
-      if (activationError) throw activationError;
-
-      // Succès!
-      // Le profil se mettra à jour automatiquement via le listener auth
-      setSuccess(true);
-      setTimeout(() => {
-        navigate('/practitioner/profile');
-      }, 3000);
+      // Rediriger vers Stripe Checkout
+      await redirectToCheckout(session.url);
     } catch (err: any) {
       console.error('Erreur lors du paiement:', err);
       setError(err.message || 'Erreur lors du traitement du paiement');
-    } finally {
       setLoading(false);
     }
   };
@@ -168,14 +154,6 @@ const PractitionerPaymentPage: React.FC = () => {
         </Alert>
 
         <Divider sx={{ my: 3 }} />
-
-        <Alert severity="warning" sx={{ mb: 3 }}>
-          <Typography variant="body2">
-            <strong>⚠️ Important :</strong> Cette page est une démonstration.
-            L'intégration complète avec Stripe sera effectuée prochainement.
-            Pour l'instant, cliquez sur "Valider le paiement" pour simuler un paiement réussi.
-          </Typography>
-        </Alert>
 
         {error && (
           <Alert severity="error" sx={{ mb: 3 }}>
