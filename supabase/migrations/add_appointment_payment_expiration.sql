@@ -23,7 +23,7 @@ BEGIN
   FOR expired_record IN
     SELECT a.id
     FROM appointments a
-    LEFT JOIN transactions t ON t.appointment_id = a.id AND t.status = 'paid'
+    LEFT JOIN transactions t ON t.appointment_id = a.id AND t.status = 'succeeded'
     WHERE a.payment_required = true
       AND a.payment_deadline < NOW()
       AND t.id IS NULL

@@ -188,7 +188,7 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
     );
   }
 
-  // Calculer les totaux
+  // Calculer les totaux réussis
   const totalSubscriptionPaid = subscriptionPayments
     .filter(p => p.status === 'succeeded')
     .reduce((sum, p) => sum + p.amount, 0);
@@ -204,6 +204,17 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
   const totalStripeFees = appointmentTransactions
     .filter(t => t.status === 'succeeded')
     .reduce((sum, t) => sum + (t.amount_stripe_fees || 0), 0);
+
+  // Calculer les montants en attente
+  const pendingSubscriptionPayments = subscriptionPayments
+    .filter(p => p.status === 'pending' || p.status === 'processing')
+    .reduce((sum, p) => sum + p.amount, 0);
+
+  const pendingAppointmentRevenue = appointmentTransactions
+    .filter(t => t.status === 'pending' || t.status === 'processing')
+    .reduce((sum, t) => sum + t.amount_practitioner, 0);
+
+  const hasPendingAmounts = pendingSubscriptionPayments > 0 || pendingAppointmentRevenue > 0;
 
   return (
     <Box>
@@ -257,6 +268,41 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
           </CardContent>
         </Card>
       </Box>
+
+      {/* Montants en attente */}
+      {hasPendingAmounts && (
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="body2" sx={{ fontWeight: 600, mb: 1, color: 'text.secondary' }}>
+            Montants en attente
+          </Typography>
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            {pendingSubscriptionPayments > 0 && (
+              <Card sx={{ flex: 1, minWidth: 180, bgcolor: 'rgba(255, 152, 0, 0.1)', border: '1px solid rgba(255, 152, 0, 0.3)' }}>
+                <CardContent sx={{ py: 1.5, px: 2 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Abonnements en attente
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                    {formatAmount(pendingSubscriptionPayments)}
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
+            {pendingAppointmentRevenue > 0 && (
+              <Card sx={{ flex: 1, minWidth: 180, bgcolor: 'rgba(255, 152, 0, 0.1)', border: '1px solid rgba(255, 152, 0, 0.3)' }}>
+                <CardContent sx={{ py: 1.5, px: 2 }}>
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+                    Rendez-vous en attente
+                  </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'warning.main' }}>
+                    {formatAmount(pendingAppointmentRevenue)}
+                  </Typography>
+                </CardContent>
+              </Card>
+            )}
+          </Box>
+        </Box>
+      )}
 
       {/* Onglets */}
       <Paper elevation={0} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2 }}>

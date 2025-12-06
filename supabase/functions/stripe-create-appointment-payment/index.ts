@@ -148,13 +148,12 @@ serve(async (req) => {
       // Calculer la commission selon le type de contrat
       const appointmentNumber = (contract.appointments_this_month || 0) + 1;
 
-      // Pour les 3 premiers RDV, c'est gratuit (sauf contrat "free")
-      if (contract.contract_type !== 'free' && appointmentNumber <= 3) {
+      // Pour les 3 premiers RDV, c'est gratuit pour STARTER et PRO uniquement
+      if ((contract.contract_type === 'starter' || contract.contract_type === 'pro') && appointmentNumber <= 3) {
         platformFee = 0;
-      } else if (contract.contract_type === 'free') {
-        // max(10€, 12%) avec cap à 25€
-        const percentageFee = amount * 0.12;
-        platformFee = Math.min(Math.max(10, percentageFee), 25);
+      } else if (contract.contract_type === 'decouverte') {
+        // DÉCOUVERTE (10€/mois): 10€ fixe par RDV - PAS de RDV gratuit
+        platformFee = 10;
       } else if (contract.contract_type === 'starter') {
         // min(6€, 8%)
         const percentageFee = amount * 0.08;

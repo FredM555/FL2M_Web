@@ -66,7 +66,7 @@ CREATE TRIGGER trigger_update_contracts_timestamp
 
 -- Commentaires pour la documentation
 COMMENT ON TABLE public.practitioner_contracts IS 'Table des contrats des praticiens - Modèle D avec 4 paliers';
-COMMENT ON COLUMN public.practitioner_contracts.contract_type IS 'Type de contrat: free (0€/mois), starter (60€/mois), pro (100€/mois), premium (180€/mois)';
+COMMENT ON COLUMN public.practitioner_contracts.contract_type IS 'Type de contrat: free (0€/mois), starter (60€/mois), pro (100€/mois), premium (160€/mois)';
 COMMENT ON COLUMN public.practitioner_contracts.monthly_fee IS 'Frais mensuels en euros';
 COMMENT ON COLUMN public.practitioner_contracts.commission_fixed IS 'Commission fixe par RDV en euros';
 COMMENT ON COLUMN public.practitioner_contracts.commission_percentage IS 'Commission en pourcentage du prix du RDV';

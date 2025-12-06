@@ -531,7 +531,10 @@ const MyAppointmentsPage = () => {
             >
               Détails
             </Button>
-            {showCancelButton && appointment.status !== 'cancelled' && !isPast(parseISO(appointment.start_time)) && (
+            {showCancelButton &&
+             appointment.status !== 'cancelled' &&
+             !isPast(parseISO(appointment.start_time)) &&
+             (appointment.payment_status !== 'paid' || profile?.user_type === 'admin') && (
               <Button
                 variant="outlined"
                 color="error"

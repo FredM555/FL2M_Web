@@ -4,7 +4,7 @@
 /**
  * Type de contrat praticien selon le Modèle D
  */
-export type ContractType = 'free' | 'starter' | 'pro' | 'premium';
+export type ContractType = 'decouverte' | 'starter' | 'pro' | 'premium';
 
 /**
  * Statut d'un contrat praticien
@@ -274,11 +274,11 @@ export interface ContractConfig {
  * Configuration complète des contrats
  */
 export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
-  free: {
-    monthly_fee: 0,
+  decouverte: {
+    monthly_fee: 10,
     commission_fixed: 10,
-    commission_percentage: 12,
-    commission_cap: 25,
+    commission_percentage: null,
+    commission_cap: null,
     max_appointments_per_month: null,
   },
   starter: {
@@ -365,7 +365,7 @@ export interface PractitionerPaymentStats {
  */
 export function getContractTypeLabel(type: ContractType): string {
   const labels: Record<ContractType, string> = {
-    free: 'Sans Engagement',
+    decouverte: 'Découverte',
     starter: 'Starter',
     pro: 'Pro',
     premium: 'Premium',

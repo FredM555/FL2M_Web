@@ -77,13 +77,9 @@ export class CommissionCalculator {
       const config = CONTRACT_CONFIGS[contractType];
 
       switch (contractType) {
-        case 'free':
-          // SANS ENGAGEMENT: max(10€, 12% du prix), plafonné à 25€
-          commission = Math.max(
-            config.commission_fixed || 0,
-            appointmentPrice * ((config.commission_percentage || 0) / 100)
-          );
-          commission = Math.min(commission, config.commission_cap || commission);
+        case 'decouverte':
+          // DÉCOUVERTE (10€/mois): 10€ fixe par RDV - PAS de RDV gratuit
+          commission = config.commission_fixed || 0;
           break;
 
         case 'starter':
@@ -308,7 +304,7 @@ export class CommissionCalculator {
     net_revenue: number;
     effective_rate: number;
   }> {
-    const contractTypes: ContractType[] = ['free', 'starter', 'pro', 'premium'];
+    const contractTypes: ContractType[] = ['decouverte', 'starter', 'pro', 'premium'];
 
     return contractTypes.map((contractType) => {
       const estimate = this.estimateMonthlyRevenue(

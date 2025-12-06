@@ -1,0 +1,92 @@
+Business Plan version du 2025-12-06
+
+
+Fonctionnement des Forfaits Intervenants 
+pour FL2M Services
+
+Comment fonctionne le forfait ?
+• Durée votre abonnement est valable jusqu'à la fin de votre cycle mensuel
+• Le nouvel abonnement débutera automatiquement le jour anniversaire de votre souscription
+• Aucune interruption de service
+ℹ️ Frais de paiement Stripe
+Les paiements clients passent par Stripe qui prélève ~2% de frais de transaction. Ces frais sont à la charge de l'intervenant. Les frais s'appliquent dès le premier RDV.
+
+Comment fonctionne le forfait changement ?
+• Votre abonnement actuel continuera jusqu'à la fin de votre cycle mensuel
+• Le nouvel abonnement débutera automatiquement le jour anniversaire de votre souscription
+• Aucune interruption de service
+
+
+
+Choisissez votre abonnement
+ 
+
+🌱 Forfait Découverte
+
+Pour débuter en douceur, avec un coût minimal
+Tarif : 9€/mois
+
+Limite : 10 rendez-vous maximum / mois
+Commission :
+•	12% du prix du rendez-vous (minimum 10€) Plafonnée à 25€ maximum
+Exemple concret :
+•	Séance à 120€ → 12% = 14,40€ (commission = 14,40€)
+Ce que vous obtenez
+•	Idéal pour tester la plateforme
+•	Tarification simple et sans surprise
+•	Accessible à tous
+•	Fonctionnalités essentielles pour démarrer
+🎯 Recommandé pour : 1 à 7 rendez-vous par mois
+________________________________________
+ 
+🚀 Forfait Starter
+Pour les praticiens réguliers qui veulent optimiser leurs coûts
+Tarif : 49€/mois
+Limite : jusqu’à 20 rendez-vous par mois
+Au-delà de 20 rdv : commission du Forfait Découverte
+Commission :
+•	8% du prix du rendez-vous (minimum 6€)  Plafonnée à 25€ maximum
+•	2 premiers rendez-vous du mois sans commission
+Exemples :
+•	Séance 120€ → 8% = 9,60€ → (commission = 9.60€)
+Avantages
+•	Commission réduite et protégée
+•	Tarif stable et prévisible
+•	Beaucoup plus économique dès 8 rendez-vous
+🎯 Recommandé pour : 8 → 17 rendez-vous par mois
+________________________________________
+ 
+💼 Forfait Pro
+Pour les praticiens installés qui veulent maîtriser leurs coûts
+Tarif : 99€/mois
+Rendez-vous : illimités
+Commission :
+•	3€ fixes par rendez-vous
+•	4 premiers rendez-vous du mois sans commission
+Ce que cela vous garantit :
+•	Coûts ultra-stables
+•	Peu importe le prix de la séance
+•	Pensé pour les pros qui dépassent 17 rdv/mois
+Exemples :
+•	Séance 120€ → commission = 3€
+•	Séance 85€ → commission = 3€
+🎯 Recommandé pour : 17 → 23 rendez-vous par mois
+________________________________________
+ 
+👑 Forfait Premium
+Pour les professionnels très actifs—zéro limite, zéro commission
+Tarif : 159€/mois
+Rendez-vous : illimités
+Commission : 0€
+Avantages Premium
+•	Aucun coût variable
+•	Visibilité prioritaire (optionnel selon ton modèle)
+•	Accès aux fonctionnalités avancées
+•	Marge maximale sur chaque séance
+•	Expérience professionnelle complète
+🎯 Recommandé pour : 24+ rendez-vous par mois
+ou ceux qui veulent éliminer totalement les commissions.
+
+
+
+

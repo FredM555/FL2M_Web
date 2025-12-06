@@ -39,12 +39,12 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
     description: string;
   }> = [
     {
-      type: 'free',
+      type: 'decouverte',
       icon: <StarIcon />,
       color: '#FFA726',
       bgGradient: 'linear-gradient(135deg, rgba(255, 167, 38, 0.1) 0%, rgba(255, 167, 38, 0.05) 100%)',
-      label: 'Sans Engagement',
-      description: 'Sans abonnement mensuel'
+      label: 'Découverte',
+      description: 'Pour tester la plateforme'
     },
     {
       type: 'starter',
@@ -97,11 +97,9 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
             <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
               Commission par RDV
             </Typography>
-            {type === 'free' && (
+            {type === 'decouverte' && (
               <Typography variant="body2" color="text.secondary">
-                max({formatAmount(config.commission_fixed!)}, {config.commission_percentage}% du prix)
-                <br />
-                <strong>Plafonné à {formatAmount(config.commission_cap!)}</strong>
+                {formatAmount(config.commission_fixed!)} fixe par RDV
               </Typography>
             )}
             {type === 'starter' && (
@@ -143,7 +141,7 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
         </Typography>
         <Typography variant="body2">
           Les paiements clients passent par Stripe qui prélève <strong>~2% de frais de transaction</strong>.
-          Ces frais sont à la charge de l'intervenant. Les commissions s'appliquent dès le premier RDV.
+          Ces frais sont à la charge de l'intervenant. Les forfaits <strong>Starter</strong> et <strong>Pro</strong> offrent 3 RDV gratuits (sans commission).
         </Typography>
       </Alert>
 
@@ -234,7 +232,7 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
         <Grid container spacing={1}>
           <Grid item xs={6} sm={3}>
             <Typography variant="caption" color="text.secondary">
-              <strong>SANS ENGAGEMENT:</strong> 10€ (max entre 10€ et 12% = 9€)
+              <strong>DÉCOUVERTE:</strong> 10€ fixe
             </Typography>
           </Grid>
           <Grid item xs={6} sm={3}>

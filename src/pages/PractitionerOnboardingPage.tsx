@@ -36,7 +36,7 @@ const PractitionerOnboardingPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
-  const [selectedContractType, setSelectedContractType] = useState<ContractType>('free');
+  const [selectedContractType, setSelectedContractType] = useState<ContractType>('decouverte');
   const [request, setRequest] = useState<PractitionerRequest | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -98,8 +98,8 @@ const PractitionerOnboardingPage: React.FC = () => {
 
       if (error) throw error;
 
-      // Vérifier si un paiement est nécessaire
-      if (selectedContractType !== 'free' && data && Array.isArray(data) && data.length > 0) {
+      // Vérifier si un paiement est nécessaire (tous les forfaits ont un coût mensuel)
+      if (data && Array.isArray(data) && data.length > 0) {
         const result = data[0];
 
         // Si le contrat a été créé mais est en attente de paiement
@@ -248,7 +248,7 @@ const PractitionerOnboardingPage: React.FC = () => {
                     Type de contrat sélectionné
                   </Typography>
                   <Typography variant="h6" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
-                    {selectedContractType === 'free' && '🎁 Sans Engagement'}
+                    {selectedContractType === 'decouverte' && '🚀 Découverte'}
                     {selectedContractType === 'starter' && '💼 Starter'}
                     {selectedContractType === 'pro' && '⭐ Pro'}
                     {selectedContractType === 'premium' && '👑 Premium'}
