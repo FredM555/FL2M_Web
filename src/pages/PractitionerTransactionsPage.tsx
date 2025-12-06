@@ -21,7 +21,8 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Pagination
+  Pagination,
+  Tooltip
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
 import {
@@ -30,13 +31,48 @@ import {
   TransactionWithDetails,
   TransactionStats
 } from '../services/transactions';
-import { formatAmount, getTransactionStatusLabel } from '../types/payments';
+import { formatAmount, getTransactionStatusLabel, CONTRACT_CONFIGS, ContractType } from '../types/payments';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PendingIcon from '@mui/icons-material/Pending';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+
+// Helper pour générer le texte du tooltip de commission
+const getCommissionTooltip = (commissionType: ContractType | null, isFreeFree: boolean): string => {
+  if (isFreeFree) {
+    return 'Rendez-vous gratuit (premier RDV du mois)';
+  }
+
+  if (!commissionType) {
+    return 'Type de commission non défini';
+  }
+
+  const config = CONTRACT_CONFIGS[commissionType];
+  const parts: string[] = [];
+
+  if (config.commission_fixed !== null) {
+    parts.push(`Fixe: ${config.commission_fixed}€`);
+  }
+
+  if (config.commission_percentage !== null) {
+    parts.push(`Pourcentage: ${config.commission_percentage}%`);
+  }
+
+  if (config.commission_cap !== null) {
+    parts.push(`Plafond: ${config.commission_cap}€`);
+  }
+
+  const contractLabels: Record<ContractType, string> = {
+    free: 'Sans Engagement',
+    starter: 'Starter',
+    pro: 'Pro',
+    premium: 'Premium'
+  };
+
+  return `${contractLabels[commissionType]} - ${parts.join(' | ')}`;
+};
 
 const PractitionerTransactionsPage: React.FC = () => {
   const { profile } = useAuth();
@@ -49,6 +85,7 @@ const PractitionerTransactionsPage: React.FC = () => {
   // Filtres
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [transferFilter, setTransferFilter] = useState<string>('all');
+  const [modeFilter, setModeFilter] = useState<string>('all');
   const [page, setPage] = useState(1);
   const perPage = 20;
 
@@ -56,7 +93,7 @@ const PractitionerTransactionsPage: React.FC = () => {
     if (profile?.practitioner_id) {
       loadData();
     }
-  }, [profile, statusFilter, transferFilter, page]);
+  }, [profile, statusFilter, transferFilter, modeFilter, page]);
 
   const loadData = async () => {
     if (!profile?.practitioner_id) return;
@@ -81,6 +118,10 @@ const PractitionerTransactionsPage: React.FC = () => {
 
       if (transferFilter !== 'all') {
         filters.transfer_status = transferFilter;
+      }
+
+      if (modeFilter !== 'all') {
+        filters.is_test_mode = modeFilter === 'test';
       }
 
       const { data: transactionsData } = await getPractitionerTransactions(
@@ -207,7 +248,7 @@ const PractitionerTransactionsPage: React.FC = () => {
       {/* Filtres */}
       <Paper sx={{ p: 3, mb: 3 }}>
         <Grid container spacing={2}>
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <FormControl fullWidth>
               <InputLabel>Statut Paiement</InputLabel>
               <Select
@@ -223,7 +264,7 @@ const PractitionerTransactionsPage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={12} sm={6}>
+          <Grid item xs={12} sm={4}>
             <FormControl fullWidth>
               <InputLabel>Statut Transfert</InputLabel>
               <Select
@@ -235,6 +276,21 @@ const PractitionerTransactionsPage: React.FC = () => {
                 <MenuItem value="pending">En attente</MenuItem>
                 <MenuItem value="eligible">Éligible</MenuItem>
                 <MenuItem value="completed">Transféré</MenuItem>
+              </Select>
+            </FormControl>
+          </Grid>
+
+          <Grid item xs={12} sm={4}>
+            <FormControl fullWidth>
+              <InputLabel>Mode</InputLabel>
+              <Select
+                value={modeFilter}
+                onChange={(e) => setModeFilter(e.target.value)}
+                label="Mode"
+              >
+                <MenuItem value="all">Tous</MenuItem>
+                <MenuItem value="prod">Production</MenuItem>
+                <MenuItem value="test">Test</MenuItem>
               </Select>
             </FormControl>
           </Grid>
@@ -257,13 +313,16 @@ const PractitionerTransactionsPage: React.FC = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
+                  <TableCell>Code RDV</TableCell>
                   <TableCell>Service</TableCell>
                   <TableCell>Client</TableCell>
                   <TableCell align="right">Montant Total</TableCell>
                   <TableCell align="right">Votre Part</TableCell>
                   <TableCell align="right">Commission</TableCell>
+                  <TableCell align="right">Frais Stripe</TableCell>
                   <TableCell>Statut</TableCell>
                   <TableCell>Transfert</TableCell>
+                  <TableCell>Mode</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -271,6 +330,22 @@ const PractitionerTransactionsPage: React.FC = () => {
                   <TableRow key={transaction.id} hover>
                     <TableCell>
                       {format(parseISO(transaction.created_at), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                    </TableCell>
+                    <TableCell>
+                      {transaction.appointment?.unique_code ? (
+                        <Chip
+                          label={transaction.appointment.unique_code}
+                          size="small"
+                          variant="outlined"
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontWeight: 600,
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">-</Typography>
+                      )}
                     </TableCell>
                     <TableCell>
                       {transaction.appointment?.service?.name || 'N/A'}
@@ -286,8 +361,20 @@ const PractitionerTransactionsPage: React.FC = () => {
                     <TableCell align="right" sx={{ color: 'success.main', fontWeight: 600 }}>
                       {formatAmount(transaction.amount_practitioner)}
                     </TableCell>
-                    <TableCell align="right" sx={{ color: 'error.main' }}>
-                      {formatAmount(transaction.amount_platform_commission)}
+                    <Tooltip
+                      title={getCommissionTooltip(
+                        transaction.commission_type,
+                        transaction.is_free_appointment
+                      )}
+                      placement="top"
+                      arrow
+                    >
+                      <TableCell align="right" sx={{ color: 'error.main', cursor: 'help' }}>
+                        {formatAmount(transaction.amount_platform_commission)}
+                      </TableCell>
+                    </Tooltip>
+                    <TableCell align="right" sx={{ color: 'warning.main', fontSize: '0.875rem' }}>
+                      {formatAmount(transaction.amount_stripe_fees)}
                     </TableCell>
                     <TableCell>
                       <Chip
@@ -301,6 +388,17 @@ const PractitionerTransactionsPage: React.FC = () => {
                         label={getTransferStatusLabel(transaction.transfer_status)}
                         color={getTransferStatusColor(transaction.transfer_status)}
                         size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={transaction.is_test_mode ? 'TEST' : 'PROD'}
+                        color={transaction.is_test_mode ? 'warning' : 'success'}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '0.7rem'
+                        }}
                       />
                     </TableCell>
                   </TableRow>

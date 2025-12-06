@@ -78,11 +78,12 @@ const AdminTransactionsPage: React.FC = () => {
   // Filtres
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [transferFilter, setTransferFilter] = useState<string>('all');
+  const [modeFilter, setModeFilter] = useState<string>('all');
   const [periodFilter, setPeriodFilter] = useState<'week' | 'month'>('month');
 
   useEffect(() => {
     loadData();
-  }, [statusFilter, transferFilter]);
+  }, [statusFilter, transferFilter, modeFilter]);
 
   useEffect(() => {
     if (tabValue === 1) {
@@ -110,6 +111,10 @@ const AdminTransactionsPage: React.FC = () => {
 
       if (transferFilter !== 'all') {
         filters.transfer_status = transferFilter;
+      }
+
+      if (modeFilter !== 'all') {
+        filters.is_test_mode = modeFilter === 'test';
       }
 
       const { data: transactionsData } = await getAllTransactions(filters);
@@ -254,7 +259,7 @@ const AdminTransactionsPage: React.FC = () => {
         {/* Filtres */}
         <Paper sx={{ p: 3, mb: 3 }}>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
                 <InputLabel>Statut Paiement</InputLabel>
                 <Select
@@ -270,7 +275,7 @@ const AdminTransactionsPage: React.FC = () => {
               </FormControl>
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid item xs={12} sm={4}>
               <FormControl fullWidth>
                 <InputLabel>Statut Transfert</InputLabel>
                 <Select
@@ -282,6 +287,21 @@ const AdminTransactionsPage: React.FC = () => {
                   <MenuItem value="pending">En attente</MenuItem>
                   <MenuItem value="eligible">Éligible</MenuItem>
                   <MenuItem value="completed">Transféré</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={4}>
+              <FormControl fullWidth>
+                <InputLabel>Mode</InputLabel>
+                <Select
+                  value={modeFilter}
+                  onChange={(e) => setModeFilter(e.target.value)}
+                  label="Mode"
+                >
+                  <MenuItem value="all">Tous</MenuItem>
+                  <MenuItem value="prod">Production</MenuItem>
+                  <MenuItem value="test">Test</MenuItem>
                 </Select>
               </FormControl>
             </Grid>
@@ -303,13 +323,16 @@ const AdminTransactionsPage: React.FC = () => {
               <TableHead>
                 <TableRow>
                   <TableCell>Date</TableCell>
+                  <TableCell>Code RDV</TableCell>
                   <TableCell>Intervenant</TableCell>
                   <TableCell>Client</TableCell>
                   <TableCell>Service</TableCell>
                   <TableCell align="right">Total</TableCell>
                   <TableCell align="right">Commission</TableCell>
+                  <TableCell align="right">Frais Stripe</TableCell>
                   <TableCell>Statut</TableCell>
                   <TableCell>Transfert</TableCell>
+                  <TableCell>Mode</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -317,6 +340,22 @@ const AdminTransactionsPage: React.FC = () => {
                   <TableRow key={transaction.id} hover>
                     <TableCell>
                       {format(parseISO(transaction.created_at), 'dd/MM/yyyy', { locale: fr })}
+                    </TableCell>
+                    <TableCell>
+                      {transaction.appointment?.unique_code ? (
+                        <Chip
+                          label={transaction.appointment.unique_code}
+                          size="small"
+                          variant="outlined"
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontWeight: 600,
+                            fontSize: '0.75rem'
+                          }}
+                        />
+                      ) : (
+                        <Typography variant="caption" color="text.secondary">-</Typography>
+                      )}
                     </TableCell>
                     <TableCell>
                       {transaction.practitioner?.profiles
@@ -335,6 +374,9 @@ const AdminTransactionsPage: React.FC = () => {
                     <TableCell align="right" sx={{ color: 'info.main', fontWeight: 600 }}>
                       {formatAmount(transaction.amount_platform_commission)}
                     </TableCell>
+                    <TableCell align="right" sx={{ color: 'warning.main', fontSize: '0.875rem' }}>
+                      {formatAmount(transaction.amount_stripe_fees)}
+                    </TableCell>
                     <TableCell>
                       <Chip
                         label={getTransactionStatusLabel(transaction.status)}
@@ -347,6 +389,17 @@ const AdminTransactionsPage: React.FC = () => {
                         label={getTransferStatusLabel(transaction.transfer_status)}
                         color={getTransferStatusColor(transaction.transfer_status)}
                         size="small"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={transaction.is_test_mode ? 'TEST' : 'PROD'}
+                        color={transaction.is_test_mode ? 'warning' : 'success'}
+                        size="small"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: '0.7rem'
+                        }}
                       />
                     </TableCell>
                   </TableRow>

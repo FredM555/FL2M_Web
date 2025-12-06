@@ -141,6 +141,7 @@ serve(async (req) => {
       .single();
 
     let platformFee = 0;
+    let stripeFees = 0;
     let practitionerAmount = amount;
 
     if (contract) {
@@ -166,8 +167,23 @@ serve(async (req) => {
         platformFee = 0;
       }
 
-      practitionerAmount = amount - platformFee;
+      // Calculer les frais Stripe (1.4% + 0.25€ pour cartes européennes)
+      // Ces frais sont à la charge de l'intervenant
+      stripeFees = (amount * 0.014) + 0.25;
+
+      // Montant net de l'intervenant = Prix total - Commission plateforme - Frais Stripe
+      practitionerAmount = amount - platformFee - stripeFees;
     }
+
+    console.log(`[STRIPE-PAYMENT] Calcul des montants:`);
+    console.log(`  - Prix total: ${amount}€`);
+    console.log(`  - Commission plateforme: ${platformFee}€`);
+    console.log(`  - Frais Stripe: ${stripeFees.toFixed(2)}€`);
+    console.log(`  - Montant net intervenant: ${practitionerAmount.toFixed(2)}€`);
+
+    console.log(`[STRIPE-PAYMENT] Configuration URLs de redirection:`);
+    console.log(`  - Success URL: ${successUrl}`);
+    console.log(`  - Cancel URL: ${cancelUrl}`);
 
     // Créer la session Stripe Checkout
     // Si le praticien a un compte Stripe Connect, utiliser application_fee_amount
@@ -218,6 +234,11 @@ serve(async (req) => {
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
+    console.log(`[STRIPE-PAYMENT] Session Stripe créée:`);
+    console.log(`  - Session ID: ${session.id}`);
+    console.log(`  - Checkout URL: ${session.url}`);
+    console.log(`  - Mode: ${session.livemode ? 'PRODUCTION' : 'TEST'}`);
+
     // Créer la transaction en base de données
     await supabase
       .from('transactions')
@@ -229,12 +250,16 @@ serve(async (req) => {
         amount_total: amount,
         amount_practitioner: practitionerAmount,
         amount_platform_commission: platformFee,
+        amount_stripe_fees: stripeFees,
+        is_test_mode: !session.livemode,  // TRUE si mode test, FALSE si production
         status: 'pending',
         currency: 'EUR',
         description: description,
         commission_type: contract?.contract_type || null,
         transfer_status: 'pending'
       });
+
+    console.log(`[STRIPE-PAYMENT] Transaction créée (mode: ${session.livemode ? 'PRODUCTION' : 'TEST'})`);
 
     return new Response(
       JSON.stringify({

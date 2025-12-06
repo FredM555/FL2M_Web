@@ -762,7 +762,8 @@ export const getAvailableWeeks = async (
 export const cancelAppointment = async (
   appointmentId: string,
   keepRecord: boolean = false,
-  userId?: string
+  userId?: string,
+  userRole?: 'admin' | 'intervenant' | 'client'
 ) => {
   try {
     // Récupérer d'abord toutes les informations du rendez-vous pour l'email
@@ -792,6 +793,22 @@ export const cancelAppointment = async (
       return {
         success: false,
         error: new Error('Rendez-vous introuvable ou déjà annulé')
+      };
+    }
+
+    // Vérifier s'il existe une transaction associée
+    const { data: transaction, error: transactionError } = await supabase
+      .from('transactions')
+      .select('id, status')
+      .eq('appointment_id', appointmentId)
+      .single();
+
+    // Si une transaction existe et que l'utilisateur n'est pas admin, bloquer l'annulation
+    if (transaction && userRole !== 'admin') {
+      return {
+        success: false,
+        error: new Error('Ce rendez-vous a une transaction associée. Seul un administrateur peut l\'annuler. Les intervenants peuvent le déplacer.'),
+        canReschedule: userRole === 'intervenant' // Indiquer que l'intervenant peut déplacer
       };
     }
     

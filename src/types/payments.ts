@@ -109,6 +109,9 @@ export interface Transaction {
   is_free_appointment: boolean;
   appointment_number: number | null;
 
+  // Mode test/production
+  is_test_mode: boolean;
+
   // Statut
   status: TransactionStatus;
   transfer_status: 'pending' | 'eligible' | 'processing' | 'completed' | 'failed';

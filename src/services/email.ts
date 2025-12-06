@@ -120,7 +120,7 @@ const getEmailTemplate = (content: string) => {
     <div class="footer">
       <p>
         Cet email a été envoyé automatiquement par FL2M Services.<br>
-        Pour toute question, contactez-nous à <a href="mailto:contact@fl2m-services.com">contact@fl2m-services.com</a>
+        Pour toute question, contactez-nous à <a href="mailto:contact@fl2m.fr">contact@fl2m.fr</a>
       </p>
       <p>
         <a href="#">Politique de confidentialité</a> |

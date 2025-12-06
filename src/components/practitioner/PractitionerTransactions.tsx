@@ -26,7 +26,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '../../services/supabase';
-import { formatAmount, TransactionStatus } from '../../types/payments';
+import { formatAmount, TransactionStatus, CONTRACT_CONFIGS, ContractType } from '../../types/payments';
 
 interface SubscriptionPayment {
   id: string;
@@ -42,14 +42,21 @@ interface SubscriptionPayment {
 
 interface AppointmentTransaction {
   id: string;
+  appointment_id: string;
   amount_total: number;
   amount_practitioner: number;
   amount_platform_commission: number;
+  amount_stripe_fees: number;
+  is_test_mode: boolean;
   status: TransactionStatus;
   payment_date: string | null;
   description: string | null;
   commission_type: 'free' | 'starter' | 'pro' | 'premium' | null;
+  is_free_appointment: boolean;
   created_at: string;
+  appointment?: {
+    unique_code?: string;
+  };
 }
 
 interface PractitionerTransactionsProps {
@@ -64,6 +71,41 @@ function TabPanel(props: { children?: React.ReactNode; index: number; value: num
     </div>
   );
 }
+
+// Helper pour générer le texte du tooltip de commission
+const getCommissionTooltip = (commissionType: ContractType | null, isFreeAppointment: boolean): string => {
+  if (isFreeAppointment) {
+    return 'Rendez-vous gratuit (premier RDV du mois)';
+  }
+
+  if (!commissionType) {
+    return 'Type de commission non défini';
+  }
+
+  const config = CONTRACT_CONFIGS[commissionType];
+  const parts: string[] = [];
+
+  if (config.commission_fixed !== null) {
+    parts.push(`Fixe: ${config.commission_fixed}€`);
+  }
+
+  if (config.commission_percentage !== null) {
+    parts.push(`Pourcentage: ${config.commission_percentage}%`);
+  }
+
+  if (config.commission_cap !== null) {
+    parts.push(`Plafond: ${config.commission_cap}€`);
+  }
+
+  const contractLabels: Record<ContractType, string> = {
+    free: 'Sans Engagement',
+    starter: 'Starter',
+    pro: 'Pro',
+    premium: 'Premium'
+  };
+
+  return `${contractLabels[commissionType]} - ${parts.join(' | ')}`;
+};
 
 const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ practitionerId }) => {
   const [tabValue, setTabValue] = useState(0);
@@ -95,7 +137,10 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
       // Charger les transactions de rendez-vous
       const { data: transactions, error: transactionsError } = await supabase
         .from('transactions')
-        .select('*')
+        .select(`
+          *,
+          appointment:appointments(unique_code)
+        `)
         .eq('practitioner_id', practitionerId)
         .order('created_at', { ascending: false });
 
@@ -156,6 +201,10 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
     .filter(t => t.status === 'succeeded')
     .reduce((sum, t) => sum + t.amount_platform_commission, 0);
 
+  const totalStripeFees = appointmentTransactions
+    .filter(t => t.status === 'succeeded')
+    .reduce((sum, t) => sum + (t.amount_stripe_fees || 0), 0);
+
   return (
     <Box>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
@@ -193,6 +242,17 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
             </Typography>
             <Typography variant="h4" sx={{ fontWeight: 700 }}>
               {formatAmount(totalCommissions)}
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card sx={{ flex: 1, minWidth: 200, bgcolor: 'error.light', color: 'error.contrastText' }}>
+          <CardContent>
+            <Typography variant="body2" sx={{ opacity: 0.9 }}>
+              Frais Stripe
+            </Typography>
+            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+              {formatAmount(totalStripeFees)}
             </Typography>
           </CardContent>
         </Card>
@@ -300,11 +360,14 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
                 <TableHead>
                   <TableRow>
                     <TableCell>Date</TableCell>
+                    <TableCell>Code RDV</TableCell>
                     <TableCell>Type de contrat</TableCell>
                     <TableCell align="right">Montant total</TableCell>
                     <TableCell align="right">Votre part</TableCell>
                     <TableCell align="right">Commission</TableCell>
+                    <TableCell align="right">Frais Stripe</TableCell>
                     <TableCell>Statut</TableCell>
+                    <TableCell>Mode</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -318,6 +381,22 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
                           <Typography variant="caption" color="text.secondary">
                             Payé le {format(new Date(transaction.payment_date), 'dd/MM/yyyy', { locale: fr })}
                           </Typography>
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        {transaction.appointment?.unique_code ? (
+                          <Chip
+                            label={transaction.appointment.unique_code}
+                            size="small"
+                            variant="outlined"
+                            sx={{
+                              fontFamily: 'monospace',
+                              fontWeight: 600,
+                              fontSize: '0.75rem'
+                            }}
+                          />
+                        ) : (
+                          <Typography variant="caption" color="text.secondary">-</Typography>
                         )}
                       </TableCell>
                       <TableCell>
@@ -343,12 +422,37 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
                           {formatAmount(transaction.amount_practitioner)}
                         </Typography>
                       </TableCell>
+                      <Tooltip
+                        title={getCommissionTooltip(
+                          transaction.commission_type,
+                          transaction.is_free_appointment
+                        )}
+                        placement="top"
+                        arrow
+                      >
+                        <TableCell align="right" sx={{ cursor: 'help' }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatAmount(transaction.amount_platform_commission)}
+                          </Typography>
+                        </TableCell>
+                      </Tooltip>
                       <TableCell align="right">
-                        <Typography variant="body2" color="text.secondary">
-                          {formatAmount(transaction.amount_platform_commission)}
+                        <Typography variant="body2" sx={{ color: 'warning.main' }}>
+                          {formatAmount(transaction.amount_stripe_fees || 0)}
                         </Typography>
                       </TableCell>
                       <TableCell>{getStatusChip(transaction.status)}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={transaction.is_test_mode ? 'TEST' : 'PROD'}
+                          color={transaction.is_test_mode ? 'warning' : 'success'}
+                          size="small"
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.7rem'
+                          }}
+                        />
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

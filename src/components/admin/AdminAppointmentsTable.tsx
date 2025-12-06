@@ -45,6 +45,7 @@ import {
 } from '../../services/supabase';
 import { supabase } from '../../services/supabase';
 import { AppointmentDetailsDialog } from '../appointments/AppointmentDetailsDialog';
+import { useAuth } from '../../context/AuthContext';
 
 interface AdminAppointmentsTableProps {
   appointments: Appointment[];
@@ -69,6 +70,8 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
   isPractitionerView = false,
   practitionerId
 }) => {
+  const { profile } = useAuth();
+
   // État pour le champ de prix personnalisé
   const [customPrice, setCustomPrice] = useState<number | null>(null);
   const [priceError, setPriceError] = useState<string | null>(null);
@@ -162,6 +165,26 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
     if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce créneau de rendez-vous ?')) return;
 
     try {
+      // Vérifier s'il existe une transaction associée
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('id, status')
+        .eq('appointment_id', appointmentId)
+        .single();
+
+      // Si une transaction existe et que l'utilisateur n'est pas admin, bloquer la suppression
+      if (transaction && profile?.user_type !== 'admin') {
+        setError('Ce rendez-vous a une transaction associée. Seul un administrateur peut le supprimer.');
+        return;
+      }
+
+      // Si une transaction existe, demander confirmation supplémentaire même pour l'admin
+      if (transaction && profile?.user_type === 'admin') {
+        if (!window.confirm('Ce rendez-vous a une transaction associée. Voulez-vous vraiment le supprimer ? Cette action est irréversible.')) {
+          return;
+        }
+      }
+
       const { error } = await supabase
         .from('appointments')
         .delete()
@@ -231,6 +254,21 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
     if (!selectedDate || !selectedTime || !currentAppointment.practitioner_id || !currentAppointment.service_id) {
       setError('Veuillez remplir tous les champs obligatoires');
       return;
+    }
+
+    // Vérifier si un intervenant essaie d'annuler un rendez-vous avec transaction
+    if (dialogMode === 'edit' && currentAppointment.id && currentAppointment.status === 'cancelled' && profile?.user_type !== 'admin') {
+      // Vérifier s'il existe une transaction associée
+      const { data: transaction } = await supabase
+        .from('transactions')
+        .select('id')
+        .eq('appointment_id', currentAppointment.id)
+        .single();
+
+      if (transaction) {
+        setError('Vous ne pouvez pas annuler un rendez-vous avec une transaction associée. Seul un administrateur peut le faire.');
+        return;
+      }
     }
 
     // Validation du prix personnalisé
@@ -536,13 +574,22 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                         </Tooltip>
                       )}
                       
-                      <Tooltip title="Supprimer">
+                      <Tooltip title={
+                        appointment.payment_status === 'paid' && profile?.user_type !== 'admin'
+                          ? "Seul un administrateur peut supprimer un rendez-vous payé"
+                          : appointment.client_id !== null
+                          ? "Impossible de supprimer un rendez-vous réservé"
+                          : "Supprimer"
+                      }>
                         <span>
-                          <IconButton 
-                            color="error" 
+                          <IconButton
+                            color="error"
                             size="small"
                             onClick={() => handleDeleteAppointment(appointment.id)}
-                            disabled={appointment.client_id !== null} // Empêcher la suppression si réservé
+                            disabled={
+                              appointment.client_id !== null || // Empêcher la suppression si réservé
+                              (appointment.payment_status === 'paid' && profile?.user_type !== 'admin') // Seul admin peut supprimer un RDV payé
+                            }
                           >
                             <DeleteIcon fontSize="small" />
                           </IconButton>

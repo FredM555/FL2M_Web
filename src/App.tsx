@@ -21,6 +21,7 @@ import ProfessionnelsPage from './pages/ProfessionnelsPage';
 import SportifsPage from './pages/SportifsPage';
 import AppointmentPage from './pages/AppointmentPage';
 import AppointmentBookingPage from './pages/AppointmentBookingPage';
+import AppointmentPaymentSuccessPage from './pages/AppointmentPaymentSuccessPage';
 import ContactPage from './pages/ContactPage';
 import AProposPage from './pages/AproposPage';
 import ConsultantsPage from './pages/ConsultantsPage';
@@ -231,6 +232,7 @@ function App() {
             <Route path="auth/callback" element={<AuthCallbackPage />} />
             <Route path="complete-profile" element={<ProfileCompletionPage />} />
             <Route path="prendre-rendez-vous" element={<AppointmentBookingPage />} />
+            <Route path="appointment-success" element={<AppointmentPaymentSuccessPage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="apropos" element={<AProposPage />} />
             <Route path="consultants" element={<ConsultantsPage />} />

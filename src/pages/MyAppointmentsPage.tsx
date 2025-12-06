@@ -70,7 +70,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 const MyAppointmentsPage = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
 
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -169,13 +169,25 @@ const MyAppointmentsPage = () => {
     try {
       const isPaid = appointmentToCancel.payment_status === 'paid';
 
-      const { success, error: cancelError, action } = await cancelAppointment(
+      // Déterminer le rôle de l'utilisateur
+      const userRole = profile?.user_type === 'admin'
+        ? 'admin'
+        : profile?.user_type === 'intervenant'
+        ? 'intervenant'
+        : 'client';
+
+      const { success, error: cancelError, action, canReschedule } = await cancelAppointment(
         appointmentToCancel.id,
         isPaid,
-        user.id
+        user.id,
+        userRole
       );
 
       if (!success || cancelError) {
+        // Si c'est un intervenant qui ne peut pas annuler, afficher un message personnalisé
+        if (canReschedule && userRole === 'intervenant') {
+          throw new Error('Vous ne pouvez pas annuler un rendez-vous payé. Vous pouvez cependant le déplacer en contactant l\'administrateur.');
+        }
         throw cancelError || new Error('Erreur lors de l\'annulation');
       }
 

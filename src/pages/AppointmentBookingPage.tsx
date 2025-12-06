@@ -454,6 +454,12 @@ const AppointmentBookingPage: React.FC = () => {
             `${serviceName} avec ${practitionerName}`
           );
 
+          console.log('[PAYMENT] Session Stripe reçue:', {
+            sessionId: session.sessionId,
+            checkoutUrl: session.url
+          });
+
+          console.log('[PAYMENT] Redirection vers Stripe Checkout...');
           // Rediriger vers Stripe Checkout
           await redirectToCheckout(session.url);
         }

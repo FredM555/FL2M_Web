@@ -5,6 +5,7 @@ import { Transaction } from '../types/payments';
 export interface TransactionWithDetails extends Transaction {
   appointment?: {
     id: string;
+    unique_code?: string;
     start_time: string;
     end_time: string;
     service: {
@@ -48,6 +49,7 @@ export const getPractitionerTransactions = async (
   filters?: {
     status?: string;
     transfer_status?: string;
+    is_test_mode?: boolean;
     limit?: number;
     offset?: number;
   }
@@ -58,6 +60,7 @@ export const getPractitionerTransactions = async (
       *,
       appointment:appointments (
         id,
+        unique_code,
         start_time,
         end_time,
         service:services (name)
@@ -77,6 +80,10 @@ export const getPractitionerTransactions = async (
 
   if (filters?.transfer_status) {
     query = query.eq('transfer_status', filters.transfer_status);
+  }
+
+  if (filters?.is_test_mode !== undefined) {
+    query = query.eq('is_test_mode', filters.is_test_mode);
   }
 
   if (filters?.limit) {
@@ -120,6 +127,7 @@ export const getAllTransactions = async (filters?: {
   practitioner_id?: string;
   status?: string;
   transfer_status?: string;
+  is_test_mode?: boolean;
   start_date?: string;
   end_date?: string;
   limit?: number;
@@ -131,6 +139,7 @@ export const getAllTransactions = async (filters?: {
       *,
       appointment:appointments (
         id,
+        unique_code,
         start_time,
         end_time,
         service:services (name)
@@ -160,6 +169,10 @@ export const getAllTransactions = async (filters?: {
 
   if (filters?.transfer_status) {
     query = query.eq('transfer_status', filters.transfer_status);
+  }
+
+  if (filters?.is_test_mode !== undefined) {
+    query = query.eq('is_test_mode', filters.is_test_mode);
   }
 
   if (filters?.start_date) {

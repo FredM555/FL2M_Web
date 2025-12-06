@@ -615,6 +615,40 @@ const MainLayout: React.FC = () => {
                               <Typography sx={{ fontWeight: 500 }}>Mes Transactions</Typography>
                             </MenuItem>
                           )}
+                          {profile?.user_type === 'intervenant' && (
+                            <MenuItem
+                              component={RouterLink}
+                              to="/practitioner-profile"
+                              onClick={handleMenuClose(setUserMenuAnchor)}
+                              sx={{
+                                px: 3,
+                                py: 1.5,
+                                transition: 'all 0.2s ease',
+                                background: 'rgba(52, 89, 149, 0.05)',
+                                borderLeft: '3px solid #345995',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(52, 89, 149, 0.12)',
+                                  '& .menu-icon': {
+                                    transform: 'scale(1.1)',
+                                  },
+                                },
+                              }}
+                            >
+                              <Box
+                                component="span"
+                                className="menu-icon"
+                                sx={{
+                                  mr: 2,
+                                  display: 'inline-flex',
+                                  fontSize: '1.2rem',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                👤
+                              </Box>
+                              <Typography sx={{ fontWeight: 500 }}>Mon profil intervenant</Typography>
+                            </MenuItem>
+                          )}
                           {profile?.user_type === 'admin' && (
                             <>
                               <MenuItem
@@ -648,6 +682,38 @@ const MainLayout: React.FC = () => {
                                   📆
                                 </Box>
                                 <Typography sx={{ fontWeight: 500 }}>Gérer mon planning</Typography>
+                              </MenuItem>
+                              <MenuItem
+                                component={RouterLink}
+                                to="/practitioner-profile"
+                                onClick={handleMenuClose(setUserMenuAnchor)}
+                                sx={{
+                                  px: 3,
+                                  py: 1.5,
+                                  transition: 'all 0.2s ease',
+                                  background: 'rgba(52, 89, 149, 0.05)',
+                                  borderLeft: '3px solid #345995',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(52, 89, 149, 0.12)',
+                                    '& .menu-icon': {
+                                      transform: 'scale(1.1)',
+                                    },
+                                  },
+                                }}
+                              >
+                                <Box
+                                  component="span"
+                                  className="menu-icon"
+                                  sx={{
+                                    mr: 2,
+                                    display: 'inline-flex',
+                                    fontSize: '1.2rem',
+                                    transition: 'all 0.2s ease',
+                                  }}
+                                >
+                                  👤
+                                </Box>
+                                <Typography sx={{ fontWeight: 500 }}>Mon profil intervenant</Typography>
                               </MenuItem>
                               <MenuItem
                                 component={RouterLink}
