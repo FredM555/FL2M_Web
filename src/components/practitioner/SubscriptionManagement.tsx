@@ -41,7 +41,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [changeDialogOpen, setChangeDialogOpen] = useState(false);
-  const [selectedNewType, setSelectedNewType] = useState<ContractType>('free');
+  const [selectedNewType, setSelectedNewType] = useState<ContractType>('decouverte');
   const [submitting, setSubmitting] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -133,7 +133,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
           commission_cap: config.commission_cap,
           max_appointments_per_month: config.max_appointments_per_month,
           start_date: today.toISOString().split('T')[0],
-          status: selectedNewType === 'free' ? 'active' : 'pending_payment'
+          status: selectedNewType === 'decouverte' ? 'active' : 'pending_payment'
         });
 
       if (createError) throw createError;
@@ -141,7 +141,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
       // Recharger les données
       await loadCurrentContract();
 
-      alert(`Abonnement ${selectedNewType.toUpperCase()} activé avec succès !${selectedNewType !== 'free' ? '\n\nVeuillez procéder au paiement pour activer votre abonnement.' : ''}`);
+      alert(`Abonnement ${selectedNewType.toUpperCase()} activé avec succès !${selectedNewType !== 'decouverte' ? '\n\nVeuillez procéder au paiement pour activer votre abonnement.' : ''}`);
     } catch (err: any) {
       console.error('Erreur lors de la création de l\'abonnement:', err);
       setError(err.message || 'Erreur lors de la création de l\'abonnement');
@@ -243,7 +243,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
           commission_cap: config.commission_cap,
           max_appointments_per_month: config.max_appointments_per_month,
           start_date: startDate.toISOString().split('T')[0],
-          status: selectedNewType === 'free' ? 'active' : 'pending_payment'
+          status: selectedNewType === 'decouverte' ? 'active' : 'pending_payment'
         });
 
       if (createError) throw createError;
@@ -461,7 +461,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
               <ListItemText
                 primary="Commission par rendez-vous"
                 secondary={
-                  currentContract.contract_type === 'free'
+                  currentContract.contract_type === 'decouverte'
                     ? `max(${formatAmount(config.commission_fixed!)}, ${config.commission_percentage}%)`
                     : currentContract.contract_type === 'starter'
                     ? `min(${formatAmount(config.commission_fixed!)}, ${config.commission_percentage}%)`

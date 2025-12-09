@@ -26,9 +26,9 @@ CREATE TABLE IF NOT EXISTS public.transactions (
   amount_stripe_fees DECIMAL(10,2) NOT NULL DEFAULT 0, -- Frais Stripe
 
   -- Détails de la commission
-  commission_type VARCHAR(20), -- 'free', 'starter', 'pro', 'premium'
-  is_free_appointment BOOLEAN DEFAULT FALSE, -- Si c'est un des 3 RDV gratuits
-  appointment_number INT, -- Numéro du RDV pour l'intervenant (1, 2, 3, 4+)
+  commission_type VARCHAR(20), -- 'decouverte', 'starter', 'pro', 'premium'
+  is_free_appointment BOOLEAN DEFAULT FALSE, -- Si c'est un RDV gratuit selon le forfait
+  appointment_number INT, -- Numéro du RDV pour l'intervenant
 
   -- Statut
   status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'succeeded', 'failed', 'refunded', 'cancelled')),
@@ -75,6 +75,6 @@ COMMENT ON COLUMN public.transactions.amount_total IS 'Montant total payé par l
 COMMENT ON COLUMN public.transactions.amount_practitioner IS 'Part nette reversée au praticien en euros';
 COMMENT ON COLUMN public.transactions.amount_platform_commission IS 'Commission de la plateforme en euros';
 COMMENT ON COLUMN public.transactions.amount_stripe_fees IS 'Frais Stripe prélevés en euros';
-COMMENT ON COLUMN public.transactions.is_free_appointment IS 'TRUE si c''est l''un des 3 premiers RDV gratuits';
+COMMENT ON COLUMN public.transactions.is_free_appointment IS 'TRUE si c''est un RDV gratuit selon forfait (STARTER: 2, PRO: 4, PREMIUM: tous)';
 COMMENT ON COLUMN public.transactions.appointment_number IS 'Numéro séquentiel du RDV pour ce praticien';
 COMMENT ON COLUMN public.transactions.status IS 'Statut de la transaction: pending, processing, succeeded, failed, refunded, cancelled';

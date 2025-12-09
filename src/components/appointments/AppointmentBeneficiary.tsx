@@ -55,7 +55,12 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
   const canEdit = React.useMemo(() => {
     if (!profile) return false;
 
-    // Admin peut toujours modifier
+    // Ne pas permettre la modification si le RDV est terminé/validé
+    if (appointment.status === 'completed' || appointment.status === 'validated') {
+      return false;
+    }
+
+    // Admin peut toujours modifier (sauf RDV terminés)
     if (profile.user_type === 'admin') return true;
 
     // Intervenant peut modifier sur ses propres RDV
@@ -418,24 +423,20 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
           )}
         </Grid>
 
-        {!canEdit && (
-          <Alert severity="info" sx={{ mt: 3 }}>
-            <Typography variant="body2">
-              <strong>Note :</strong> Seuls les administrateurs et l'intervenant du rendez-vous peuvent modifier ces informations.
-            </Typography>
-          </Alert>
-        )}
       </Paper>
 
-      <Alert severity="warning" sx={{ mt: 3 }}>
-        <Typography variant="body2" gutterBottom>
-          <strong>Information importante :</strong>
-        </Typography>
-        <Typography variant="body2">
-          Ces informations sont <strong>indispensables pour la préparation de la séance</strong>.
-          Pour les personnes mariées, divorcées ou adoptées, utilisez toujours les informations de naissance.
-        </Typography>
-      </Alert>
+      {/* Afficher le message uniquement si le rendez-vous n'est pas encore terminé/à valider */}
+      {appointment.status !== 'completed' && appointment.status !== 'validated' && (
+        <Alert severity="warning" sx={{ mt: 3 }}>
+          <Typography variant="body2" gutterBottom>
+            <strong>Information importante :</strong>
+          </Typography>
+          <Typography variant="body2">
+            Ces informations sont <strong>indispensables pour la préparation de la séance</strong>.
+            Pour les personnes mariées, divorcées ou adoptées, utilisez toujours les informations de naissance.
+          </Typography>
+        </Alert>
+      )}
 
       {/* Snackbar de succès */}
       <Snackbar

@@ -27,19 +27,19 @@
 ### **Principe**
 
 1. **Client → Intervenant** : Validation admin
-2. **Choix forfait** : FREE, STARTER, PRO, PREMIUM
+2. **Choix forfait** : DÉCOUVERTE, STARTER, PRO, PREMIUM
 3. **Changement mensuel** : Au 1er du mois
 4. **Paiement différé** : Transfert après validation (48h)
 5. **Stripe gère TOUT** : Facturation, IBAN, déclarations
 
 ### **Modèle de Commission**
 
-| Type | Prix/mois | 3 RDV gratuits | Commission |
-|------|-----------|----------------|------------|
-| FREE | 0€ | ❌ | max(10€, 12%) ≤ 25€ |
-| STARTER | 60€ | ✅ | min(6€, 8%) |
-| PRO | 100€ | ✅ | 3€ fixe |
-| PREMIUM | 160€ | ❌ | 0€ |
+| Type | Prix/mois | RDV Gratuits | Commission |
+|------|-----------|--------------|------------|
+| DÉCOUVERTE | 9€ | 0 | max(10€, 12%) ≤ 25€ |
+| STARTER | 49€ | 2 | min(6€, 8%) ≤ 25€ |
+| PRO | 99€ | 4 | 3€ fixe |
+| PREMIUM | 159€ | Tous | 0€ |
 
 ---
 
@@ -54,7 +54,7 @@ Admin accepte
     ↓
 - Rôle: practitioner
 - Compte Stripe Connect créé
-- Contrat FREE par défaut
+- Contrat DÉCOUVERTE par défaut
     ↓
 Nouveau menu "Mon Contrat"
 ```
@@ -62,7 +62,7 @@ Nouveau menu "Mon Contrat"
 ### **2. Choix du Forfait**
 
 ```
-Intervenant choisit (ex: STARTER 60€)
+Intervenant choisit (ex: STARTER 49€)
     ↓
 Stripe Checkout pour carte bancaire
     ↓
@@ -302,10 +302,10 @@ BEGIN
     monthly_fee = (
       SELECT monthly_fee
       FROM (VALUES
-        ('free', 0),
-        ('starter', 60),
-        ('pro', 100),
-        ('premium', 160)
+        ('decouverte', 9),
+        ('starter', 49),
+        ('pro', 99),
+        ('premium', 159)
       ) AS configs(type, monthly_fee)
       WHERE configs.type = pc.next_contract_type
     ),
@@ -570,7 +570,7 @@ export class ContractManagementService {
       .single();
 
     // Créer souscription Stripe si payant
-    if (contractType !== 'free') {
+    if (contractType !== 'decouverte') {
       const subscriptionId = await this.createSubscription(practitionerId, contractType);
 
       await supabase
@@ -941,31 +941,31 @@ import { ContractManagementService } from '@/services/contract-management';
 
 const CONTRACTS = [
   {
-    type: 'free' as ContractType,
-    name: 'Sans Engagement',
-    price: 0,
-    features: ['Aucun abonnement', 'Commission: max(10€, 12%)', 'Plafonné 25€'],
+    type: 'decouverte' as ContractType,
+    name: 'Découverte',
+    price: 9,
+    features: ['Aucun RDV gratuit', 'Commission: max(10€, 12%)', 'Plafonné 25€', 'Limité 10 RDV/mois'],
   },
   {
     type: 'starter' as ContractType,
     name: 'Starter',
-    price: 60,
-    badge: '🎁 3 RDV gratuits',
-    features: ['3 premiers RDV GRATUITS', 'Commission: min(6€, 8%)', 'RDV illimités'],
+    price: 49,
+    badge: '🎁 2 RDV gratuits',
+    features: ['2 premiers RDV GRATUITS', 'Commission: min(6€, 8%)', 'Plafonné 25€', 'Limité 20 RDV/mois'],
   },
   {
     type: 'pro' as ContractType,
     name: 'Pro',
-    price: 100,
+    price: 99,
     badge: '⭐ Recommandé',
-    features: ['3 premiers RDV GRATUITS', 'Commission: 3€ fixe', 'Badge Pro'],
+    features: ['4 premiers RDV GRATUITS', 'Commission: 3€ fixe', 'RDV illimités', 'Badge Pro'],
   },
   {
     type: 'premium' as ContractType,
     name: 'Premium',
-    price: 160,
+    price: 159,
     badge: '👑 VIP',
-    features: ['0€ commission (tous)', 'Featured homepage', 'Analytics avancés'],
+    features: ['0€ commission (tous)', 'RDV illimités', 'Featured homepage', 'Analytics avancés'],
   },
 ];
 
@@ -1251,8 +1251,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 4. Créer compte Stripe Connect
     await StripeConnectService.createConnectAccount(practitionerId);
 
-    // 5. Contrat FREE par défaut
-    await ContractManagementService.setContract(practitionerId, 'free');
+    // 5. Contrat DÉCOUVERTE par défaut
+    await ContractManagementService.setContract(practitionerId, 'decouverte');
 
     res.status(200).json({ success: true, practitionerId });
   } catch (error) {
@@ -1419,9 +1419,9 @@ STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
 # Prix Stripe (créer dans Dashboard)
-STRIPE_PRICE_STARTER=price_...  # 60€/mois
-STRIPE_PRICE_PRO=price_...      # 100€/mois
-STRIPE_PRICE_PREMIUM=price_...  # 160€/mois
+STRIPE_PRICE_STARTER=price_...  # 49€/mois
+STRIPE_PRICE_PRO=price_...      # 99€/mois
+STRIPE_PRICE_PREMIUM=price_...  # 159€/mois
 
 # Supabase
 VITE_SUPABASE_URL=https://xxx.supabase.co
@@ -1439,9 +1439,9 @@ NEXT_PUBLIC_APP_URL=https://votresite.com
 
 1. Aller sur https://dashboard.stripe.com/products
 2. Créer 3 produits :
-   - **STARTER** : 60€/mois récurrent
-   - **PRO** : 100€/mois récurrent
-   - **PREMIUM** : 160€/mois récurrent
+   - **STARTER** : 49€/mois récurrent
+   - **PRO** : 99€/mois récurrent
+   - **PREMIUM** : 159€/mois récurrent
 3. Copier les IDs de prix → `.env`
 
 ---

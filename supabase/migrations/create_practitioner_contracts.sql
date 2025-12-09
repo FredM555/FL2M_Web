@@ -9,7 +9,7 @@
 CREATE TABLE IF NOT EXISTS public.practitioner_contracts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   practitioner_id UUID NOT NULL REFERENCES public.practitioners(id) ON DELETE CASCADE,
-  contract_type VARCHAR(20) NOT NULL CHECK (contract_type IN ('free', 'starter', 'pro', 'premium')),
+  contract_type VARCHAR(20) NOT NULL CHECK (contract_type IN ('decouverte', 'starter', 'pro', 'premium')),
 
   -- Configuration du contrat
   monthly_fee DECIMAL(10,2) NOT NULL DEFAULT 0,
@@ -65,8 +65,8 @@ CREATE TRIGGER trigger_update_contracts_timestamp
   EXECUTE FUNCTION update_contracts_updated_at();
 
 -- Commentaires pour la documentation
-COMMENT ON TABLE public.practitioner_contracts IS 'Table des contrats des praticiens - Modèle D avec 4 paliers';
-COMMENT ON COLUMN public.practitioner_contracts.contract_type IS 'Type de contrat: free (0€/mois), starter (60€/mois), pro (100€/mois), premium (160€/mois)';
+COMMENT ON TABLE public.practitioner_contracts IS 'Table des contrats des praticiens - Modèle D v4.0 avec 4 paliers';
+COMMENT ON COLUMN public.practitioner_contracts.contract_type IS 'Type de contrat: decouverte (9€/mois), starter (49€/mois), pro (99€/mois), premium (159€/mois)';
 COMMENT ON COLUMN public.practitioner_contracts.monthly_fee IS 'Frais mensuels en euros';
 COMMENT ON COLUMN public.practitioner_contracts.commission_fixed IS 'Commission fixe par RDV en euros';
 COMMENT ON COLUMN public.practitioner_contracts.commission_percentage IS 'Commission en pourcentage du prix du RDV';

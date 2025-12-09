@@ -21,7 +21,7 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import InfoIcon from '@mui/icons-material/Info';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { CONTRACT_CONFIGS, formatAmount } from '../types/payments';
+import { CONTRACT_CONFIGS, formatAmount, ContractType } from '../types/payments';
 import { createSubscriptionCheckout, redirectToCheckout } from '../services/stripe';
 
 const PractitionerPaymentPage: React.FC = () => {
@@ -34,7 +34,7 @@ const PractitionerPaymentPage: React.FC = () => {
   const [success, setSuccess] = useState(false);
 
   const contractId = searchParams.get('contractId');
-  const contractType = searchParams.get('contractType') as 'free' | 'starter' | 'pro' | 'premium';
+  const contractType = searchParams.get('contractType') as ContractType;
 
   useEffect(() => {
     if (!contractId || !contractType) {
@@ -132,7 +132,7 @@ const PractitionerPaymentPage: React.FC = () => {
               <ListItemIcon sx={{ minWidth: 30 }}>•</ListItemIcon>
               <ListItemText
                 primary={
-                  contractType === 'free'
+                  contractType === 'decouverte'
                     ? `Commission : max(${formatAmount(config.commission_fixed!)}, ${config.commission_percentage}%)`
                     : contractType === 'starter'
                     ? `Commission : min(${formatAmount(config.commission_fixed!)}, ${config.commission_percentage}%)`

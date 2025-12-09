@@ -18,9 +18,22 @@ const supabase = createClient(supabaseUrl, supabaseKey);
  */
 export class CommissionCalculator {
   /**
-   * Nombre de RDV gratuits offerts à tous les praticiens
+   * Nombre de RDV gratuits selon le type de contrat
    */
-  private static readonly FREE_APPOINTMENTS_COUNT = 3;
+  private static getFreeAppointmentsCount(contractType: ContractType): number {
+    switch (contractType) {
+      case 'decouverte':
+        return 0; // Aucun RDV gratuit
+      case 'starter':
+        return 2; // 2 premiers RDV gratuits
+      case 'pro':
+        return 4; // 4 premiers RDV gratuits
+      case 'premium':
+        return Infinity; // Tous les RDV sont gratuits (0€ commission)
+      default:
+        return 0;
+    }
+  }
 
   /**
    * Calcule la commission pour un RDV en utilisant la fonction SQL
@@ -66,10 +79,10 @@ export class CommissionCalculator {
     let commission = 0;
     let isFree = false;
 
-    // RÈGLE 1 : Les 3 premiers RDV sont GRATUITS UNIQUEMENT pour STARTER et PRO
-    const hasFreeAppointments = contractType === 'starter' || contractType === 'pro';
+    // RÈGLE 1 : Vérifier si ce RDV est dans les RDV gratuits
+    const freeAppointmentsCount = this.getFreeAppointmentsCount(contractType);
 
-    if (hasFreeAppointments && appointmentNumber <= this.FREE_APPOINTMENTS_COUNT) {
+    if (appointmentNumber <= freeAppointmentsCount) {
       commission = 0;
       isFree = true;
     } else {
@@ -78,27 +91,32 @@ export class CommissionCalculator {
 
       switch (contractType) {
         case 'decouverte':
-          // DÉCOUVERTE (10€/mois): 10€ fixe par RDV - PAS de RDV gratuit
-          commission = config.commission_fixed || 0;
+          // DÉCOUVERTE (9€/mois): max(10€, 12%) plafonné à 25€ - PAS de RDV gratuit
+          commission = Math.max(
+            config.commission_fixed || 0,
+            appointmentPrice * ((config.commission_percentage || 0) / 100)
+          );
+          commission = Math.min(commission, config.commission_cap || commission);
           break;
 
         case 'starter':
-          // STARTER (60€/mois): min(6€, 8% du prix) - 3 premiers RDV gratuits
+          // STARTER (49€/mois): min(6€, 8%) plafonné à 25€ - 2 premiers RDV gratuits
           commission = Math.min(
             config.commission_fixed || 0,
             appointmentPrice * ((config.commission_percentage || 0) / 100)
           );
+          commission = Math.min(commission, config.commission_cap || commission);
           break;
 
         case 'pro':
-          // PRO (100€/mois): 3€ fixe - 3 premiers RDV gratuits
+          // PRO (99€/mois): 3€ fixe - 4 premiers RDV gratuits
           commission = config.commission_fixed || 0;
           break;
 
         case 'premium':
-          // PREMIUM (160€/mois): 0€ pour tous les RDV
+          // PREMIUM (159€/mois): 0€ pour tous les RDV
           commission = 0;
-          isFree = true; // Tous les RDV sont à 0€ pour premium
+          isFree = true;
           break;
 
         default:
@@ -159,13 +177,13 @@ export class CommissionCalculator {
 
     let breakEvenAppointments: number | null = null;
 
-    for (let appointments = 4; appointments <= maxAppointments; appointments++) {
+    for (let appointments = 1; appointments <= maxAppointments; appointments++) {
       // Calculer le coût total pour chaque type de contrat
       let cost1 = config1.monthly_fee;
       let cost2 = config2.monthly_fee;
 
-      // Ajouter les commissions (en commençant après les 3 RDV gratuits)
-      for (let i = 4; i <= appointments; i++) {
+      // Ajouter les commissions pour tous les RDV
+      for (let i = 1; i <= appointments; i++) {
         const result1 = this.calculateCommissionLocal(i, appointmentPrice, contractType1);
         const result2 = this.calculateCommissionLocal(i, appointmentPrice, contractType2);
         cost1 += result1.commission_amount;

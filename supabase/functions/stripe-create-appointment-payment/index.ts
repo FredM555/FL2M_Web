@@ -148,22 +148,39 @@ serve(async (req) => {
       // Calculer la commission selon le type de contrat
       const appointmentNumber = (contract.appointments_this_month || 0) + 1;
 
-      // Pour les 3 premiers RDV, c'est gratuit pour STARTER et PRO uniquement
-      if ((contract.contract_type === 'starter' || contract.contract_type === 'pro') && appointmentNumber <= 3) {
-        platformFee = 0;
-      } else if (contract.contract_type === 'decouverte') {
-        // DÉCOUVERTE (10€/mois): 10€ fixe par RDV - PAS de RDV gratuit
-        platformFee = 10;
-      } else if (contract.contract_type === 'starter') {
-        // min(6€, 8%)
-        const percentageFee = amount * 0.08;
-        platformFee = Math.min(6, percentageFee);
+      // Vérifier les RDV gratuits selon le forfait
+      let freeAppointmentsCount = 0;
+      if (contract.contract_type === 'starter') {
+        freeAppointmentsCount = 2; // 2 premiers RDV gratuits
       } else if (contract.contract_type === 'pro') {
-        // 3€ fixe
-        platformFee = 3;
+        freeAppointmentsCount = 4; // 4 premiers RDV gratuits
       } else if (contract.contract_type === 'premium') {
-        // 0€
+        freeAppointmentsCount = Infinity; // Tous les RDV gratuits
+      }
+      // decouverte = 0 RDV gratuits
+
+      // Si c'est un RDV gratuit
+      if (appointmentNumber <= freeAppointmentsCount) {
         platformFee = 0;
+      } else {
+        // Calculer la commission selon le forfait
+        if (contract.contract_type === 'decouverte') {
+          // DÉCOUVERTE (9€/mois): max(10€, 12%) plafonné à 25€
+          const percentageFee = amount * 0.12;
+          platformFee = Math.max(10, percentageFee);
+          platformFee = Math.min(platformFee, 25); // Plafond à 25€
+        } else if (contract.contract_type === 'starter') {
+          // STARTER (49€/mois): min(6€, 8%) plafonné à 25€
+          const percentageFee = amount * 0.08;
+          platformFee = Math.min(6, percentageFee);
+          platformFee = Math.min(platformFee, 25); // Plafond à 25€
+        } else if (contract.contract_type === 'pro') {
+          // PRO (99€/mois): 3€ fixe
+          platformFee = 3;
+        } else if (contract.contract_type === 'premium') {
+          // PREMIUM (159€/mois): 0€
+          platformFee = 0;
+        }
       }
 
       // Calculer les frais Stripe (1.4% + 0.25€ pour cartes européennes)

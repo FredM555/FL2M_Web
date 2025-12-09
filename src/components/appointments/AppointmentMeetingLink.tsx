@@ -42,11 +42,16 @@ export const AppointmentMeetingLink: React.FC<AppointmentMeetingLinkProps> = ({
   // Champ du formulaire
   const [meetingLink, setMeetingLink] = useState('');
 
-  // Déterminer si l'utilisateur peut modifier (admin ou intervenant)
+  // Déterminer si l'utilisateur peut modifier (admin ou intervenant, et RDV non terminé)
   const canEdit = React.useMemo(() => {
     if (!profile) return false;
 
-    // Admin peut toujours modifier
+    // Ne pas permettre la modification si le RDV est terminé/validé
+    if (appointment.status === 'completed' || appointment.status === 'validated') {
+      return false;
+    }
+
+    // Admin peut toujours modifier (sauf RDV terminés)
     if (profile.user_type === 'admin') return true;
 
     // Intervenant peut modifier sur ses propres RDV
@@ -263,13 +268,6 @@ export const AppointmentMeetingLink: React.FC<AppointmentMeetingLinkProps> = ({
           </Grid>
         </Grid>
 
-        {!canEdit && (
-          <Alert severity="info" sx={{ mt: 3 }}>
-            <Typography variant="body2">
-              <strong>Note :</strong> Seuls les administrateurs et l'intervenant du rendez-vous peuvent modifier le lien de visio.
-            </Typography>
-          </Alert>
-        )}
 
         {isEditing && (
           <Box sx={{ mt: 3, display: 'flex', gap: 2, justifyContent: 'flex-end' }}>

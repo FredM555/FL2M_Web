@@ -10,9 +10,9 @@
 ### Documents Essentiels à Lire en Premier
 
 1. **[MODELE_D_FINAL.md](./MODELE_D_FINAL.md)** ⭐ **PRIORITÉ 1**
-   - Modèle de commission Version 3.0 (actuel)
-   - 4 types de contrats : SANS ENGAGEMENT, STARTER, PRO, PREMIUM
-   - **3 RDV gratuits pour STARTER et PRO uniquement**
+   - Modèle de commission Version 4.0 (actuel)
+   - 4 types de contrats : DÉCOUVERTE, STARTER, PRO, PREMIUM
+   - **RDV gratuits : Découverte (0), Starter (2), Pro (4), Premium (tous)**
    - Algorithme de calcul complet
    - Exemples de revenus mensuels
    - **👉 Commencez par ce document !**
@@ -31,19 +31,23 @@
 
 ### Modèle Économique
 
-**[MODELE_D_FINAL.md](./MODELE_D_FINAL.md)** - Version 3.0
+**[MODELE_D_FINAL.md](./MODELE_D_FINAL.md)** - Version 4.0
 Grille tarifaire des intervenants avec 4 contrats :
 
-| Contrat | Prix/Mois | Commission | RDV Gratuits |
-|---------|-----------|------------|--------------|
-| **Sans Engagement** | 0€ | max(10€, 12%) plafonné 25€ | ❌ Non |
-| **Starter** | 60€ | min(6€, 8%) | ✅ 3 premiers RDV |
-| **Pro** | 100€ | 3€ fixe | ✅ 3 premiers RDV |
-| **Premium** | 160€ | 0€ | ✅ Tous les RDV |
+| Contrat | Prix/Mois | Limite RDV | Commission | RDV Gratuits |
+|---------|-----------|------------|------------|--------------|
+| **Découverte** | 9€ | 10/mois | max(10€, 12%) plafonné 25€ | ❌ Non |
+| **Starter** | 49€ | 20/mois* | min(6€, 8%) plafonné 25€ | ✅ 2 premiers RDV |
+| **Pro** | 99€ | Illimité | 3€ fixe | ✅ 4 premiers RDV |
+| **Premium** | 159€ | Illimité | 0€ | ✅ Tous les RDV |
+
+*Au-delà de 20 RDV : commission du forfait Découverte
 
 **Points clés :**
-- Les 3 RDV gratuits s'appliquent **uniquement** à STARTER et PRO
-- SANS ENGAGEMENT et PREMIUM n'ont **pas** de RDV gratuits
+- Découverte : Aucun RDV gratuit, limité à 10 RDV/mois
+- Starter : 2 RDV gratuits/mois, limité à 20 RDV/mois
+- Pro : 4 RDV gratuits/mois, illimité
+- Premium : Tous les RDV gratuits, illimité
 - Algorithme de calcul inclus dans le document
 
 ### Implémentation Technique
@@ -146,8 +150,8 @@ Guide de test du système :
 Les migrations suivantes sont **prêtes à déployer** :
 
 1. **`20251127204706_update_commission_model_final.sql`** ⭐ **PRINCIPALE**
-   - Mise à jour du modèle de commission V3.0
-   - Fonction `calculate_commission()` avec 3 RDV gratuits pour STARTER/PRO
+   - Mise à jour du modèle de commission V4.0
+   - Fonction `calculate_commission()` avec RDV gratuits (STARTER: 2, PRO: 4)
    - **À déployer en priorité**
 
 2. **`create_practitioner_contracts.sql`**
@@ -203,9 +207,10 @@ psql < supabase/migrations/add_unique_code_to_appointments.sql
 
 - [ ] Créer un compte Stripe Connect
 - [ ] Configurer les produits Stripe :
-  - [ ] STARTER : 60€/mois
-  - [ ] PRO : 100€/mois
-  - [ ] PREMIUM : 160€/mois
+  - [ ] DÉCOUVERTE : 9€/mois
+  - [ ] STARTER : 49€/mois
+  - [ ] PRO : 99€/mois
+  - [ ] PREMIUM : 159€/mois
 - [ ] Récupérer les clés API Stripe (test + production)
 - [ ] Configurer le webhook Stripe
 
@@ -248,7 +253,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 - [ ] Tester le paiement client
 - [ ] Tester la validation de RDV (manuelle + auto 48h)
 - [ ] Tester le transfert à l'intervenant
-- [ ] Vérifier les 3 RDV gratuits pour STARTER/PRO
+- [ ] Vérifier les RDV gratuits (STARTER: 2, PRO: 4, PREMIUM: tous)
 
 ---
 
@@ -270,7 +275,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 7. **Tester** la fonction `calculate_commission()` avec des données de test
 8. **Vérifier** le flux de paiement en test
-9. **Valider** les 3 RDV gratuits pour STARTER et PRO
+9. **Valider** les RDV gratuits (STARTER: 2, PRO: 4, PREMIUM: tous)
 
 ---
 

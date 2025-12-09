@@ -42,57 +42,17 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { fr } from 'date-fns/locale';
 import { format, parseISO, addDays, addMinutes, addWeeks } from 'date-fns';
-import { supabase, createAppointment, updateAppointment } from '../../services/supabase';
+import {
+  supabase,
+  createAppointment,
+  updateAppointment,
+  Appointment,
+  Service,
+  Practitioner,
+  Profile
+} from '../../services/supabase';
 
-// Types
-interface Service {
-  id: string;
-  name: string;
-  category: 'particuliers' | 'professionnels' | 'sportifs';
-  subcategory: string;
-  price: number;
-  duration: number;
-  description?: string;
-}
-
-interface Profile {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email?: string;
-  birth_date?: string;
-}
-
-interface Practitioner {
-  id: string;
-  user_id: string;
-  bio?: string;
-  profile?: Profile;
-  display_name?: string;
-  title?: string;
-}
-
-interface Appointment {
-  id: string;
-  client_id: string | null;
-  practitioner_id: string;
-  service_id: string;
-  start_time: string;
-  end_time: string;
-  status: 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed' | 'pending_quote';
-  payment_status: 'unpaid' | 'paid' | 'refunded';
-  payment_id?: string;
-  notes?: string;
-  beneficiary_first_name?: string;
-  beneficiary_last_name?: string;
-  beneficiary_birth_date?: string;
-  beneficiary_email?: string;
-  meeting_link?: string;
-  custom_price?: number;
-  client?: Profile;
-  practitioner?: Practitioner;
-  service?: Service;
-}
+// Types are now imported from supabase.ts
 
 interface AdminWeeklyCalendarProps {
   appointments: Appointment[];

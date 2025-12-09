@@ -40,6 +40,7 @@ import VideoCallIcon from '@mui/icons-material/VideoCall';
 import DescriptionIcon from '@mui/icons-material/Description';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { AppointmentDetailsDialog } from '../components/appointments/AppointmentDetailsDialog';
+import { AppointmentValidationCard } from '../components/appointments/AppointmentValidationCard';
 
 // Interface pour la valeur de l'onglet
 interface TabPanelProps {
@@ -131,18 +132,41 @@ const MyAppointmentsPage = () => {
     loadAppointments();
   }, [user]);
 
+  // Comptage des rendez-vous en cours (completed + issue_reported)
+  const getToValidateCount = () => {
+    return appointments.filter(
+      appointment =>
+        appointment.status === 'completed' ||
+        appointment.status === 'issue_reported'
+    ).length;
+  };
+
   // Filtrage des rendez-vous selon l'onglet sélectionné
   const filteredAppointments = () => {
     switch (tabValue) {
-      case 0: // À venir
+      case 0: // À venir (pending/confirmed dans le futur)
         return appointments.filter(
-          appointment => !isPast(parseISO(appointment.start_time)) && appointment.status !== 'cancelled'
+          appointment =>
+            !isPast(parseISO(appointment.start_time)) &&
+            (appointment.status === 'pending' || appointment.status === 'confirmed')
         );
-      case 1: // Passés
+      case 1: // En cours (completed + issue_reported)
         return appointments.filter(
-          appointment => isPast(parseISO(appointment.start_time)) || appointment.status === 'completed'
+          appointment =>
+            appointment.status === 'completed' ||
+            appointment.status === 'issue_reported'
         );
-      case 2: // Annulés
+      case 2: // Passés (validated + confirmed/pending passés)
+        return appointments.filter(
+          appointment => {
+            // RDV validés
+            if (appointment.status === 'validated') return true;
+            // RDV passés qui ne sont pas cancelled, completed ou issue_reported
+            return isPast(parseISO(appointment.start_time)) &&
+                   (appointment.status === 'confirmed' || appointment.status === 'pending');
+          }
+        );
+      case 3: // Annulés
         return appointments.filter(appointment => appointment.status === 'cancelled');
       default:
         return appointments;
@@ -253,6 +277,10 @@ const MyAppointmentsPage = () => {
         return 'error';
       case 'completed':
         return 'info';
+      case 'validated':
+        return 'success';
+      case 'issue_reported':
+        return 'error';
       default:
         return 'default';
     }
@@ -269,6 +297,10 @@ const MyAppointmentsPage = () => {
         return 'Annulé';
       case 'completed':
         return 'Terminé';
+      case 'validated':
+        return 'Validé ✓';
+      case 'issue_reported':
+        return 'Problème signalé';
       default:
         return status;
     }
@@ -738,6 +770,29 @@ const MyAppointmentsPage = () => {
                 }}
               >
                 <Tab label="À venir" />
+                <Tab
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      En cours
+                      {getToValidateCount() > 0 && (
+                        <Chip
+                          label={getToValidateCount()}
+                          size="small"
+                          sx={{
+                            backgroundColor: '#FF6B00',
+                            color: 'white',
+                            fontWeight: 700,
+                            height: '20px',
+                            minWidth: '20px',
+                            '& .MuiChip-label': {
+                              px: 0.75,
+                            },
+                          }}
+                        />
+                      )}
+                    </Box>
+                  }
+                />
                 <Tab label="Passés" />
                 <Tab label="Annulés" />
               </Tabs>
@@ -785,6 +840,34 @@ const MyAppointmentsPage = () => {
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+                    Vous n'avez pas de rendez-vous en cours
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                    Les rendez-vous terminés et à valider apparaîtront ici.
+                  </Typography>
+                </Box>
+              ) : (
+                <Box>
+                  {filteredAppointments().map((appointment) => (
+                    <Box key={appointment.id} sx={{ mb: 3 }}>
+                      <AppointmentValidationCard
+                        appointment={appointment}
+                        onValidated={() => {
+                          // Recharger les rendez-vous après validation
+                          loadAppointments();
+                        }}
+                        onViewDetails={() => handleOpenDetailsDialog(appointment)}
+                      />
+                    </Box>
+                  ))}
+                </Box>
+              )}
+            </TabPanel>
+
+            <TabPanel value={tabValue} index={2}>
+              {filteredAppointments().length === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <Typography variant="h6" sx={{ color: 'text.secondary' }}>
                     Vous n'avez pas de rendez-vous passés
                   </Typography>
                 </Box>
@@ -797,7 +880,7 @@ const MyAppointmentsPage = () => {
               )}
             </TabPanel>
 
-            <TabPanel value={tabValue} index={2}>
+            <TabPanel value={tabValue} index={3}>
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="h6" sx={{ color: 'text.secondary' }}>

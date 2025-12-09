@@ -1,5 +1,6 @@
 // src/services/supabase.ts
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
+import { ContractType } from '../types/payments';
 
 // Types pour la base de données
 export type Profile = {
@@ -78,7 +79,7 @@ export type Appointment = {
   service_id: string;
   start_time: string;
   end_time: string;
-  status: 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed' | 'pending_quote';
+  status: 'pending' | 'confirmed' | 'beneficiaire_confirme' | 'cancelled' | 'completed' | 'validated' | 'issue_reported' | 'pending_quote';
   payment_status: 'unpaid' | 'paid' | 'refunded';
   payment_id?: string;
   payment_required?: boolean;
@@ -1660,7 +1661,7 @@ export const preApprovePractitionerRequest = async (
  */
 export const completePractitionerOnboarding = async (
   requestId: string,
-  contractType: 'free' | 'starter' | 'pro' | 'premium',
+  contractType: ContractType,
   contractDocumentUrl?: string,
   startDate?: string
 ) => {

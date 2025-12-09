@@ -51,7 +51,7 @@ interface AppointmentTransaction {
   status: TransactionStatus;
   payment_date: string | null;
   description: string | null;
-  commission_type: 'free' | 'starter' | 'pro' | 'premium' | null;
+  commission_type: ContractType | null;
   is_free_appointment: boolean;
   created_at: string;
   appointment?: {
@@ -98,7 +98,7 @@ const getCommissionTooltip = (commissionType: ContractType | null, isFreeAppoint
   }
 
   const contractLabels: Record<ContractType, string> = {
-    free: 'Sans Engagement',
+    decouverte: 'Découverte',
     starter: 'Starter',
     pro: 'Pro',
     premium: 'Premium'

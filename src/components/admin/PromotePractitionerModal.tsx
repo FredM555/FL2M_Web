@@ -44,7 +44,7 @@ const PromotePractitionerModal: React.FC<PromotePractitionerModalProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   // État du formulaire
-  const [contractType, setContractType] = useState<ContractType>('free');
+  const [contractType, setContractType] = useState<ContractType>('decouverte');
   const [contractDocumentUrl, setContractDocumentUrl] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
   const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
@@ -101,7 +101,7 @@ const PromotePractitionerModal: React.FC<PromotePractitionerModalProps> = ({
   const handleClose = () => {
     if (!loading) {
       setActiveStep(0);
-      setContractType('free');
+      setContractType('decouverte');
       setContractDocumentUrl(null);
       setAdminNotes('');
       setStartDate(new Date().toISOString().split('T')[0]);

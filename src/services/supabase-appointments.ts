@@ -961,3 +961,96 @@ export const getClientAppointments = (clientId: string) => {
     .eq('client_id', clientId)
     .order('start_time', { ascending: true });
 };
+
+/**
+ * Marquer un rendez-vous comme terminé (manuellement par l'intervenant)
+ * @param appointmentId ID du rendez-vous à marquer comme terminé
+ * @param userId ID de l'utilisateur qui effectue l'action
+ * @returns Résultat de la mise à jour
+ */
+export const markAppointmentAsCompleted = async (
+  appointmentId: string,
+  userId?: string
+) => {
+  try {
+    // Vérifier que le rendez-vous existe et n'est pas déjà terminé ou annulé
+    const { data: appointment, error: fetchError } = await supabase
+      .from('appointments')
+      .select('id, status, start_time, end_time')
+      .eq('id', appointmentId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    if (!appointment) {
+      return {
+        success: false,
+        error: new Error('Rendez-vous introuvable')
+      };
+    }
+
+    if (appointment.status === 'completed') {
+      return {
+        success: false,
+        error: new Error('Ce rendez-vous est déjà marqué comme terminé')
+      };
+    }
+
+    if (appointment.status === 'cancelled') {
+      return {
+        success: false,
+        error: new Error('Impossible de marquer un rendez-vous annulé comme terminé')
+      };
+    }
+
+    // Mettre à jour le statut à 'completed'
+    const { data, error: updateError } = await supabase
+      .from('appointments')
+      .update({
+        status: 'completed',
+        updated_at: new Date().toISOString(),
+        updated_by: userId || null
+      })
+      .eq('id', appointmentId)
+      .select(`
+        *,
+        client:profiles!client_id(*),
+        practitioner:practitioners!practitioner_id(
+          *,
+          profile:profiles(*)
+        ),
+        service:services(*)
+      `)
+      .single();
+
+    if (updateError) throw updateError;
+
+    // Logger l'action
+    if (data && data.client_id) {
+      logActivity({
+        userId: data.client_id,
+        actionType: 'appointment_completed',
+        actionDescription: 'Rendez-vous marqué comme terminé',
+        entityType: 'appointment',
+        entityId: appointmentId,
+        metadata: {
+          completed_by: userId,
+          completed_at: new Date().toISOString()
+        }
+      }).catch(err => console.warn('Erreur log completion RDV:', err));
+    }
+
+    return {
+      success: true,
+      data,
+      message: 'Le rendez-vous a été marqué comme terminé.'
+    };
+  } catch (error) {
+    console.error('Erreur dans markAppointmentAsCompleted:', error);
+    return {
+      success: false,
+      error,
+      message: 'Une erreur est survenue lors du marquage du rendez-vous comme terminé.'
+    };
+  }
+};

@@ -19,22 +19,26 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip
+  Tooltip,
+  Divider
 } from '@mui/material';
 import {
   Send as SendIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   Lock as LockIcon,
-  LockOpen as LockOpenIcon
+  LockOpen as LockOpenIcon,
+  ReportProblem as ReportProblemIcon
 } from '@mui/icons-material';
 import {
   AppointmentComment,
   getAppointmentComments,
   createAppointmentComment,
   updateAppointmentComment,
-  deleteAppointmentComment
+  deleteAppointmentComment,
+  supabase
 } from '../../services/supabase';
+import { validateAppointment, sendContestationEmail } from '../../services/stripe';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -42,11 +46,17 @@ import { fr } from 'date-fns/locale';
 interface AppointmentCommentsProps {
   appointmentId: string;
   practitionerId: string;
+  appointmentStatus?: string;
+  clientId?: string;
+  onProblemReported?: () => void;
 }
 
 export const AppointmentComments: React.FC<AppointmentCommentsProps> = ({
   appointmentId,
-  practitionerId
+  practitionerId,
+  appointmentStatus,
+  clientId,
+  onProblemReported
 }) => {
   const { profile } = useAuth();
   const [comments, setComments] = useState<AppointmentComment[]>([]);
@@ -64,7 +74,15 @@ export const AppointmentComments: React.FC<AppointmentCommentsProps> = ({
   const [editContent, setEditContent] = useState('');
   const [editIsPrivate, setEditIsPrivate] = useState(false);
 
+  // Report problem state
+  const [showProblemDialog, setShowProblemDialog] = useState(false);
+  const [problemDescription, setProblemDescription] = useState('');
+  const [reportingProblem, setReportingProblem] = useState(false);
+
   const isConsultant = profile?.user_type === 'intervenant' || profile?.user_type === 'admin';
+  // L'utilisateur peut contester s'il est le CLIENT de ce RDV spécifique ET que le status est completed (pas issue_reported)
+  const isClientOfThisAppointment = clientId && profile?.id === clientId;
+  const canReportProblem = appointmentStatus === 'completed' && isClientOfThisAppointment;
 
   useEffect(() => {
     loadComments();
@@ -170,6 +188,50 @@ export const AppointmentComments: React.FC<AppointmentCommentsProps> = ({
     }
   };
 
+  const handleReportProblem = async () => {
+    if (!problemDescription.trim()) {
+      setError('Veuillez décrire le problème');
+      return;
+    }
+
+    setReportingProblem(true);
+    setError(null);
+
+    try {
+      // Créer un commentaire visible pour tracer le problème signalé
+      await createAppointmentComment(
+        appointmentId,
+        `⚠️ PROBLÈME SIGNALÉ ⚠️\n\n${problemDescription}`,
+        false // Public pour que l'intervenant puisse le voir
+      );
+
+      // Signaler le problème (change le status vers issue_reported)
+      await validateAppointment(appointmentId, false, problemDescription);
+
+      // Envoyer l'email de notification à l'admin (ne pas bloquer si ça échoue)
+      sendContestationEmail(appointmentId, problemDescription);
+
+      // Recharger les commentaires pour afficher le nouveau
+      await loadComments();
+
+      setShowProblemDialog(false);
+      setProblemDescription('');
+
+      if (onProblemReported) {
+        onProblemReported();
+      }
+
+      // Message de confirmation
+      setError(null);
+      alert('Problème signalé avec succès. Notre équipe va examiner votre demande et a été notifiée par email.');
+    } catch (err: any) {
+      console.error('Erreur lors du signalement:', err);
+      setError(err.message || 'Erreur lors du signalement du problème');
+    } finally {
+      setReportingProblem(false);
+    }
+  };
+
   const canEditComment = (comment: AppointmentComment) => {
     if (!profile) return false;
     return comment.author_id === profile.id;
@@ -269,76 +331,169 @@ export const AppointmentComments: React.FC<AppointmentCommentsProps> = ({
         </Typography>
       ) : (
         <List>
-          {filteredComments.map((comment) => (
-            <Card key={comment.id} sx={{ mb: 2 }}>
-              <CardContent>
-                <Box display="flex" gap={2}>
-                  <Avatar sx={{ bgcolor: comment.is_private ? 'warning.main' : 'primary.main' }}>
-                    {getInitials(comment.author?.first_name, comment.author?.last_name)}
-                  </Avatar>
+          {filteredComments.map((comment) => {
+            const isProblemReport = comment.content.startsWith('⚠️ PROBLÈME SIGNALÉ ⚠️');
 
-                  <Box flex={1}>
-                    <Box display="flex" justifyContent="space-between" alignItems="start">
-                      <Box>
-                        <Typography variant="subtitle2">
-                          {comment.author?.first_name} {comment.author?.last_name}
-                          {comment.author?.pseudo && (
-                            <Typography component="span" variant="body2" color="text.secondary">
-                              {' '}({comment.author.pseudo})
-                            </Typography>
-                          )}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {format(new Date(comment.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
-                        </Typography>
-                      </Box>
+            return (
+              <Card
+                key={comment.id}
+                sx={{
+                  mb: 2,
+                  ...(isProblemReport && {
+                    border: '2px solid',
+                    borderColor: 'error.main',
+                    bgcolor: 'rgba(211, 47, 47, 0.05)'
+                  })
+                }}
+              >
+                <CardContent>
+                  <Box display="flex" gap={2}>
+                    <Avatar sx={{
+                      bgcolor: isProblemReport ? 'error.main' : (comment.is_private ? 'warning.main' : 'primary.main')
+                    }}>
+                      {isProblemReport ? <ReportProblemIcon /> : getInitials(comment.author?.first_name, comment.author?.last_name)}
+                    </Avatar>
 
-                      <Box display="flex" gap={1} alignItems="center">
-                        {comment.is_private && (
-                          <Tooltip title="Note privée - Visible uniquement par le consultant">
+                    <Box flex={1}>
+                      <Box display="flex" justifyContent="space-between" alignItems="start">
+                        <Box>
+                          <Typography variant="subtitle2">
+                            {comment.author?.first_name} {comment.author?.last_name}
+                            {comment.author?.pseudo && (
+                              <Typography component="span" variant="body2" color="text.secondary">
+                                {' '}({comment.author.pseudo})
+                              </Typography>
+                            )}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {format(new Date(comment.created_at), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                          </Typography>
+                        </Box>
+
+                        <Box display="flex" gap={1} alignItems="center">
+                          {isProblemReport && (
                             <Chip
-                              icon={<LockIcon />}
-                              label="Privé"
+                              icon={<ReportProblemIcon />}
+                              label="Problème signalé"
                               size="small"
-                              color="warning"
+                              color="error"
                             />
-                          </Tooltip>
-                        )}
+                          )}
 
-                        {canEditComment(comment) && (
-                          <>
-                            <Tooltip title="Modifier">
-                              <IconButton
+                          {comment.is_private && (
+                            <Tooltip title="Note privée - Visible uniquement par le consultant">
+                              <Chip
+                                icon={<LockIcon />}
+                                label="Privé"
                                 size="small"
-                                onClick={() => handleEditComment(comment)}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
+                                color="warning"
+                              />
                             </Tooltip>
-                            <Tooltip title="Supprimer">
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleDeleteComment(comment.id)}
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </>
-                        )}
+                          )}
+
+                          {canEditComment(comment) && !isProblemReport && (
+                            <>
+                              <Tooltip title="Modifier">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleEditComment(comment)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Supprimer">
+                                <IconButton
+                                  size="small"
+                                  color="error"
+                                  onClick={() => handleDeleteComment(comment.id)}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            </>
+                          )}
+                        </Box>
                       </Box>
-                    </Box>
 
-                    <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-wrap' }}>
-                      {comment.content}
-                    </Typography>
+                      <Typography variant="body2" sx={{ mt: 1, whiteSpace: 'pre-wrap' }}>
+                        {comment.content}
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </CardContent>
-            </Card>
-          ))}
+                </CardContent>
+              </Card>
+            );
+          })}
         </List>
       )}
+
+      {/* Bouton pour contester le RDV - uniquement pour les RDV "à valider" et une seule fois */}
+      {canReportProblem && (
+        <Box sx={{ mt: 4, pt: 3, borderTop: '1px dashed', borderColor: 'divider' }}>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1, textAlign: 'center' }}>
+            Un problème avec ce rendez-vous ?
+          </Typography>
+          <Box sx={{ textAlign: 'center' }}>
+            <Button
+              size="small"
+              variant="text"
+              color="error"
+              startIcon={<ReportProblemIcon fontSize="small" />}
+              onClick={() => setShowProblemDialog(true)}
+              sx={{
+                textTransform: 'none',
+                fontSize: '0.813rem',
+                opacity: 0.7,
+                '&:hover': {
+                  opacity: 1,
+                  backgroundColor: 'rgba(211, 47, 47, 0.04)'
+                }
+              }}
+            >
+              Contester le RDV
+            </Button>
+          </Box>
+        </Box>
+      )}
+
+      {/* Report Problem Dialog */}
+      <Dialog open={showProblemDialog} onClose={() => setShowProblemDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Contester le rendez-vous</DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2">
+              Le problème sera signalé à l'équipe FL2M Services. Le paiement de l'intervenant sera bloqué jusqu'à résolution.
+            </Typography>
+          </Alert>
+
+          <TextField
+            label="Décrivez le problème *"
+            multiline
+            rows={4}
+            fullWidth
+            value={problemDescription}
+            onChange={(e) => setProblemDescription(e.target.value)}
+            placeholder="Expliquez précisément ce qui s'est passé..."
+            required
+            sx={{ mt: 2 }}
+            helperText="Ce commentaire est obligatoire"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowProblemDialog(false)}>
+            Annuler
+          </Button>
+          <Button
+            onClick={handleReportProblem}
+            variant="contained"
+            color="error"
+            disabled={reportingProblem || !problemDescription.trim()}
+            startIcon={reportingProblem ? <CircularProgress size={20} /> : undefined}
+          >
+            {reportingProblem ? 'Envoi en cours...' : 'Contester'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>

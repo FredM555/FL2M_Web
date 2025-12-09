@@ -45,11 +45,17 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
   );
   const [customPrice, setCustomPrice] = useState<string>('');
 
-  // Déterminer si l'utilisateur peut modifier (admin seulement)
+  // Déterminer si l'utilisateur peut modifier (admin seulement, et RDV non terminé)
   const canEdit = React.useMemo(() => {
     if (!profile) return false;
+
+    // Ne pas permettre la modification si le RDV est terminé/validé
+    if (appointment.status === 'completed' || appointment.status === 'validated') {
+      return false;
+    }
+
     return profile.user_type === 'admin';
-  }, [profile]);
+  }, [profile, appointment]);
 
   // Charger la liste des intervenants
   useEffect(() => {
@@ -348,24 +354,9 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
           </Grid>
         </Grid>
 
-        {!canEdit && (
-          <Alert severity="info" sx={{ mt: 3 }}>
-            <Typography variant="body2">
-              <strong>Note :</strong> Seuls les administrateurs peuvent modifier l'intervenant du rendez-vous.
-            </Typography>
-          </Alert>
-        )}
       </Paper>
 
-      <Alert severity="warning" sx={{ mt: 3 }}>
-        <Typography variant="body2" gutterBottom>
-          <strong>Attention :</strong>
-        </Typography>
-        <Typography variant="body2">
-          Le changement d'intervenant modifiera l'intervenant assigné à ce rendez-vous.
-          Assurez-vous que le nouvel intervenant est disponible à cette date et heure.
-        </Typography>
-      </Alert>
+
 
       {/* Snackbar de succès */}
       <Snackbar

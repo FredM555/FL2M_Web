@@ -55,7 +55,7 @@ const ManageContractModal: React.FC<ManageContractModalProps> = ({
   const [success, setSuccess] = useState(false);
 
   // États du formulaire
-  const [contractType, setContractType] = useState<ContractType>('free');
+  const [contractType, setContractType] = useState<ContractType>('decouverte');
   const [startDate, setStartDate] = useState<Date | null>(new Date());
   const [contractDocumentUrl, setContractDocumentUrl] = useState<string | null>(null);
   const [adminNotes, setAdminNotes] = useState('');
@@ -83,7 +83,7 @@ const ManageContractModal: React.FC<ManageContractModalProps> = ({
 
   const handleClose = () => {
     setActiveStep(0);
-    setContractType('free');
+    setContractType('decouverte');
     setStartDate(new Date());
     setContractDocumentUrl(null);
     setAdminNotes('');

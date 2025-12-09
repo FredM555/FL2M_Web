@@ -275,28 +275,28 @@ export interface ContractConfig {
  */
 export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
   decouverte: {
-    monthly_fee: 10,
+    monthly_fee: 9,
     commission_fixed: 10,
-    commission_percentage: null,
-    commission_cap: null,
-    max_appointments_per_month: null,
+    commission_percentage: 12,
+    commission_cap: 25,
+    max_appointments_per_month: 10,
   },
   starter: {
-    monthly_fee: 60,
+    monthly_fee: 49,
     commission_fixed: 6,
     commission_percentage: 8,
-    commission_cap: null,
-    max_appointments_per_month: null,
+    commission_cap: 25,
+    max_appointments_per_month: 20,
   },
   pro: {
-    monthly_fee: 100,
+    monthly_fee: 99,
     commission_fixed: 3,
     commission_percentage: null,
     commission_cap: null,
     max_appointments_per_month: null,
   },
   premium: {
-    monthly_fee: 160,
+    monthly_fee: 159,
     commission_fixed: 0,
     commission_percentage: null,
     commission_cap: null,

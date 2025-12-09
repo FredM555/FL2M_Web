@@ -98,19 +98,37 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
               Commission par RDV
             </Typography>
             {type === 'decouverte' && (
-              <Typography variant="body2" color="text.secondary">
-                {formatAmount(config.commission_fixed!)} fixe par RDV
-              </Typography>
+              <>
+                <Typography variant="body2" color="text.secondary">
+                  max({formatAmount(config.commission_fixed!)}, {config.commission_percentage}% du prix)
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  Plafonné à {formatAmount(config.commission_cap!)}
+                </Typography>
+              </>
             )}
             {type === 'starter' && (
-              <Typography variant="body2" color="text.secondary">
-                min({formatAmount(config.commission_fixed!)}, {config.commission_percentage}% du prix)
-              </Typography>
+              <>
+                <Typography variant="body2" color="text.secondary">
+                  min({formatAmount(config.commission_fixed!)}, {config.commission_percentage}% du prix)
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
+                  Plafonné à {formatAmount(config.commission_cap!)}
+                </Typography>
+                <Typography variant="body2" color="success.main" sx={{ fontWeight: 600, mt: 0.5 }}>
+                  🎁 2 premiers RDV gratuits/mois
+                </Typography>
+              </>
             )}
             {type === 'pro' && (
-              <Typography variant="body2" color="text.secondary">
-                {formatAmount(config.commission_fixed!)} fixe par RDV
-              </Typography>
+              <>
+                <Typography variant="body2" color="text.secondary">
+                  {formatAmount(config.commission_fixed!)} fixe par RDV
+                </Typography>
+                <Typography variant="body2" color="success.main" sx={{ fontWeight: 600, mt: 0.5 }}>
+                  🎁 4 premiers RDV gratuits/mois
+                </Typography>
+              </>
             )}
             {type === 'premium' && (
               <Typography variant="body2" color="text.secondary">
@@ -121,9 +139,12 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
 
           {config.max_appointments_per_month && (
             <Grid item xs={12}>
-              <Alert severity="info" sx={{ py: 0.5 }}>
+              <Alert severity="warning" sx={{ py: 0.5 }}>
                 <Typography variant="body2">
-                  Limité à {config.max_appointments_per_month} RDV/mois
+                  <strong>Limité à {config.max_appointments_per_month} RDV/mois</strong>
+                  {type === 'starter' && (
+                    <><br />Au-delà : commission du forfait Découverte</>
+                  )}
                 </Typography>
               </Alert>
             </Grid>
@@ -141,7 +162,7 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
         </Typography>
         <Typography variant="body2">
           Les paiements clients passent par Stripe qui prélève <strong>~2% de frais de transaction</strong>.
-          Ces frais sont à la charge de l'intervenant. Les forfaits <strong>Starter</strong> et <strong>Pro</strong> offrent 3 RDV gratuits (sans commission).
+          Ces frais sont à la charge de l'intervenant. Les forfaits <strong>Starter</strong> offrent 2 RDV gratuits/mois et <strong>Pro</strong> offrent 4 RDV gratuits/mois (sans commission).
         </Typography>
       </Alert>
 
@@ -227,27 +248,27 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
 
       <Box sx={{ mt: 3 }}>
         <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-          💡 <strong>Exemples de calcul pour un RDV à 75€ :</strong>
+          💡 <strong>Exemples de calcul pour un RDV à 120€ :</strong>
         </Typography>
         <Grid container spacing={1}>
-          <Grid item xs={6} sm={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <Typography variant="caption" color="text.secondary">
-              <strong>DÉCOUVERTE:</strong> 10€ fixe
+              <strong>DÉCOUVERTE:</strong> 14,40€ (max entre 10€ et 12% = 14,40€)
             </Typography>
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <Typography variant="caption" color="text.secondary">
-              <strong>STARTER:</strong> 6€ (min entre 6€ et 8% = 6€)
+              <strong>STARTER:</strong> 6€ (min entre 6€ et 8% = 6€) + 2 RDV gratuits
             </Typography>
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <Typography variant="caption" color="text.secondary">
-              <strong>PRO:</strong> 3€ fixe
+              <strong>PRO:</strong> 3€ fixe + 4 RDV gratuits
             </Typography>
           </Grid>
-          <Grid item xs={6} sm={3}>
+          <Grid item xs={12} sm={6} md={3}>
             <Typography variant="caption" color="text.secondary">
-              <strong>PREMIUM:</strong> 0€
+              <strong>PREMIUM:</strong> 0€ - tous RDV gratuits
             </Typography>
           </Grid>
         </Grid>

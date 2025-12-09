@@ -9,21 +9,25 @@ import {
   Tab,
   Typography,
   Button,
-  Tooltip
+  Tooltip,
+  CircularProgress,
+  Alert
 } from '@mui/material';
 import { Close as CloseIcon } from '@mui/icons-material';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import PersonIcon from '@mui/icons-material/Person';
 import CakeIcon from '@mui/icons-material/Cake';
 import PaymentIcon from '@mui/icons-material/Payment';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { AppointmentDocuments } from './AppointmentDocuments';
 import { AppointmentComments } from './AppointmentComments';
 import { AppointmentBeneficiary } from './AppointmentBeneficiary';
 import { AppointmentPractitioner } from './AppointmentPractitioner';
 import { AppointmentMeetingLink } from './AppointmentMeetingLink';
 import { Appointment } from '../../services/supabase';
+import { markAppointmentAsCompleted } from '../../services/supabase-appointments';
 import { useAuth } from '../../context/AuthContext';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
 
 interface TabPanelProps {
@@ -61,9 +65,12 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   appointment,
   onAppointmentUpdate
 }) => {
-  const { profile } = useAuth();
+  const { profile, user } = useAuth();
   const [currentTab, setCurrentTab] = useState(0);
   const [currentAppointment, setCurrentAppointment] = useState(appointment);
+  const [completingAppointment, setCompletingAppointment] = useState(false);
+  const [completionError, setCompletionError] = useState<string>('');
+  const [completionSuccess, setCompletionSuccess] = useState(false);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
@@ -80,7 +87,43 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   // Mettre à jour l'appointment quand la prop change
   React.useEffect(() => {
     setCurrentAppointment(appointment);
+    setCompletionError('');
+    setCompletionSuccess(false);
   }, [appointment]);
+
+  // Fonction pour marquer le rendez-vous comme terminé
+  const handleMarkAsCompleted = async () => {
+    if (!user) return;
+
+    setCompletingAppointment(true);
+    setCompletionError('');
+    setCompletionSuccess(false);
+
+    try {
+      const { success, error, data, message } = await markAppointmentAsCompleted(
+        currentAppointment.id,
+        user.id
+      );
+
+      if (!success || error) {
+        throw error || new Error(message || 'Erreur lors du marquage comme terminé');
+      }
+
+      if (data) {
+        handleAppointmentUpdate(data);
+        setCompletionSuccess(true);
+
+        // Masquer le message de succès après 3 secondes
+        setTimeout(() => {
+          setCompletionSuccess(false);
+        }, 3000);
+      }
+    } catch (err: any) {
+      setCompletionError(err.message || 'Erreur lors du marquage comme terminé');
+    } finally {
+      setCompletingAppointment(false);
+    }
+  };
 
   // Déterminer si l'utilisateur peut uploader des documents
   const canUpload = React.useMemo(() => {
@@ -213,6 +256,37 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                   </Tooltip>
                 </Box>
               )}
+
+              {/* Bouton pour marquer comme terminé (uniquement pour les intervenants et admins sur RDV passés) */}
+              {(profile?.user_type === 'intervenant' || profile?.user_type === 'admin') &&
+               currentAppointment.status !== 'completed' &&
+               currentAppointment.status !== 'cancelled' &&
+               currentAppointment.status !== 'validated' &&
+               isPast(parseISO(currentAppointment.start_time)) && (
+                <Box sx={{ mt: 2 }}>
+                  <Tooltip title="Marquer ce rendez-vous comme terminé pour permettre au client de le valider">
+                    <Button
+                      variant="outlined"
+                      startIcon={completingAppointment ? <CircularProgress size={20} /> : <CheckCircleIcon />}
+                      onClick={handleMarkAsCompleted}
+                      disabled={completingAppointment}
+                      fullWidth
+                      sx={{
+                        py: { xs: 1.5, sm: 1 },
+                        fontSize: { xs: '0.9rem', sm: '0.875rem' },
+                        borderColor: '#FFA500',
+                        color: '#FFA500',
+                        '&:hover': {
+                          borderColor: '#FF8C00',
+                          backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                        },
+                      }}
+                    >
+                      {completingAppointment ? 'Marquage en cours...' : 'Marquer comme terminé'}
+                    </Button>
+                  </Tooltip>
+                </Box>
+              )}
             </Box>
 
             {/* Colonne de droite : Bénéficiaire (mis en évidence) */}
@@ -298,6 +372,18 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
           </Box>
         </Box>
 
+        {/* Messages d'alerte pour le marquage comme terminé */}
+        {completionSuccess && (
+          <Alert severity="success" sx={{ mb: 2 }} onClose={() => setCompletionSuccess(false)}>
+            Le rendez-vous a été marqué comme terminé avec succès !
+          </Alert>
+        )}
+        {completionError && (
+          <Alert severity="error" sx={{ mb: 2 }} onClose={() => setCompletionError('')}>
+            {completionError}
+          </Alert>
+        )}
+
         {/* Tabs pour Bénéficiaire, Intervenant, Visio, Documents et Commentaires */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mx: { xs: -1.5, sm: 0 } }}>
           <Tabs
@@ -355,6 +441,9 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
           <AppointmentComments
             appointmentId={currentAppointment.id}
             practitionerId={currentAppointment.practitioner_id}
+            appointmentStatus={currentAppointment.status}
+            clientId={currentAppointment.client_id}
+            onProblemReported={onClose}
           />
         </TabPanel>
       </DialogContent>

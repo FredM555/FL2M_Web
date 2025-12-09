@@ -40,6 +40,7 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import VisibilityIcon from '@mui/icons-material/Visibility';
+import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 
 // Interface pour les messages
 interface ContactMessage {
@@ -70,6 +71,7 @@ const AdminContactMessagesPage: React.FC = () => {
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [responseDialogOpen, setResponseDialogOpen] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [contestationsCount, setContestationsCount] = useState(0);
   
   // Chargement des messages
   useEffect(() => {
@@ -90,13 +92,24 @@ const AdminContactMessagesPage: React.FC = () => {
           query = query.eq('status', 'processing');
         } else if (tabValue === 2) {
           query = query.eq('status', 'responded');
+        } else if (tabValue === 3) {
+          // Onglet Contestations : messages avec le sujet "Demande de contestation"
+          query = query.eq('subject', 'Demande de contestation');
         }
         
         const { data, error } = await query;
-        
+
         if (error) throw error;
-        
+
         setMessages(data || []);
+
+        // Compter les contestations pour le badge
+        const { count: contestCount } = await supabase
+          .from('contact_messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('subject', 'Demande de contestation');
+
+        setContestationsCount(contestCount || 0);
       } catch (err: any) {
         console.error('Erreur lors du chargement des messages:', err);
         setError(err.message || 'Une erreur est survenue lors du chargement des messages');
@@ -168,9 +181,10 @@ const AdminContactMessagesPage: React.FC = () => {
   // Envoyer une réponse
   const handleSendResponse = async () => {
     if (!selectedMessage) return;
-    
+
     try {
-      const { error } = await supabase
+      // D'abord mettre à jour le message dans la base de données
+      const { error: updateError } = await supabase
         .from('contact_messages')
         .update({
           status: 'responded',
@@ -178,12 +192,37 @@ const AdminContactMessagesPage: React.FC = () => {
           responded_at: new Date().toISOString()
         })
         .eq('id', selectedMessage.id);
-      
-      if (error) throw error;
-      
-      // Dans un système complet, envoyer réellement l'email ici via une fonction Edge Supabase
-      console.log('Email envoyé à:', selectedMessage.email, 'avec la réponse:', responseText);
-      
+
+      if (updateError) throw updateError;
+
+      // Ensuite envoyer l'email via la fonction Edge Supabase
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('Session non trouvée');
+      }
+
+      const emailResponse = await fetch(
+        `${supabase.supabaseUrl}/functions/v1/send-contact-response`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            messageId: selectedMessage.id,
+            response: responseText,
+          }),
+        }
+      );
+
+      if (!emailResponse.ok) {
+        const errorData = await emailResponse.json();
+        throw new Error(errorData.error || 'Erreur lors de l\'envoi de l\'email');
+      }
+
+      console.log('Email de réponse envoyé avec succès à:', selectedMessage.email);
+
       // Fermer le dialogue et rafraîchir la liste
       setResponseDialogOpen(false);
       setRefreshTrigger(prev => prev + 1);
@@ -292,13 +331,29 @@ const AdminContactMessagesPage: React.FC = () => {
               </Box>
             } 
           />
-          <Tab 
+          <Tab
             label={
               <Box sx={{ display: 'flex', alignItems: 'center' }}>
                 <CheckCircleIcon sx={{ mr: 1 }} />
                 Répondus
               </Box>
-            } 
+            }
+          />
+          <Tab
+            label={
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <ReportProblemIcon sx={{ mr: 1 }} />
+                Contestations
+                {contestationsCount > 0 && (
+                  <Chip
+                    label={contestationsCount}
+                    size="small"
+                    color="error"
+                    sx={{ ml: 1, height: 20, minWidth: 20 }}
+                  />
+                )}
+              </Box>
+            }
           />
         </Tabs>
         
@@ -321,7 +376,7 @@ const AdminContactMessagesPage: React.FC = () => {
             <Box sx={{ textAlign: 'center', p: 4 }}>
               <Typography variant="body1" color="text.secondary">
                 Aucun message{' '}
-                {tabValue === 0 ? 'nouveau' : tabValue === 1 ? 'en cours' : 'répondu'} pour le moment.
+                {tabValue === 0 ? 'nouveau' : tabValue === 1 ? 'en cours' : tabValue === 2 ? 'répondu' : 'de contestation'} pour le moment.
               </Typography>
             </Box>
           ) : (
@@ -356,9 +411,19 @@ const AdminContactMessagesPage: React.FC = () => {
                         </Box>
                       </TableCell>
                       <TableCell>
-                        <Typography variant="body2">
-                          {message.subject}
-                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Typography variant="body2">
+                            {message.subject}
+                          </Typography>
+                          {message.subject === 'Demande de contestation' && (
+                            <Chip
+                              icon={<ReportProblemIcon fontSize="small" />}
+                              label="Contestation"
+                              size="small"
+                              color="error"
+                            />
+                          )}
+                        </Box>
                       </TableCell>
                       <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>
                         <Typography variant="body2">

@@ -8,7 +8,7 @@
 
 ## 📋 Vue d'ensemble
 
-Cette documentation décrit l'API TypeScript pour le calcul de commission selon le Modèle D avec 3 RDV gratuits. Les services sont utilisables côté client (React) et communiquent avec Supabase.
+Cette documentation décrit l'API TypeScript pour le calcul de commission selon le Modèle D v4.0 avec RDV gratuits selon le forfait (DÉCOUVERTE: 0, STARTER: 2, PRO: 4, PREMIUM: tous). Les services sont utilisables côté client (React) et communiquent avec Supabase.
 
 ---
 
@@ -56,7 +56,7 @@ static async calculateCommission(
 {
   commission_amount: number;     // Montant de la commission en €
   practitioner_amount: number;   // Montant net pour le praticien en €
-  is_free: boolean;             // true si RDV 1-3
+  is_free: boolean;             // true si RDV gratuit selon forfait (STARTER: 1-2, PRO: 1-4, PREMIUM: tous)
   appointment_number: number;    // Numéro séquentiel du RDV
   contract_type: ContractType;   // Type de contrat actif
 }
@@ -102,7 +102,7 @@ static calculateCommissionLocal(
 const result = CommissionCalculator.calculateCommissionLocal(
   4, // 4ème RDV
   60,
-  'free'
+  'decouverte'
 );
 
 console.log(result.commission_amount); // 10 (max(10, 60*0.12))
@@ -126,18 +126,18 @@ static simulateCommission(
 ```typescript
 const simulations = CommissionCalculator.simulateCommission(
   60,
-  'free',
+  'starter',
   [1, 2, 3, 4, 5, 10, 20]
 );
 
 simulations.forEach(sim => {
   console.log(`RDV #${sim.appointment_number}: ${sim.commission_amount}€`);
 });
-// RDV #1: 0€
-// RDV #2: 0€
-// RDV #3: 0€
-// RDV #4: 10€
-// RDV #5: 10€
+// RDV #1: 0€ (gratuit)
+// RDV #2: 0€ (gratuit)
+// RDV #3: 4.80€
+// RDV #4: 4.80€
+// RDV #5: 4.80€
 // ...
 ```
 
@@ -235,8 +235,8 @@ static calculateBreakEvenPoint(
 ```typescript
 const breakeven = CommissionCalculator.calculateBreakEvenPoint(
   60,
-  'free',
-  'pro',
+  'decouverte',
+  'starter',
   20
 );
 
@@ -540,9 +540,9 @@ npm run test:watch
 ### Couverture des tests
 
 Les tests couvrent :
-- ✅ Les 3 premiers RDV gratuits (tous contrats)
-- ✅ Calcul FREE: max(10€, 12%), plafonné à 25€
-- ✅ Calcul STARTER: min(6€, 8%)
+- ✅ RDV gratuits selon forfait (DÉCOUVERTE: 0, STARTER: 2, PRO: 4, PREMIUM: tous)
+- ✅ Calcul DÉCOUVERTE: max(10€, 12%), plafonné à 25€
+- ✅ Calcul STARTER: min(6€, 8%), plafonné à 25€
 - ✅ Calcul PRO: 3€ fixe
 - ✅ Calcul PREMIUM: 0€
 - ✅ Simulations et estimations
