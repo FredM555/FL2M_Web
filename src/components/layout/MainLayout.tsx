@@ -19,7 +19,8 @@ import {
   ListItem,
   ListItemIcon,
   ListItemText,
-  Grid
+  Grid,
+  Badge
 } from '@mui/material';
 import { Link as RouterLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
@@ -49,6 +50,7 @@ const MainLayout: React.FC = () => {
   // États pour les menus
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
 
   // Slogans en défilement
   const slogans = React.useMemo(() => [
@@ -113,6 +115,30 @@ const MainLayout: React.FC = () => {
 
     checkPendingOnboarding();
   }, [user, location.pathname, navigate]);
+
+  // Charger le nombre de messages non lus
+  React.useEffect(() => {
+    const loadUnreadCount = async () => {
+      if (!user) {
+        setUnreadMessagesCount(0);
+        return;
+      }
+
+      try {
+        const { getUnreadThreadCount } = await import('../../services/messaging');
+        const { count } = await getUnreadThreadCount(user.id);
+        setUnreadMessagesCount(count);
+      } catch (error) {
+        console.error('Erreur lors du chargement des messages non lus:', error);
+      }
+    };
+
+    loadUnreadCount();
+
+    // Rafraîchir toutes les minutes
+    const interval = setInterval(loadUnreadCount, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   // Hauteur totale du bandeau pour décaler le contenu principal
   const headerHeight = isMobile ? '56px' : '108px'; // Hauteur réduite du header
@@ -503,18 +529,23 @@ const MainLayout: React.FC = () => {
                               },
                             }}
                           >
-                            <Box
-                              component="span"
-                              className="menu-icon"
-                              sx={{
-                                mr: 2,
-                                display: 'inline-flex',
-                                fontSize: '1.2rem',
-                                transition: 'all 0.2s ease',
-                              }}
+                            <Badge
+                              badgeContent={unreadMessagesCount}
+                              color="error"
+                              sx={{ mr: 2 }}
                             >
-                              💬
-                            </Box>
+                              <Box
+                                component="span"
+                                className="menu-icon"
+                                sx={{
+                                  display: 'inline-flex',
+                                  fontSize: '1.2rem',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                💬
+                              </Box>
+                            </Badge>
                             <Typography sx={{ fontWeight: 500 }}>Messages</Typography>
                           </MenuItem>
                           <MenuItem
