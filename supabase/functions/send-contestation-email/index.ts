@@ -93,14 +93,16 @@ Date: ${appointmentDate}
 ${problemDescription}`;
 
     await supabase
-      .from('contact_messages')
+      .from('messages')
       .insert({
         first_name: appointment.client?.first_name || 'Client',
         last_name: appointment.client?.last_name || 'Inconnu',
         email: appointment.client?.email || 'no-email@fl2m.fr',
         subject: 'Demande de contestation',
         message: contestationMessage,
-        status: 'new'
+        status: 'new',
+        category: 'contact',
+        sender_type: 'public'
       });
 
     // Envoyer l'email via Resend

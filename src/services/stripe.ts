@@ -24,9 +24,10 @@ export const getStripe = (): Promise<Stripe | null> => {
  * IDs des prix Stripe pour les abonnements intervenants
  */
 export const STRIPE_PRICE_IDS = {
-  starter: import.meta.env.STRIPE_STARTER_PRICE_ID || '',
-  pro: import.meta.env.STRIPE_PRO_PRICE_ID || '',
-  premium: import.meta.env.STRIPE_PREMIUM_PRICE_ID || ''
+  decouverte: import.meta.env.VITE_STRIPE_DECOUVERTE_PRICE_ID || '',
+  starter: import.meta.env.VITE_STRIPE_STARTER_PRICE_ID || '',
+  pro: import.meta.env.VITE_STRIPE_PRO_PRICE_ID || '',
+  premium: import.meta.env.VITE_STRIPE_PREMIUM_PRICE_ID || ''
 };
 
 /**
@@ -34,7 +35,7 @@ export const STRIPE_PRICE_IDS = {
  */
 export const createSubscriptionCheckout = async (
   contractId: string,
-  contractType: 'starter' | 'pro' | 'premium'
+  contractType: 'decouverte' | 'starter' | 'pro' | 'premium'
 ) => {
   const priceId = STRIPE_PRICE_IDS[contractType];
 

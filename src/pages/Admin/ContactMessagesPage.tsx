@@ -81,7 +81,7 @@ const AdminContactMessagesPage: React.FC = () => {
       
       try {
         let query = supabase
-          .from('contact_messages')
+          .from('messages')
           .select('*')
           .order('created_at', { ascending: false });
         
@@ -105,7 +105,7 @@ const AdminContactMessagesPage: React.FC = () => {
 
         // Compter les contestations pour le badge
         const { count: contestCount } = await supabase
-          .from('contact_messages')
+          .from('messages')
           .select('*', { count: 'exact', head: true })
           .eq('subject', 'Demande de contestation');
 
@@ -164,7 +164,7 @@ const AdminContactMessagesPage: React.FC = () => {
       }
       
       const { error } = await supabase
-        .from('contact_messages')
+        .from('messages')
         .update(updateData)
         .eq('id', messageId);
       
@@ -185,7 +185,7 @@ const AdminContactMessagesPage: React.FC = () => {
     try {
       // D'abord mettre à jour le message dans la base de données
       const { error: updateError } = await supabase
-        .from('contact_messages')
+        .from('messages')
         .update({
           status: 'responded',
           response: responseText,
@@ -202,7 +202,7 @@ const AdminContactMessagesPage: React.FC = () => {
       }
 
       const emailResponse = await fetch(
-        `${supabase.supabaseUrl}/functions/v1/send-contact-response`,
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/send-contact-response`,
         {
           method: 'POST',
           headers: {
@@ -238,7 +238,7 @@ const AdminContactMessagesPage: React.FC = () => {
     
     try {
       const { error } = await supabase
-        .from('contact_messages')
+        .from('messages')
         .delete()
         .eq('id', messageId);
       

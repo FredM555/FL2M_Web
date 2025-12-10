@@ -100,7 +100,7 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
             {type === 'decouverte' && (
               <>
                 <Typography variant="body2" color="text.secondary">
-                  max({formatAmount(config.commission_fixed!)}, {config.commission_percentage}% du prix)
+                  {config.commission_percentage}% du prix (minimum {formatAmount(config.commission_fixed!)})
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
                   Plafonné à {formatAmount(config.commission_cap!)}
@@ -110,14 +110,16 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
             {type === 'starter' && (
               <>
                 <Typography variant="body2" color="text.secondary">
-                  min({formatAmount(config.commission_fixed!)}, {config.commission_percentage}% du prix)
+                  {config.commission_percentage}% du prix (minimum {formatAmount(config.commission_fixed!)})
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
                   Plafonné à {formatAmount(config.commission_cap!)}
                 </Typography>
-                <Typography variant="body2" color="success.main" sx={{ fontWeight: 600, mt: 0.5 }}>
-                  🎁 2 premiers RDV gratuits/mois
-                </Typography>
+                {config.free_appointments_per_month > 0 && (
+                  <Typography variant="body2" color="success.main" sx={{ fontWeight: 600, mt: 0.5 }}>
+                    🎁 {config.free_appointments_per_month} premiers RDV sans commission/mois
+                  </Typography>
+                )}
               </>
             )}
             {type === 'pro' && (
@@ -125,9 +127,11 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
                 <Typography variant="body2" color="text.secondary">
                   {formatAmount(config.commission_fixed!)} fixe par RDV
                 </Typography>
-                <Typography variant="body2" color="success.main" sx={{ fontWeight: 600, mt: 0.5 }}>
-                  🎁 4 premiers RDV gratuits/mois
-                </Typography>
+                {config.free_appointments_per_month > 0 && (
+                  <Typography variant="body2" color="success.main" sx={{ fontWeight: 600, mt: 0.5 }}>
+                    🎁 {config.free_appointments_per_month} premiers RDV sans commission/mois
+                  </Typography>
+                )}
               </>
             )}
             {type === 'premium' && (
@@ -162,7 +166,7 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
         </Typography>
         <Typography variant="body2">
           Les paiements clients passent par Stripe qui prélève <strong>~2% de frais de transaction</strong>.
-          Ces frais sont à la charge de l'intervenant. Les forfaits <strong>Starter</strong> offrent 2 RDV gratuits/mois et <strong>Pro</strong> offrent 4 RDV gratuits/mois (sans commission).
+          Ces frais sont à la charge de l'intervenant. Les frais s'appliquent dès le premier RDV.
         </Typography>
       </Alert>
 

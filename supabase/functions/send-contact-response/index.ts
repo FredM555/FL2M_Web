@@ -50,9 +50,9 @@ serve(async (req) => {
       throw new Error('Paramètres manquants');
     }
 
-    // Récupérer le message de contact
+    // Récupérer le message (anciennement contact_messages, maintenant messages)
     const { data: message, error: messageError } = await supabase
-      .from('contact_messages')
+      .from('messages')
       .select('*')
       .eq('id', messageId)
       .single();
@@ -60,6 +60,16 @@ serve(async (req) => {
     if (messageError || !message) {
       throw new Error('Message non trouvé');
     }
+
+    // Mettre à jour le statut du message à 'responded' et enregistrer la réponse
+    await supabase
+      .from('messages')
+      .update({
+        status: 'responded',
+        response: response,
+        responded_at: new Date().toISOString()
+      })
+      .eq('id', messageId);
 
     // Créer l'email de réponse
     const emailHtml = `

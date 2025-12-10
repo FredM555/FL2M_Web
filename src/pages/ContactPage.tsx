@@ -120,10 +120,14 @@ const ContactPage = () => {
         status: 'new'
       };
       
-      // Insérer le message dans la table contact_messages
+      // Insérer le message dans la table messages (anciennement contact_messages)
       const { error: insertError } = await supabase
-        .from('contact_messages')
-        .insert([newMessage]);
+        .from('messages')
+        .insert([{
+          ...newMessage,
+          category: 'contact', // Catégorie pour les messages du formulaire de contact
+          sender_type: 'public' // Type d'expéditeur pour les messages publics
+        }]);
       
       if (insertError) throw insertError;
       

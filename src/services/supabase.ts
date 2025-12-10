@@ -1524,7 +1524,8 @@ export const createPractitionerRequest = async (data: {
     return { data: null, error: new Error('User not authenticated') };
   }
 
-  return supabase
+  // Créer la demande d'intervenant
+  const { data: request, error: requestError } = await supabase
     .from('practitioner_requests')
     .insert({
       user_id: user.id,
@@ -1535,6 +1536,27 @@ export const createPractitionerRequest = async (data: {
       user:profiles!user_id(id, first_name, last_name, email, user_type)
     `)
     .single();
+
+  if (requestError || !request) {
+    return { data: null, error: requestError };
+  }
+
+  // Récupérer le profil de l'utilisateur pour le nom
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('first_name, last_name, email')
+    .eq('id', user.id)
+    .single();
+
+  const userName = profile
+    ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() || 'Utilisateur'
+    : 'Utilisateur';
+
+  // Créer automatiquement un thread de messages pour cette demande
+  const { createPractitionerRequestThread } = await import('./messaging');
+  await createPractitionerRequestThread(user.id, request.id, userName, profile?.email || '');
+
+  return { data: request, error: null };
 };
 
 /**

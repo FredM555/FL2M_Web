@@ -65,7 +65,7 @@ const AdminLayout: React.FC = () => {
     const fetchNewMessagesCount = async () => {
       try {
         const { count, error } = await supabase
-          .from('contact_messages')
+          .from('messages')
           .select('*', { count: 'exact', head: true })
           .eq('status', 'new');
         
@@ -85,11 +85,11 @@ const AdminLayout: React.FC = () => {
     
     // Configurer un abonnement aux changements en temps réel (si Supabase le permet pour votre table)
     const subscription = supabase
-      .channel('contact_messages')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'contact_messages' 
+      .channel('messages')
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'messages'
       }, () => {
         fetchNewMessagesCount();
       })

@@ -53,7 +53,7 @@ const PractitionerPaymentPage: React.FC = () => {
       // Créer la session de paiement Stripe Checkout
       const session = await createSubscriptionCheckout(
         contractId,
-        contractType as 'starter' | 'pro' | 'premium'
+        contractType as 'decouverte' | 'starter' | 'pro' | 'premium'
       );
 
       // Rediriger vers Stripe Checkout

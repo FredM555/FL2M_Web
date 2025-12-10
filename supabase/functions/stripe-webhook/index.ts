@@ -273,30 +273,99 @@ async function handleSubscriptionCheckoutCompleted(
 ) {
   const contractId = session.metadata?.contract_id;
   const subscriptionId = session.subscription as string;
+  const practitionerId = session.metadata?.practitioner_id;
 
   if (!contractId) return;
 
   console.log(`[Webhook] Activation du contrat: ${contractId}`);
 
-  // Activer le contrat
-  const { error: updateError } = await supabase
+  // Récupérer le contrat pour vérifier sa date de début
+  const { data: contract, error: fetchError } = await supabase
     .from('practitioner_contracts')
-    .update({
-      status: 'active',
-      start_date: new Date().toISOString()
-    })
-    .eq('id', contractId);
+    .select('start_date, practitioner_id')
+    .eq('id', contractId)
+    .single();
 
-  if (updateError) {
-    console.error('[Webhook] Erreur activation contrat:', updateError);
+  if (fetchError || !contract) {
+    console.error('[Webhook] Erreur récupération contrat:', fetchError);
     return;
   }
+
+  const startDate = new Date(contract.start_date);
+  const today = new Date();
+  const isFutureStart = startDate > today;
+
+  // Si le contrat commence dans le futur, c'est un changement d'abonnement
+  if (isFutureStart) {
+    console.log(`[Webhook] Changement d'abonnement planifié pour le ${startDate.toISOString()}`);
+
+    // Marquer le nouveau contrat comme pending_activation (sera activé à la date de début)
+    const { error: updateError } = await supabase
+      .from('practitioner_contracts')
+      .update({
+        status: 'pending_activation'
+      })
+      .eq('id', contractId);
+
+    if (updateError) {
+      console.error('[Webhook] Erreur mise à jour contrat:', updateError);
+    }
+
+    // Récupérer l'ancien contrat actif et planifier sa fin
+    const { data: oldContract } = await supabase
+      .from('practitioner_contracts')
+      .select('id, start_date')
+      .eq('practitioner_id', contract.practitioner_id)
+      .eq('status', 'active')
+      .order('start_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (oldContract) {
+      // Calculer la veille du début du nouveau contrat comme date de fin de l'ancien
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() - 1);
+
+      await supabase
+        .from('practitioner_contracts')
+        .update({
+          end_date: endDate.toISOString().split('T')[0]
+        })
+        .eq('id', oldContract.id);
+
+      console.log(`[Webhook] Ancien contrat ${oldContract.id} se terminera le ${endDate.toISOString()}`);
+    }
+  } else {
+    // Nouveau contrat, activer immédiatement
+    console.log(`[Webhook] Nouveau contrat, activation immédiate`);
+
+    const { error: updateError } = await supabase
+      .from('practitioner_contracts')
+      .update({
+        status: 'active',
+        start_date: today.toISOString().split('T')[0]
+      })
+      .eq('id', contractId);
+
+    if (updateError) {
+      console.error('[Webhook] Erreur activation contrat:', updateError);
+      return;
+    }
+  }
+
+  // Enregistrer l'ID de subscription Stripe dans le contrat
+  await supabase
+    .from('practitioner_contracts')
+    .update({
+      stripe_subscription_id: subscriptionId
+    })
+    .eq('id', contractId);
 
   // Créer un enregistrement de paiement d'abonnement
   const { error: paymentError } = await supabase
     .from('subscription_payments')
     .insert({
-      practitioner_id: session.metadata?.practitioner_id,
+      practitioner_id: practitionerId || contract.practitioner_id,
       contract_id: contractId,
       stripe_subscription_id: subscriptionId,
       stripe_payment_intent_id: session.payment_intent,

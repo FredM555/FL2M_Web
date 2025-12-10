@@ -9,7 +9,7 @@ export type ContractType = 'decouverte' | 'starter' | 'pro' | 'premium';
 /**
  * Statut d'un contrat praticien
  */
-export type ContractStatus = 'pending_payment' | 'active' | 'suspended' | 'terminated';
+export type ContractStatus = 'pending_payment' | 'pending_activation' | 'active' | 'suspended' | 'terminated';
 
 /**
  * Statut d'une transaction
@@ -61,6 +61,10 @@ export interface PractitionerContract {
   commission_percentage: number | null;
   commission_cap: number | null;
   max_appointments_per_month: number | null;
+  free_appointments_per_month: number;
+
+  // Stripe
+  stripe_subscription_id: string | null;
 
   // Dates et statut
   start_date: string; // ISO date
@@ -268,10 +272,11 @@ export interface ContractConfig {
   commission_percentage: number | null;
   commission_cap: number | null;
   max_appointments_per_month: number | null;
+  free_appointments_per_month: number;
 }
 
 /**
- * Configuration complète des contrats
+ * Configuration complète des contrats selon BusinessPlan.txt
  */
 export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
   decouverte: {
@@ -280,6 +285,7 @@ export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
     commission_percentage: 12,
     commission_cap: 25,
     max_appointments_per_month: 10,
+    free_appointments_per_month: 0, // Pas de RDV gratuits
   },
   starter: {
     monthly_fee: 49,
@@ -287,6 +293,7 @@ export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
     commission_percentage: 8,
     commission_cap: 25,
     max_appointments_per_month: 20,
+    free_appointments_per_month: 2, // 2 premiers RDV gratuits/mois
   },
   pro: {
     monthly_fee: 99,
@@ -294,6 +301,7 @@ export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
     commission_percentage: null,
     commission_cap: null,
     max_appointments_per_month: null,
+    free_appointments_per_month: 4, // 4 premiers RDV gratuits/mois
   },
   premium: {
     monthly_fee: 159,
@@ -301,6 +309,7 @@ export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
     commission_percentage: null,
     commission_cap: null,
     max_appointments_per_month: null,
+    free_appointments_per_month: 0, // Tous les RDV sont déjà sans commission
   },
 };
 
@@ -376,6 +385,7 @@ export function getContractTypeLabel(type: ContractType): string {
 export function getContractStatusLabel(status: ContractStatus): string {
   const labels: Record<ContractStatus, string> = {
     pending_payment: 'En attente de paiement',
+    pending_activation: 'En attente d\'activation',
     active: 'Actif',
     suspended: 'Suspendu',
     terminated: 'Résilié',

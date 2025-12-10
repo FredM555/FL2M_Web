@@ -57,6 +57,8 @@ import ProfilePage from './pages/ProfilePage';
 import PractitionerProfilePage from './pages/PractitionerProfilePage';
 import PractitionerOnboardingPage from './pages/PractitionerOnboardingPage';
 import PractitionerPaymentPage from './pages/PractitionerPaymentPage';
+import PractitionerSubscriptionPage from './pages/PractitionerSubscriptionPage';
+import MessagesPage from './pages/MessagesPage';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import PractitionerSchedulePage from './pages/Practitioner/PractitionerSchedulePage';
 import { BeneficiariesPage } from './pages/BeneficiariesPage';
@@ -284,6 +286,16 @@ function App() {
             <Route path="practitioner-payment" element={
               <ProtectedRoute>
                 <PractitionerPaymentPage />
+              </ProtectedRoute>
+            } />
+            <Route path="practitioner-subscription" element={
+              <ProtectedRoute>
+                <PractitionerSubscriptionPage />
+              </ProtectedRoute>
+            } />
+            <Route path="messages" element={
+              <ProtectedRoute>
+                <MessagesPage />
               </ProtectedRoute>
             } />
             <Route path="mes-rendez-vous" element={
