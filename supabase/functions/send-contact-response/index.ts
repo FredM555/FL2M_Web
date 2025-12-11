@@ -1,4 +1,5 @@
-// supabase/functions/send-contact-response/index.ts
+// supabase/functions/send-contact-response/index_NEW.ts
+// Version améliorée avec support du système de chat par thread
 import { serve } from 'https://deno.land/std@0.224.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.45.0';
 
@@ -44,32 +45,122 @@ serve(async (req) => {
       throw new Error('Accès réservé aux administrateurs');
     }
 
-    const { messageId, response } = await req.json();
+    // Récupérer les paramètres (support des deux formats)
+    const body = await req.json();
+    const { threadId, recipientEmail, recipientName, subject, response, messageId } = body;
 
-    if (!messageId || !response) {
-      throw new Error('Paramètres manquants');
+    // Support de l'ancien format (messageId) et du nouveau (threadId)
+    if (!response) {
+      throw new Error('Réponse manquante');
     }
 
-    // Récupérer le message (anciennement contact_messages, maintenant messages)
-    const { data: message, error: messageError } = await supabase
-      .from('messages')
-      .select('*')
-      .eq('id', messageId)
-      .single();
+    let messageThread = null;
+    let recipientInfo = {
+      email: recipientEmail,
+      name: recipientName,
+      subject: subject
+    };
 
-    if (messageError || !message) {
-      throw new Error('Message non trouvé');
+    if (threadId) {
+      // Nouveau format avec threadId
+      // Récupérer tous les messages du thread pour construire l'historique
+      const { data: messages, error: messagesError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('thread_id', threadId)
+        .order('created_at', { ascending: true });
+
+      if (messagesError || !messages || messages.length === 0) {
+        throw new Error('Thread non trouvé');
+      }
+
+      messageThread = messages;
+
+      // Récupérer les infos du premier message si pas fournies
+      if (!recipientEmail) {
+        const firstMessage = messages[0];
+        recipientInfo.email = firstMessage.email;
+        recipientInfo.name = `${firstMessage.first_name} ${firstMessage.last_name}`;
+        recipientInfo.subject = firstMessage.subject;
+      }
+    } else if (messageId) {
+      // Ancien format avec messageId
+      const { data: message, error: messageError } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('id', messageId)
+        .single();
+
+      if (messageError || !message) {
+        throw new Error('Message non trouvé');
+      }
+
+      recipientInfo.email = message.email;
+      recipientInfo.name = `${message.first_name} ${message.last_name}`;
+      recipientInfo.subject = message.subject;
+      messageThread = [message];
+    } else {
+      throw new Error('threadId ou messageId requis');
     }
 
-    // Mettre à jour le statut du message à 'responded' et enregistrer la réponse
-    await supabase
-      .from('messages')
-      .update({
-        status: 'responded',
-        response: response,
-        responded_at: new Date().toISOString()
-      })
-      .eq('id', messageId);
+    if (!recipientInfo.email) {
+      throw new Error('Email du destinataire manquant');
+    }
+
+    // Construire l'historique des messages pour l'email
+    let messagesHistory = '';
+    if (messageThread && messageThread.length > 1) {
+      messagesHistory = '<div style="background: #f9f9f9; padding: 15px; margin: 15px 0; border-radius: 4px;">';
+      messagesHistory += '<p class="label" style="font-weight: bold; color: #555;">Historique de la conversation :</p>';
+
+      messageThread.forEach((msg, index) => {
+        if (index === 0) {
+          // Premier message (message original)
+          messagesHistory += `
+            <div style="background: white; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #345995;">
+              <p style="font-size: 12px; color: #666; margin: 0 0 5px 0;">
+                <strong>${msg.first_name} ${msg.last_name}</strong> •
+                ${new Date(msg.created_at).toLocaleString('fr-FR')}
+              </p>
+              <p style="white-space: pre-wrap; margin: 5px 0;">${msg.message}</p>
+            </div>
+          `;
+        } else if (msg.sender_type === 'admin') {
+          // Réponse admin
+          messagesHistory += `
+            <div style="background: #e8f4f8; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #03a9f4;">
+              <p style="font-size: 12px; color: #666; margin: 0 0 5px 0;">
+                <strong>Équipe FL²M Services</strong> •
+                ${new Date(msg.created_at).toLocaleString('fr-FR')}
+              </p>
+              <p style="white-space: pre-wrap; margin: 5px 0;">${msg.message}</p>
+            </div>
+          `;
+        } else if (msg.sender_type === 'user') {
+          // Réponse utilisateur
+          messagesHistory += `
+            <div style="background: white; padding: 10px; margin: 10px 0; border-radius: 4px; border-left: 4px solid #4caf50;">
+              <p style="font-size: 12px; color: #666; margin: 0 0 5px 0;">
+                <strong>${msg.first_name} ${msg.last_name}</strong> •
+                ${new Date(msg.created_at).toLocaleString('fr-FR')}
+              </p>
+              <p style="white-space: pre-wrap; margin: 5px 0;">${msg.message}</p>
+            </div>
+          `;
+        }
+      });
+
+      messagesHistory += '</div>';
+    } else if (messageThread && messageThread.length === 1) {
+      // Premier message seulement
+      const firstMsg = messageThread[0];
+      messagesHistory = `
+        <div class="original-message" style="background: white; padding: 15px; margin: 15px 0; border-radius: 4px; border: 1px solid #ddd; border-left: 4px solid #345995;">
+          <p class="label" style="font-weight: bold; color: #555;">Votre message :</p>
+          <p style="white-space: pre-wrap; margin: 10px 0;">${firstMsg.message}</p>
+        </div>
+      `;
+    }
 
     // Créer l'email de réponse
     const emailHtml = `
@@ -83,42 +174,45 @@ serve(async (req) => {
             .header { background: linear-gradient(135deg, #345995 0%, #1D3461 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
             .content { background: #f9f9f9; padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px; }
             .greeting { margin-bottom: 20px; }
-            .original-message { background: white; padding: 15px; margin: 15px 0; border-radius: 4px; border: 1px solid #ddd; border-left: 4px solid #345995; }
             .response-box { background: #e8f4f8; padding: 15px; margin: 15px 0; border-radius: 4px; border-left: 4px solid #03a9f4; }
             .footer { text-align: center; margin-top: 20px; font-size: 12px; color: #777; }
             .label { font-weight: bold; color: #555; }
+            .button { display: inline-block; padding: 12px 24px; background: #345995; color: white; text-decoration: none; border-radius: 6px; margin: 15px 0; }
           </style>
         </head>
         <body>
           <div class="container">
             <div class="header">
-              <h1 style="margin: 0;">📧 Réponse à votre message</h1>
+              <h1 style="margin: 0;">📧 Nouveau message de FL²M Services</h1>
             </div>
             <div class="content">
               <div class="greeting">
-                <p>Bonjour ${message.first_name} ${message.last_name},</p>
-                <p>Nous avons bien reçu votre message concernant : <strong>${message.subject}</strong></p>
+                <p>Bonjour ${recipientInfo.name},</p>
+                <p>Vous avez reçu une nouvelle réponse concernant : <strong>${recipientInfo.subject}</strong></p>
               </div>
 
-              <div class="original-message">
-                <p class="label">Votre message :</p>
-                <p style="white-space: pre-wrap; margin: 10px 0;">${message.message}</p>
-              </div>
+              ${messagesHistory}
 
               <div class="response-box">
-                <p class="label">Notre réponse :</p>
+                <p class="label">Nouvelle réponse :</p>
                 <p style="white-space: pre-wrap; margin: 10px 0;">${response}</p>
               </div>
 
-              <div style="margin-top: 30px;">
-                <p>Si vous avez d'autres questions, n'hésitez pas à nous contacter à nouveau via notre formulaire de contact ou directement à cette adresse email.</p>
+              <div style="margin-top: 30px; text-align: center;">
+                <p>Pour répondre à ce message, connectez-vous à votre espace personnel :</p>
+                <a href="https://www.fl2m.fr/login" class="button">Accéder à mes messages</a>
+              </div>
+
+              <div style="margin-top: 20px;">
+                <p>Si vous n'avez pas de compte, vous pouvez répondre directement à cet email.</p>
                 <p>Cordialement,<br>L'équipe FL²M Services</p>
               </div>
 
               <div class="footer">
                 <p>Cette réponse a été envoyée depuis FL²M Services</p>
                 <p style="margin-top: 10px;">
-                  <a href="https://www.fl2m.fr" style="color: #345995; text-decoration: none;">www.fl2m.fr</a>
+                  <a href="https://www.fl2m.fr" style="color: #345995; text-decoration: none;">www.fl2m.fr</a> •
+                  <a href="mailto:contact@fl2m.fr" style="color: #345995; text-decoration: none;">contact@fl2m.fr</a>
                 </p>
               </div>
             </div>
@@ -136,9 +230,9 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         from: 'FL2M Services <contact@fl2m.fr>',
-        to: [message.email],
+        to: [recipientInfo.email],
         reply_to: 'contact@fl2m.fr',
-        subject: `Re: ${message.subject}`,
+        subject: `Re: ${recipientInfo.subject}`,
         html: emailHtml,
       }),
     });

@@ -97,7 +97,7 @@ export interface MessageWithSender extends Message {
     first_name: string;
     last_name: string;
     email: string;
-    role: string;
+    user_type: string;
   };
 }
 

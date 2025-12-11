@@ -183,19 +183,39 @@ const AdminContactMessagesPage: React.FC = () => {
     if (!selectedMessage) return;
 
     try {
-      // D'abord mettre à jour le message dans la base de données
+      // Récupérer l'utilisateur admin connecté
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Utilisateur non authentifié');
+      }
+
+      // Créer un nouveau message dans le thread (réponse de l'admin)
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert({
+          thread_id: selectedMessage.thread_id || selectedMessage.id,
+          parent_id: selectedMessage.id,
+          user_id: user.id,
+          message: responseText,
+          sender_type: 'admin',
+          read_by_user: false,
+          read_by_admin: true
+        });
+
+      if (messageError) throw messageError;
+
+      // Mettre à jour le statut du message principal à 'responded'
       const { error: updateError } = await supabase
         .from('messages')
         .update({
           status: 'responded',
-          response: responseText,
           responded_at: new Date().toISOString()
         })
         .eq('id', selectedMessage.id);
 
       if (updateError) throw updateError;
 
-      // Ensuite envoyer l'email via la fonction Edge Supabase
+      // Envoyer l'email via la fonction Edge Supabase
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         throw new Error('Session non trouvée');
@@ -218,10 +238,11 @@ const AdminContactMessagesPage: React.FC = () => {
 
       if (!emailResponse.ok) {
         const errorData = await emailResponse.json();
-        throw new Error(errorData.error || 'Erreur lors de l\'envoi de l\'email');
+        console.warn('Erreur lors de l\'envoi de l\'email:', errorData.error || 'Erreur inconnue');
+        // Ne pas bloquer si l'email échoue
+      } else {
+        console.log('Email de réponse envoyé avec succès à:', selectedMessage.email);
       }
-
-      console.log('Email de réponse envoyé avec succès à:', selectedMessage.email);
 
       // Fermer le dialogue et rafraîchir la liste
       setResponseDialogOpen(false);

@@ -1,4 +1,5 @@
-// src/pages/MessagesPage.tsx
+// src/pages/MessagesPage_NEW.tsx
+// Version améliorée avec interface de chat moderne
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
@@ -10,13 +11,13 @@ import {
   ListItemButton,
   ListItemText,
   TextField,
-  Button,
   IconButton,
   Chip,
   Avatar,
   CircularProgress,
   Alert,
-  Badge
+  Badge,
+  Divider
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import CloseIcon from '@mui/icons-material/Close';
@@ -40,7 +41,7 @@ import {
   reopenMessageThread
 } from '../services/messaging';
 
-const MessagesPage: React.FC = () => {
+const MessagesPageNew: React.FC = () => {
   const { user, profile } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -154,6 +155,13 @@ const MessagesPage: React.FC = () => {
     setSending(false);
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   const handleCloseThread = async () => {
     if (!selectedThread) return;
 
@@ -162,7 +170,6 @@ const MessagesPage: React.FC = () => {
     if (err) {
       setError('Erreur lors de la fermeture du message');
     } else {
-      // Mettre à jour l'état local
       setSelectedThread({ ...selectedThread, status: 'closed' });
       loadThreads();
     }
@@ -176,7 +183,6 @@ const MessagesPage: React.FC = () => {
     if (err) {
       setError('Erreur lors de la réouverture du message');
     } else {
-      // Mettre à jour l'état local
       setSelectedThread({ ...selectedThread, status: 'responded' });
       loadThreads();
     }
@@ -194,6 +200,18 @@ const MessagesPage: React.FC = () => {
     } else {
       return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
     }
+  };
+
+  const getSenderName = (msg: MessageWithSender) => {
+    if (msg.sender_type === 'system') return '🤖 FL²M Services';
+    if (msg.sender_type === 'admin') return '👤 Équipe FL²M Services';
+    if (msg.sender_type === 'public') {
+      return `${msg.first_name || 'Vous'} ${msg.last_name || ''}`.trim();
+    }
+    if (msg.sender) {
+      return `${msg.sender.first_name} ${msg.sender.last_name}`.trim();
+    }
+    return 'Vous';
   };
 
   if (loading) {
@@ -219,14 +237,14 @@ const MessagesPage: React.FC = () => {
         </Alert>
       )}
 
-      <Grid container spacing={0} sx={{ height: 'calc(100vh - 250px)' }}>
-        {/* Liste des threads */}
-        <Grid item xs={12} md={4}>
+      <Grid container spacing={0} sx={{ height: 'calc(100vh - 220px)', minHeight: '600px' }}>
+        {/* Liste des conversations */}
+        <Grid item xs={12} md={4} sx={{ height: '100%' }}>
           <Paper sx={{ height: '100%', overflow: 'auto', borderRight: '1px solid #e0e0e0' }}>
             {threads.length === 0 ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
                 <Typography variant="body1" color="text.secondary">
-                  Aucun message
+                  Aucune conversation
                 </Typography>
               </Box>
             ) : (
@@ -252,7 +270,7 @@ const MessagesPage: React.FC = () => {
                             {thread.subject}
                           </Typography>
                           {thread.unread_count_user > 0 && (
-                            <Badge badgeContent={thread.unread_count_user} color="primary" />
+                            <Badge badgeContent={thread.unread_count_user} color="error" />
                           )}
                         </Box>
                       }
@@ -276,106 +294,152 @@ const MessagesPage: React.FC = () => {
           </Paper>
         </Grid>
 
-        {/* Zone de messages */}
-        <Grid item xs={12} md={8}>
+        {/* Zone de chat */}
+        <Grid item xs={12} md={8} sx={{ height: '100%' }}>
           <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {selectedThread ? (
               <>
-                {/* En-tête du thread */}
-                <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar sx={{ bgcolor: getMessageCategoryColor(selectedThread.category) }}>
-                    {getMessageCategoryIcon(selectedThread.category)}
-                  </Avatar>
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                      {selectedThread.subject}
-                    </Typography>
-                    <Chip
-                      label={getMessageStatusLabel(selectedThread.status)}
-                      size="small"
-                      color={getMessageStatusColor(selectedThread.status)}
-                      sx={{ mt: 0.5 }}
-                    />
+                {/* En-tête de la conversation */}
+                <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: 'grey.50' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Avatar sx={{ bgcolor: getMessageCategoryColor(selectedThread.category) }}>
+                      {getMessageCategoryIcon(selectedThread.category)}
+                    </Avatar>
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                        {selectedThread.subject}
+                      </Typography>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                        <Chip
+                          label={getMessageCategoryLabel(selectedThread.category)}
+                          size="small"
+                          sx={{ height: '20px', fontSize: '0.7rem' }}
+                        />
+                        <Chip
+                          label={getMessageStatusLabel(selectedThread.status)}
+                          size="small"
+                          color={getMessageStatusColor(selectedThread.status)}
+                          sx={{ height: '20px', fontSize: '0.7rem' }}
+                        />
+                      </Box>
+                    </Box>
+                    {selectedThread.status !== 'closed' ? (
+                      <IconButton onClick={handleCloseThread} title="Fermer la conversation" size="small">
+                        <CloseIcon />
+                      </IconButton>
+                    ) : (
+                      <IconButton onClick={handleReopenThread} title="Rouvrir la conversation" size="small">
+                        <ReopenIcon />
+                      </IconButton>
+                    )}
                   </Box>
-                  {selectedThread.status !== 'closed' ? (
-                    <IconButton onClick={handleCloseThread} title="Fermer le message">
-                      <CloseIcon />
-                    </IconButton>
-                  ) : (
-                    <IconButton onClick={handleReopenThread} title="Rouvrir le message">
-                      <ReopenIcon />
-                    </IconButton>
-                  )}
                 </Box>
 
-                {/* Messages */}
-                <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+                {/* Messages (style chat) */}
+                <Box sx={{ flex: 1, overflow: 'auto', p: 2, bgcolor: '#f5f5f5' }}>
                   {loadingMessages ? (
                     <Box sx={{ textAlign: 'center', py: 4 }}>
                       <CircularProgress size={30} />
                     </Box>
                   ) : messages.length === 0 ? (
                     <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 4 }}>
-                      Aucun message
+                      Aucun message dans cette conversation
                     </Typography>
                   ) : (
                     <Box>
-                      {messages.map((msg) => {
-                        const isUser = msg.sender_type === 'user';
+                      {messages.map((msg, index) => {
+                        const isMyMessage = msg.sender_type === 'user' || msg.sender_type === 'public';
                         const isSystem = msg.sender_type === 'system';
-                        const isPublic = msg.sender_type === 'public';
+                        const isAdmin = msg.sender_type === 'admin';
+
+                        // Afficher la date si c'est un nouveau jour
+                        const showDate = index === 0 ||
+                          new Date(messages[index - 1].created_at).toDateString() !== new Date(msg.created_at).toDateString();
 
                         return (
-                          <Box
-                            key={msg.id}
-                            sx={{
-                              display: 'flex',
-                              justifyContent: isUser || isPublic ? 'flex-end' : 'flex-start',
-                              mb: 2
-                            }}
-                          >
-                            <Paper
-                              elevation={1}
-                              sx={{
-                                p: 2,
-                                maxWidth: '70%',
-                                bgcolor: isSystem
-                                  ? 'grey.100'
-                                  : isUser || isPublic
-                                  ? 'primary.main'
-                                  : 'background.paper',
-                                color: (isUser || isPublic) && !isSystem ? 'white' : 'text.primary'
-                              }}
-                            >
-                              {!isUser && !isPublic && msg.sender && (
-                                <Typography variant="caption" sx={{ fontWeight: 600, display: 'block', mb: 0.5 }}>
-                                  {isSystem
-                                    ? '🤖 Système'
-                                    : msg.sender_type === 'admin'
-                                    ? '👤 Administrateur'
-                                    : `${msg.sender.first_name} ${msg.sender.last_name}`}
-                                </Typography>
-                              )}
-                              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
-                                {msg.message}
-                              </Typography>
-                              <Typography
-                                variant="caption"
+                          <Box key={msg.id}>
+                            {showDate && (
+                              <Box sx={{ textAlign: 'center', my: 2 }}>
+                                <Chip
+                                  label={new Date(msg.created_at).toLocaleDateString('fr-FR', {
+                                    weekday: 'long',
+                                    day: 'numeric',
+                                    month: 'long'
+                                  })}
+                                  size="small"
+                                  sx={{ bgcolor: 'white' }}
+                                />
+                              </Box>
+                            )}
+
+                            {isSystem ? (
+                              // Message système (centré)
+                              <Box sx={{ textAlign: 'center', my: 1 }}>
+                                <Chip
+                                  label={msg.message}
+                                  size="small"
+                                  sx={{ bgcolor: 'info.light', color: 'white' }}
+                                />
+                              </Box>
+                            ) : (
+                              // Message utilisateur ou admin
+                              <Box
                                 sx={{
-                                  display: 'block',
-                                  mt: 1,
-                                  opacity: 0.7,
-                                  textAlign: 'right'
+                                  display: 'flex',
+                                  justifyContent: isMyMessage ? 'flex-end' : 'flex-start',
+                                  mb: 1
                                 }}
                               >
-                                {new Date(msg.created_at).toLocaleString('fr-FR', {
-                                  day: 'numeric',
-                                  month: 'short',
-                                  hour: '2-digit',
-                                  minute: '2-digit'
-                                })}
-                              </Typography>
-                            </Paper>
+                                <Box sx={{ maxWidth: '70%' }}>
+                                  {/* Nom de l'expéditeur pour les messages admin */}
+                                  {!isMyMessage && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        display: 'block',
+                                        ml: 1,
+                                        mb: 0.5,
+                                        fontWeight: 600,
+                                        color: 'primary.main'
+                                      }}
+                                    >
+                                      {getSenderName(msg)}
+                                    </Typography>
+                                  )}
+
+                                  <Paper
+                                    elevation={1}
+                                    sx={{
+                                      p: 1.5,
+                                      bgcolor: isMyMessage ? 'primary.main' : 'white',
+                                      color: isMyMessage ? 'white' : 'text.primary',
+                                      borderRadius: isMyMessage ? '16px 16px 4px 16px' : '16px 16px 16px 4px'
+                                    }}
+                                  >
+                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                                      {msg.message}
+                                    </Typography>
+                                  </Paper>
+
+                                  {/* Heure */}
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      display: 'block',
+                                      mt: 0.5,
+                                      mx: 1,
+                                      opacity: 0.6,
+                                      textAlign: isMyMessage ? 'right' : 'left'
+                                    }}
+                                  >
+                                    {new Date(msg.created_at).toLocaleTimeString('fr-FR', {
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            )}
                           </Box>
                         );
                       })}
@@ -385,51 +449,56 @@ const MessagesPage: React.FC = () => {
                 </Box>
 
                 {/* Zone de saisie */}
-                {selectedThread.status !== 'closed' && (
-                  <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0' }}>
+                {selectedThread.status !== 'closed' ? (
+                  <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0', bgcolor: 'white' }}>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <TextField
                         fullWidth
                         multiline
                         maxRows={4}
-                        placeholder="Écrire un message..."
+                        placeholder="Tapez votre message..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleSendMessage();
+                        onKeyPress={handleKeyPress}
+                        disabled={sending}
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            borderRadius: '20px'
                           }
                         }}
-                        disabled={sending}
                       />
-                      <Button
-                        variant="contained"
+                      <IconButton
+                        color="primary"
                         onClick={handleSendMessage}
                         disabled={!newMessage.trim() || sending}
-                        sx={{ minWidth: 50 }}
+                        sx={{
+                          bgcolor: 'primary.main',
+                          color: 'white',
+                          '&:hover': { bgcolor: 'primary.dark' },
+                          '&:disabled': { bgcolor: 'grey.300' }
+                        }}
                       >
-                        {sending ? <CircularProgress size={24} /> : <SendIcon />}
-                      </Button>
+                        {sending ? <CircularProgress size={20} /> : <SendIcon />}
+                      </IconButton>
                     </Box>
                     <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                       Appuyez sur Entrée pour envoyer, Shift+Entrée pour une nouvelle ligne
                     </Typography>
                   </Box>
-                )}
-
-                {selectedThread.status === 'closed' && (
-                  <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0', bgcolor: 'grey.50' }}>
-                    <Alert severity="info">
-                      Ce message est fermé. Vous pouvez le rouvrir pour continuer à échanger.
-                    </Alert>
+                ) : (
+                  <Box sx={{ p: 2, textAlign: 'center', bgcolor: 'grey.100' }}>
+                    <Typography variant="body2" color="text.secondary">
+                      Cette conversation est fermée. Vous pouvez la rouvrir en cliquant sur l'icône en haut à droite.
+                    </Typography>
                   </Box>
                 )}
               </>
             ) : (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                <Typography variant="body1" color="text.secondary">
-                  Sélectionnez un message pour voir la conversation
+                <Typography variant="h6" color="text.secondary">
+                  Sélectionnez une conversation pour commencer
                 </Typography>
               </Box>
             )}
@@ -440,4 +509,4 @@ const MessagesPage: React.FC = () => {
   );
 };
 
-export default MessagesPage;
+export default MessagesPageNew;

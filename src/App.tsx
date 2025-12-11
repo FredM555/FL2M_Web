@@ -58,7 +58,7 @@ import PractitionerProfilePage from './pages/PractitionerProfilePage';
 import PractitionerOnboardingPage from './pages/PractitionerOnboardingPage';
 import PractitionerPaymentPage from './pages/PractitionerPaymentPage';
 import PractitionerSubscriptionPage from './pages/PractitionerSubscriptionPage';
-import MessagesPage from './pages/MessagesPage';
+import MessagesPage from './pages/MessagesPage_NEW';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import PractitionerSchedulePage from './pages/Practitioner/PractitionerSchedulePage';
 import { BeneficiariesPage } from './pages/BeneficiariesPage';
@@ -77,7 +77,7 @@ import AdminAppointmentsPage from './pages/Admin/AppointmentsPage';
 import AdminTransactionsPage from './pages/Admin/AdminTransactionsPage';
 
 // Import du nouveau composant
-import AdminContactMessagesPage from './pages/Admin/ContactMessagesPage';
+import AdminContactMessagesPage from './pages/Admin/ContactMessagesPage_NEW';
 import AdminPractitionerRequestsPage from './pages/Admin/PractitionerRequestsPage';
 import AdminActivityLogsPage from './pages/Admin/ActivityLogsPage';
 

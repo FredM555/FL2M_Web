@@ -103,7 +103,7 @@ export async function getThreadMessages(threadId: string) {
     .from('messages')
     .select(`
       *,
-      sender:profiles!messages_user_id_fkey(first_name, last_name, email, role)
+      sender:profiles(first_name, last_name, email, user_type)
     `)
     .eq('thread_id', threadId)
     .order('created_at', { ascending: true });
