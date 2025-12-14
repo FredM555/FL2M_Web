@@ -45,6 +45,9 @@ import ReportProblemIcon from '@mui/icons-material/ReportProblem';
 // Interface pour les messages
 interface ContactMessage {
   id: string;
+  thread_id?: string | null;
+  parent_id?: string | null;
+  user_id?: string | null;
   first_name: string;
   last_name: string;
   email: string;
@@ -52,11 +55,14 @@ interface ContactMessage {
   subject: string;
   message: string;
   status: 'new' | 'processing' | 'responded';
+  sender_type?: 'public' | 'user' | 'admin' | 'system';
   created_at: string;
   updated_at: string;
   assigned_to_email?: string;
   response?: string;
   responded_at?: string;
+  read_by_admin?: boolean;
+  read_by_user?: boolean;
 }
 
 const AdminContactMessagesPage: React.FC = () => {

@@ -8,7 +8,8 @@ import {
   CircularProgress,
   Button,
   Tabs,
-  Tab
+  Tab,
+  Badge
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
@@ -16,6 +17,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import PaymentIcon from '@mui/icons-material/Payment';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PreviewIcon from '@mui/icons-material/Preview';
+import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import { useAuth } from '../context/AuthContext';
 import { PractitionerProfileForm } from '../components/practitioner/PractitionerProfileForm';
 import { UserRoleBadge } from '../components/profile/UserRoleBadge';
@@ -28,6 +30,8 @@ import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import SubscriptionManagement from '../components/practitioner/SubscriptionManagement';
 import PractitionerTransactions from '../components/practitioner/PractitionerTransactions';
 import PractitionerProfilePreview from '../components/practitioner/PractitionerProfilePreview';
+import { StripeAccountStatus } from '../components/practitioner/StripeAccountStatus';
+import { checkConnectStatus, StripeConnectStatus } from '../services/stripeConnect';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -57,10 +61,21 @@ const PractitionerProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
+  const [stripeStatus, setStripeStatus] = useState<StripeConnectStatus | null>(null);
 
   useEffect(() => {
     loadPractitionerProfile();
+    loadStripeStatus();
   }, []);
+
+  const loadStripeStatus = async () => {
+    try {
+      const status = await checkConnectStatus();
+      setStripeStatus(status);
+    } catch (err) {
+      console.error('Erreur chargement statut Stripe:', err);
+    }
+  };
 
   const loadPractitionerProfile = async () => {
     setLoading(true);
@@ -340,6 +355,40 @@ const PractitionerProfilePage: React.FC = () => {
               <Tab icon={<PersonIcon />} label="Mon Profil" iconPosition="start" />
               <Tab icon={<PreviewIcon />} label="Aperçu" iconPosition="start" />
               <Tab icon={<PaymentIcon />} label="Mon Abonnement" iconPosition="start" />
+              <Tab
+                icon={
+                  <Badge
+                    variant="dot"
+                    color={
+                      stripeStatus?.status === 'complete' && stripeStatus?.canReceivePayments
+                        ? 'success'
+                        : stripeStatus?.status === 'not_created'
+                        ? 'error'
+                        : 'warning'
+                    }
+                  >
+                    <AccountBalanceIcon />
+                  </Badge>
+                }
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    Compte bancaire
+                    {stripeStatus?.status === 'complete' && stripeStatus?.canReceivePayments && (
+                      <Box
+                        component="span"
+                        sx={{
+                          fontSize: '0.7rem',
+                          color: 'success.main',
+                          fontWeight: 600
+                        }}
+                      >
+                        ✓
+                      </Box>
+                    )}
+                  </Box>
+                }
+                iconPosition="start"
+              />
               <Tab icon={<ReceiptIcon />} label="Mes Transactions" iconPosition="start" />
             </Tabs>
 
@@ -369,6 +418,10 @@ const PractitionerProfilePage: React.FC = () => {
               </TabPanel>
 
               <TabPanel value={tabValue} index={3}>
+                <StripeAccountStatus />
+              </TabPanel>
+
+              <TabPanel value={tabValue} index={4}>
                 <PractitionerTransactions practitionerId={practitioner.id} />
               </TabPanel>
             </Box>

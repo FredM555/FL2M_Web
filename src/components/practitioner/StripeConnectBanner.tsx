@@ -80,7 +80,7 @@ export const StripeConnectBanner: React.FC<StripeConnectBannerProps> = ({ compac
             <Button
               color="inherit"
               size="small"
-              onClick={() => navigate('/practitioner/stripe-connect')}
+              onClick={() => navigate('/intervenant/stripe-connect')}
             >
               Configurer
             </Button>
@@ -113,7 +113,7 @@ export const StripeConnectBanner: React.FC<StripeConnectBannerProps> = ({ compac
             <Button
               color="inherit"
               size="small"
-              onClick={() => navigate('/practitioner/stripe-connect')}
+              onClick={() => navigate('/intervenant/stripe-connect')}
             >
               Compléter
             </Button>

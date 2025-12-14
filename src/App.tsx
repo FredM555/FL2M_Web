@@ -64,9 +64,6 @@ import PractitionerSchedulePage from './pages/Practitioner/PractitionerScheduleP
 import { BeneficiariesPage } from './pages/BeneficiariesPage';
 import PractitionerStripeConnectPage from './pages/PractitionerStripeConnectPage';
 import PractitionerStripeConnectSuccessPage from './pages/PractitionerStripeConnectSuccessPage';
-import PractitionerTransactionsPage from './pages/PractitionerTransactionsPage';
-
-
 
 // Pages admin
 import AdminDashboardPage from './pages/Admin/DashboardPage';
@@ -321,11 +318,6 @@ function App() {
             <Route path="intervenant/stripe-connect-success" element={
               <ProtectedRoute>
                 <PractitionerStripeConnectSuccessPage />
-              </ProtectedRoute>
-            } />
-            <Route path="intervenant/transactions" element={
-              <ProtectedRoute>
-                <PractitionerTransactionsPage />
               </ProtectedRoute>
             } />
           </Route>

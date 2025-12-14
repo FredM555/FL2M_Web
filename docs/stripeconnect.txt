@@ -1,0 +1,72 @@
+Parfait ! Le code fonctionne maintenant, mais le problème est que Stripe Connect     
+  n'est pas activé sur votre compte Stripe. C'est une configuration à faire dans le    
+   dashboard Stripe.
+
+  🔧 Solution : Activer Stripe Connect
+
+  Voici comment activer Stripe Connect sur votre compte Stripe :
+
+  Étape 1 : Se connecter au Dashboard Stripe
+
+  1. Allez sur https://dashboard.stripe.com/
+  2. Connectez-vous avec votre compte Stripe (celui qui contient votre
+  STRIPE_SECRET_KEY)
+
+  Étape 2 : Activer Connect
+
+  1. Dans le menu de gauche, cliquez sur "Connect" (ou "Connexion" en français)        
+  2. Si vous ne voyez pas Connect dans le menu :
+    - Cliquez sur "Settings" (⚙️ en haut à droite) → "Connect"
+    - Ou allez directement sur : https://dashboard.stripe.com/settings/connect
+
+  Étape 3 : Commencer la configuration
+
+  1. Cliquez sur "Get started" ou "Commencer"
+  2. Stripe va vous demander quelques informations sur votre entreprise :
+    - Type d'activité : "Marketplace/plateforme" ou "Services professionnels"
+    - Description : "Plateforme de réservation de consultations avec des
+  intervenants"
+    - URL du site : votre site (fl2m.fr ou votre domaine)
+
+  Étape 4 : Accepter les conditions
+
+  1. Lisez et acceptez les Conditions de service Stripe Connect
+  2. Cliquez sur "Activer Connect" ou "Enable Connect"
+
+  Étape 5 : Configurer les paramètres Connect
+
+  1. Une fois activé, allez dans Connect → Settings
+  2. Vérifiez que le Branding est configuré (nom de votre plateforme, logo)
+  3. Configurez l'URL de redirection (optionnel pour le mode Express)
+
+  ---
+  📸 Si vous avez besoin d'aide visuelle
+
+  Voici les étapes en résumé :
+  Dashboard Stripe → Connect (menu gauche) → Get Started →
+  Remplir le formulaire → Accept → Connect activé ✅
+
+  ---
+  ✅ Vérification
+
+  Une fois Connect activé, vous devriez voir :
+  - Un onglet "Connect" dans le menu de gauche
+  - La possibilité de créer des "Connected accounts"
+  - Un message de confirmation que Connect est activé
+
+  ---
+  🧪 Après activation
+
+  1. Pas besoin de redéployer les fonctions Edge (elles sont déjà correctes)
+  2. Pas besoin de changer les clés API (la même STRIPE_SECRET_KEY fonctionnera)       
+  3. Juste rafraîchir votre navigateur et réessayer de cliquer sur "Configurer mon     
+  compte bancaire"
+
+  Dites-moi quand vous avez activé Connect et on testera ensemble ! 🚀
+
+  ---
+  💡 Note importante
+
+  - Stripe Connect est gratuit à activer
+  - Vous pouvez continuer à utiliser votre compte en mode test
+  - Les frais Connect s'appliquent uniquement sur les vrais paiements (mode live)      

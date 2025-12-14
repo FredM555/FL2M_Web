@@ -323,14 +323,18 @@ const MessagesPageNew: React.FC = () => {
                         />
                       </Box>
                     </Box>
-                    {selectedThread.status !== 'closed' ? (
-                      <IconButton onClick={handleCloseThread} title="Fermer la conversation" size="small">
-                        <CloseIcon />
-                      </IconButton>
-                    ) : (
-                      <IconButton onClick={handleReopenThread} title="Rouvrir la conversation" size="small">
-                        <ReopenIcon />
-                      </IconButton>
+                    {profile?.user_type !== 'intervenant' && (
+                      <>
+                        {selectedThread.status !== 'closed' ? (
+                          <IconButton onClick={handleCloseThread} title="Fermer la conversation" size="small">
+                            <CloseIcon />
+                          </IconButton>
+                        ) : (
+                          <IconButton onClick={handleReopenThread} title="Rouvrir la conversation" size="small">
+                            <ReopenIcon />
+                          </IconButton>
+                        )}
+                      </>
                     )}
                   </Box>
                 </Box>

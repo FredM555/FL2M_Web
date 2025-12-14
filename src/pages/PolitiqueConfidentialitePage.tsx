@@ -75,7 +75,7 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               mb: 4,
             }}
           >
-            Dernière mise à jour : [DATE À COMPLÉTER]
+            Dernière mise à jour : 14 décembre 2024
           </Typography>
 
           <Divider sx={{ mb: 4 }} />
@@ -101,10 +101,11 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               1. Responsable du traitement des données
             </Typography>
             <Typography variant="body1" sx={{ pl: 2 }}>
-              <strong>Raison sociale :</strong> [NOM DE LA SOCIÉTÉ]<br />
-              <strong>Siège social :</strong> [ADRESSE COMPLÈTE]<br />
-              <strong>Email :</strong> [ADRESSE EMAIL]<br />
-              <strong>Téléphone :</strong> [NUMÉRO DE TÉLÉPHONE]
+              <strong>Raison sociale :</strong> FL2M IPS<br />
+              <strong>Siège social :</strong> 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
+              <strong>Représentant légal :</strong> Frédéric Ménard<br />
+              <strong>Email :</strong> contact@fl2m.fr<br />
+              <strong>SIREN :</strong> 982131260
             </Typography>
           </Box>
 
@@ -129,10 +130,13 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               2.1. Données d'identification
             </Typography>
             <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
-              <li>Nom et prénom</li>
+              <li>Nom et prénom (y compris second prénom et nom de jeune fille)</li>
               <li>Adresse email</li>
               <li>Numéro de téléphone</li>
-              <li>Date de naissance (si nécessaire pour les services de numérologie)</li>
+              <li>Date de naissance complète (nécessaire pour les calculs numérologiques)</li>
+              <li>Département de résidence</li>
+              <li>Photo de profil / Avatar (optionnel)</li>
+              <li>Pseudonyme (optionnel)</li>
             </Typography>
 
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
@@ -158,9 +162,32 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               2.4. Données relatives aux rendez-vous
             </Typography>
             <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
-              <li>Informations sur les rendez-vous pris</li>
+              <li>Informations sur les rendez-vous pris (date, heure, intervenant)</li>
+              <li>Statut des rendez-vous (confirmé, annulé, complété)</li>
               <li>Notes et préférences concernant les consultations</li>
               <li>Type de service demandé (particuliers, professionnels, sportifs)</li>
+              <li>Liens de visioconférence pour consultations à distance</li>
+              <li>Évaluations et avis (après consultation)</li>
+            </Typography>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+              2.5. Données numérologiques
+            </Typography>
+            <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
+              <li>Calculs numérologiques (Racine 1, Racine 2, Tronc, Dynamique de vie, etc.)</li>
+              <li>Documents PDF générés (arbres numérologiques, plans de vie, analyses)</li>
+              <li>Notes personnelles des consultations</li>
+            </Typography>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+              2.6. Données relatives aux bénéficiaires
+            </Typography>
+            <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
+              <li>Informations des personnes pour lesquelles vous prenez rendez-vous (enfants, conjoints, parents, etc.)</li>
+              <li>Lien de parenté avec le bénéficiaire</li>
+              <li>Données numérologiques des bénéficiaires</li>
+              <li>Documents associés aux bénéficiaires</li>
+              <li>Autorisations de partage d'accès entre utilisateurs</li>
             </Typography>
           </Box>
 
@@ -257,15 +284,22 @@ const PolitiqueConfidentialitePage: React.FC = () => {
             </Typography>
             <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
               <li><strong>Personnel autorisé de FL²M :</strong> ayant besoin d'accéder aux données pour l'exécution de leurs missions</li>
-              <li><strong>Consultants et intervenants :</strong> pour la réalisation de vos consultations</li>
+              <li><strong>Consultants et intervenants :</strong> pour la réalisation de vos consultations (uniquement les données nécessaires à la prestation)</li>
               <li><strong>Prestataires techniques :</strong>
                 <ul>
-                  <li>Hébergeur du site : [NOM DE L'HÉBERGEUR]</li>
-                  <li>Plateforme de paiement : Stripe</li>
-                  <li>Outils d'analyse : [ex: Google Analytics, si applicable]</li>
+                  <li><strong>Vercel Inc.</strong> - Hébergement du site web (frontend, États-Unis avec garanties RGPD)</li>
+                  <li><strong>Supabase Inc.</strong> - Hébergement de la base de données et des fichiers (données hébergées dans l'UE)</li>
+                  <li><strong>Stripe Inc.</strong> - Plateforme de paiement sécurisé (certifiée PCI-DSS niveau 1, États-Unis avec clauses contractuelles types)</li>
+                  <li><strong>Resend</strong> - Service d'envoi d'emails transactionnels</li>
+                  <li><strong>Google LLC</strong> - Authentification via Google OAuth (optionnel, États-Unis)</li>
+                  <li><strong>Apple Inc.</strong> - Authentification via Apple Sign-In (optionnel, États-Unis)</li>
                 </ul>
               </li>
+              <li><strong>Utilisateurs autorisés :</strong> dans le cas de partage d'accès aux bénéficiaires (selon vos paramètres)</li>
               <li><strong>Autorités compétentes :</strong> sur réquisition judiciaire ou dans le cadre d'obligations légales</li>
+            </Typography>
+            <Typography variant="body1" paragraph sx={{ mt: 2 }}>
+              Tous nos sous-traitants sont liés par des accords de confidentialité et sont tenus de traiter vos données conformément au RGPD.
             </Typography>
           </Box>
 
@@ -283,7 +317,23 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               7. Transfert de données hors UE
             </Typography>
             <Typography variant="body1" paragraph>
-              Certains de nos prestataires peuvent être situés en dehors de l'Union Européenne. Dans ce cas, nous nous assurons que des garanties appropriées sont mises en place (clauses contractuelles types, Privacy Shield, etc.) pour assurer la protection de vos données.
+              Certains de nos prestataires sont situés hors de l'Union Européenne. Vos données peuvent être transférées dans les cas suivants :
+            </Typography>
+            <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
+              <li><strong>Vercel Inc. (États-Unis) :</strong> Hébergement du site web (interface), applique des clauses contractuelles types de l'UE et est conforme au EU-US Data Privacy Framework</li>
+              <li><strong>Stripe Inc. (États-Unis) :</strong> Traitement des paiements, certifié PCI-DSS niveau 1 et appliquant des clauses contractuelles types de l'UE</li>
+              <li><strong>Google LLC / Apple Inc. (États-Unis) :</strong> Uniquement si vous utilisez leur service d'authentification (optionnel)</li>
+            </Typography>
+            <Typography variant="body1" paragraph sx={{ mt: 2 }}>
+              Dans tous les cas, nous nous assurons que des garanties appropriées sont en place conformément au RGPD :
+            </Typography>
+            <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
+              <li>Clauses contractuelles types approuvées par la Commission Européenne</li>
+              <li>Certification EU-US Data Privacy Framework (lorsque applicable)</li>
+              <li>Mesures techniques et organisationnelles de sécurité renforcées</li>
+            </Typography>
+            <Typography variant="body1" paragraph sx={{ mt: 2 }}>
+              <strong>Note importante :</strong> Vos données sensibles (profils, rendez-vous, documents personnels, données numérologiques) sont hébergées par Supabase dans des centres de données situés exclusivement dans l'Union Européenne.
             </Typography>
           </Box>
 
@@ -352,8 +402,12 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               Pour exercer vos droits, contactez-nous :
             </Typography>
             <Typography variant="body1" sx={{ pl: 2 }}>
-              <strong>Par email :</strong> [ADRESSE EMAIL DPO ou CONTACT]<br />
-              <strong>Par courrier :</strong> [ADRESSE POSTALE]
+              <strong>Par email :</strong> contact@fl2m.fr (objet : "Exercice de mes droits RGPD")<br />
+              <strong>Par courrier :</strong> FL2M IPS - RGPD, 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
+              <strong>Via le formulaire de contact :</strong>{' '}
+              <a href="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+                Page Contact
+              </a>
             </Typography>
 
             <Typography variant="body1" paragraph sx={{ mt: 2 }}>
@@ -375,15 +429,52 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               10. Cookies
             </Typography>
             <Typography variant="body1" paragraph>
-              Notre site utilise des cookies pour :
+              Notre site utilise les technologies de cookies et de stockage local suivantes :
+            </Typography>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+              10.1. Cookies strictement nécessaires
             </Typography>
             <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
-              <li><strong>Cookies essentiels :</strong> Nécessaires au fonctionnement du site (authentification, panier, etc.)</li>
-              <li><strong>Cookies de performance :</strong> Pour analyser l'utilisation du site et améliorer nos services</li>
-              <li><strong>Cookies de personnalisation :</strong> Pour mémoriser vos préférences</li>
+              <li><strong>Cookies d'authentification Supabase (sb-*) :</strong> Durée : Session ou 7 jours<br/>
+                Permettent de maintenir votre connexion active et sécurisée</li>
+              <li><strong>Stockage local (localStorage) :</strong> Conserve les tokens de session de manière sécurisée</li>
+              <li><strong>Stockage de session (sessionStorage) :</strong> Gestion temporaire des flux d'authentification OAuth</li>
             </Typography>
-            <Typography variant="body1" paragraph sx={{ mt: 2 }}>
-              Vous pouvez gérer vos préférences de cookies via les paramètres de votre navigateur. Le refus de certains cookies peut limiter certaines fonctionnalités du site.
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 3 }}>
+              10.2. Technologies de stockage
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Les informations stockées localement incluent :
+            </Typography>
+            <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
+              <li>Tokens de session (chiffrés)</li>
+              <li>Préférences utilisateur (langue, thème)</li>
+              <li>État de navigation OAuth (temporaire)</li>
+            </Typography>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 3 }}>
+              10.3. Gestion des cookies
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Les cookies que nous utilisons sont strictement nécessaires au fonctionnement du site (authentification, sécurité). Leur refus empêchera l'utilisation des fonctionnalités nécessitant une connexion.
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Vous pouvez gérer les cookies via les paramètres de votre navigateur :
+            </Typography>
+            <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
+              <li><strong>Chrome :</strong> Paramètres &gt; Confidentialité et sécurité &gt; Cookies</li>
+              <li><strong>Firefox :</strong> Options &gt; Vie privée et sécurité &gt; Cookies</li>
+              <li><strong>Safari :</strong> Préférences &gt; Confidentialité &gt; Cookies</li>
+              <li><strong>Edge :</strong> Paramètres &gt; Confidentialité &gt; Cookies</li>
+            </Typography>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 3 }}>
+              10.4. Pas de cookies publicitaires
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Nous n'utilisons <strong>aucun cookie publicitaire, de tracking ou d'analyse</strong> (Google Analytics, Facebook Pixel, etc.). Les seuls cookies utilisés sont strictement nécessaires au fonctionnement du service.
             </Typography>
           </Box>
 
@@ -457,9 +548,12 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               Pour toute question concernant cette politique de confidentialité ou le traitement de vos données personnelles :
             </Typography>
             <Typography variant="body1" sx={{ pl: 2 }}>
-              <strong>Email :</strong> [ADRESSE EMAIL]<br />
-              <strong>Téléphone :</strong> [NUMÉRO DE TÉLÉPHONE]<br />
-              <strong>Courrier :</strong> [ADRESSE POSTALE]
+              <strong>Email :</strong> contact@fl2m.fr<br />
+              <strong>Courrier :</strong> FL2M IPS, 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
+              <strong>Formulaire de contact :</strong>{' '}
+              <a href="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+                https://fl2m.fr/contact
+              </a>
             </Typography>
           </Box>
         </Paper>

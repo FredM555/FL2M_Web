@@ -63,6 +63,31 @@ serve(async (req) => {
 
     const profile = practitioner.profiles;
 
+    // Fonction pour formater le numéro de téléphone au format E.164
+    const formatPhoneForStripe = (phone: string | null | undefined): string | undefined => {
+      if (!phone) return undefined;
+
+      // Nettoyer le numéro (enlever espaces, tirets, points)
+      let cleaned = phone.replace(/[\s\-\.]/g, '');
+
+      // Si le numéro commence par 0 et fait 10 chiffres (format français)
+      if (cleaned.match(/^0[1-9]\d{8}$/)) {
+        // Remplacer le 0 initial par +33
+        return '+33' + cleaned.substring(1);
+      }
+
+      // Si le numéro commence déjà par +33
+      if (cleaned.match(/^\+33[1-9]\d{8}$/)) {
+        return cleaned;
+      }
+
+      // Si le numéro est dans un autre format, ne pas l'envoyer
+      console.warn(`[Stripe Connect] Numéro de téléphone invalide: ${phone}`);
+      return undefined;
+    };
+
+    const formattedPhone = formatPhoneForStripe(profile.phone);
+
     // Si le praticien a déjà un compte Stripe Connect
     if (practitioner.stripe_account_id) {
       // Vérifier le statut du compte
@@ -88,8 +113,8 @@ serve(async (req) => {
       // Si le compte existe mais n'est pas complet, créer un nouveau lien d'onboarding
       const accountLink = await stripe.accountLinks.create({
         account: practitioner.stripe_account_id,
-        refresh_url: `${req.headers.get('origin')}/practitioner/stripe-connect?refresh=true`,
-        return_url: `${req.headers.get('origin')}/practitioner/stripe-connect/success`,
+        refresh_url: `${req.headers.get('origin')}/intervenant/stripe-connect?refresh=true`,
+        return_url: `${req.headers.get('origin')}/intervenant/stripe-connect-success`,
         type: 'account_onboarding',
       });
 
@@ -119,7 +144,7 @@ serve(async (req) => {
         email: profile.email,
         first_name: profile.first_name,
         last_name: profile.last_name,
-        phone: profile.phone,
+        phone: formattedPhone, // Utiliser le numéro formaté
       },
       metadata: {
         practitioner_id: practitioner.id,
@@ -146,8 +171,8 @@ serve(async (req) => {
     // Créer un lien d'onboarding
     const accountLink = await stripe.accountLinks.create({
       account: account.id,
-      refresh_url: `${req.headers.get('origin')}/practitioner/stripe-connect?refresh=true`,
-      return_url: `${req.headers.get('origin')}/practitioner/stripe-connect/success`,
+      refresh_url: `${req.headers.get('origin')}/intervenant/stripe-connect?refresh=true`,
+      return_url: `${req.headers.get('origin')}/intervenant/stripe-connect-success`,
       type: 'account_onboarding',
     });
 

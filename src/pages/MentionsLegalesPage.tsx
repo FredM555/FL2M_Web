@@ -75,7 +75,7 @@ const MentionsLegalesPage: React.FC = () => {
               mb: 4,
             }}
           >
-            Dernière mise à jour : [DATE À COMPLÉTER]
+            Dernière mise à jour : 14 décembre 2024
           </Typography>
 
           <Divider sx={{ mb: 4 }} />
@@ -94,17 +94,16 @@ const MentionsLegalesPage: React.FC = () => {
               1. Éditeur du site
             </Typography>
             <Typography variant="body1" paragraph>
-              Le site FL²M est édité par :
+              Le site FL²M (https://fl2m.fr) est édité par :
             </Typography>
             <Typography variant="body1" component="div" sx={{ pl: 2 }}>
-              <strong>Raison sociale :</strong> [NOM DE LA SOCIÉTÉ]<br />
-              <strong>Forme juridique :</strong> [SARL / SAS / EURL / Auto-entrepreneur / Autre]<br />
-              <strong>Capital social :</strong> [MONTANT] euros<br />
-              <strong>Siège social :</strong> [ADRESSE COMPLÈTE]<br />
-              <strong>SIRET :</strong> [NUMÉRO SIRET]<br />
-              <strong>TVA intracommunautaire :</strong> [NUMÉRO DE TVA]<br />
-              <strong>Email :</strong> [ADRESSE EMAIL]<br />
-              <strong>Téléphone :</strong> [NUMÉRO DE TÉLÉPHONE]<br />
+              <strong>Raison sociale :</strong> FL2M IPS<br />
+              <strong>Siège social :</strong> 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
+              <strong>SIREN :</strong> 982131260<br />
+              <strong>SIRET :</strong> 98213126000019<br />
+              <strong>TVA intracommunautaire :</strong> FR71982131260<br />
+              <strong>Email :</strong> contact@fl2m.fr<br />
+              <strong>Téléphone :</strong> [À compléter si souhaité]<br />
             </Typography>
           </Box>
 
@@ -122,12 +121,12 @@ const MentionsLegalesPage: React.FC = () => {
               2. Directeur de la publication
             </Typography>
             <Typography variant="body1" sx={{ pl: 2 }}>
-              <strong>Nom :</strong> [NOM DU DIRECTEUR]<br />
-              <strong>Qualité :</strong> [Gérant / Président / Autre]
+              <strong>Nom :</strong> Frédéric Ménard<br />
+              <strong>Qualité :</strong> Dirigeant
             </Typography>
           </Box>
 
-          {/* Section 3 : Hébergeur */}
+          {/* Section 3 : Hébergeurs */}
           <Box sx={{ mb: 4 }}>
             <Typography
               variant="h5"
@@ -138,13 +137,30 @@ const MentionsLegalesPage: React.FC = () => {
                 mb: 2,
               }}
             >
-              3. Hébergeur du site
+              3. Hébergement
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Le site FL²M utilise plusieurs services d'hébergement :
+            </Typography>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+              3.1. Hébergement du site web (frontend)
             </Typography>
             <Typography variant="body1" sx={{ pl: 2 }}>
-              <strong>Raison sociale :</strong> [NOM DE L'HÉBERGEUR - ex: OVH, AWS, etc.]<br />
-              <strong>Adresse :</strong> [ADRESSE DE L'HÉBERGEUR]<br />
-              <strong>Téléphone :</strong> [TÉLÉPHONE DE L'HÉBERGEUR]<br />
-              <strong>Site web :</strong> [URL DE L'HÉBERGEUR]
+              <strong>Raison sociale :</strong> Vercel Inc.<br />
+              <strong>Adresse :</strong> 440 N Barranca Ave #4133, Covina, CA 91723, États-Unis<br />
+              <strong>Site web :</strong> https://vercel.com<br />
+              <strong>Note :</strong> Hébergement du site web (interface utilisateur)
+            </Typography>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 3 }}>
+              3.2. Hébergement des données (backend)
+            </Typography>
+            <Typography variant="body1" sx={{ pl: 2 }}>
+              <strong>Raison sociale :</strong> Supabase Inc.<br />
+              <strong>Adresse :</strong> 970 Toa Payoh North, #07-04, Singapore 318992<br />
+              <strong>Site web :</strong> https://supabase.com<br />
+              <strong>Note :</strong> Les données personnelles, rendez-vous et documents sont hébergés dans des centres de données situés dans l'Union Européenne, conformément au RGPD.
             </Typography>
           </Box>
 
@@ -207,13 +223,35 @@ const MentionsLegalesPage: React.FC = () => {
                 mb: 2,
               }}
             >
-              6. Cookies
+              6. Cookies et technologies similaires
             </Typography>
             <Typography variant="body1" paragraph>
-              Ce site utilise des cookies pour améliorer votre expérience de navigation et analyser le trafic.
+              Le site FL²M utilise des cookies et des technologies de stockage local pour assurer son bon fonctionnement et améliorer votre expérience.
+            </Typography>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
+              6.1. Cookies strictement nécessaires
             </Typography>
             <Typography variant="body1" paragraph>
-              Vous pouvez à tout moment désactiver les cookies dans les paramètres de votre navigateur. Cependant, cela peut affecter certaines fonctionnalités du site.
+              Ces cookies sont indispensables au fonctionnement du site :
+            </Typography>
+            <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
+              <li><strong>Cookies d'authentification (Supabase) :</strong> Gèrent votre connexion et votre session utilisateur (clés commençant par "sb-")</li>
+              <li><strong>Stockage local (localStorage) :</strong> Conserve votre session de manière sécurisée</li>
+              <li><strong>Cookies de sécurité :</strong> Protègent contre les attaques CSRF et garantissent la sécurité de vos données</li>
+            </Typography>
+
+            <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 3 }}>
+              6.2. Gestion des cookies
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Vous pouvez configurer votre navigateur pour refuser les cookies. Toutefois, cela empêchera l'utilisation de certaines fonctionnalités essentielles du site, notamment la connexion à votre compte.
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Pour plus d'informations sur la gestion des cookies, consultez la section dédiée dans notre{' '}
+              <a href="/politique-confidentialite" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+                Politique de Confidentialité
+              </a>.
             </Typography>
           </Box>
 
@@ -294,9 +332,12 @@ const MentionsLegalesPage: React.FC = () => {
               Pour toute question concernant ces mentions légales, vous pouvez nous contacter :
             </Typography>
             <Typography variant="body1" sx={{ pl: 2 }}>
-              <strong>Par email :</strong> [ADRESSE EMAIL]<br />
-              <strong>Par téléphone :</strong> [NUMÉRO DE TÉLÉPHONE]<br />
-              <strong>Par courrier :</strong> [ADRESSE POSTALE]
+              <strong>Par email :</strong> contact@fl2m.fr<br />
+              <strong>Par courrier :</strong> FL2M IPS, 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
+              <strong>Via le formulaire de contact :</strong>{' '}
+              <a href="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+                Page Contact
+              </a>
             </Typography>
           </Box>
         </Paper>

@@ -75,7 +75,7 @@ const CGUPage: React.FC = () => {
               mb: 4,
             }}
           >
-            Dernière mise à jour : [DATE À COMPLÉTER]
+            Dernière mise à jour : 14 décembre 2024
           </Typography>
 
           <Divider sx={{ mb: 4 }} />
@@ -83,7 +83,7 @@ const CGUPage: React.FC = () => {
           {/* Introduction */}
           <Box sx={{ mb: 4 }}>
             <Typography variant="body1" paragraph>
-              Les présentes Conditions Générales d'Utilisation (ci-après "CGU") régissent l'utilisation du site internet FL²M accessible à l'adresse [URL DU SITE] (ci-après "le Site").
+              Les présentes Conditions Générales d'Utilisation (ci-après "CGU") régissent l'utilisation du site internet FL²M accessible à l'adresse https://fl2m.fr (ci-après "le Site").
             </Typography>
             <Typography variant="body1" paragraph>
               L'utilisation du Site implique l'acceptation pleine et entière des présentes CGU. Si vous n'acceptez pas ces conditions, veuillez ne pas utiliser le Site.
@@ -131,11 +131,13 @@ const CGUPage: React.FC = () => {
               2. Mentions légales
             </Typography>
             <Typography variant="body1" sx={{ pl: 2 }}>
-              <strong>Éditeur du site :</strong> [NOM DE LA SOCIÉTÉ]<br />
-              <strong>Siège social :</strong> [ADRESSE COMPLÈTE]<br />
-              <strong>SIRET :</strong> [NUMÉRO SIRET]<br />
-              <strong>Email :</strong> [ADRESSE EMAIL]<br />
-              <strong>Téléphone :</strong> [NUMÉRO DE TÉLÉPHONE]
+              <strong>Éditeur du site :</strong> FL2M IPS<br />
+              <strong>Siège social :</strong> 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
+              <strong>SIREN :</strong> 982131260<br />
+              <strong>SIRET :</strong> 98213126000019<br />
+              <strong>TVA intracommunautaire :</strong> FR71982131260<br />
+              <strong>Représentant légal :</strong> Frédéric Ménard<br />
+              <strong>Email :</strong> contact@fl2m.fr
             </Typography>
           </Box>
 
@@ -326,14 +328,17 @@ const CGUPage: React.FC = () => {
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
               7.1. Annulation par l'utilisateur
             </Typography>
-            <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
-              <li><strong>Plus de 48 heures avant :</strong> Remboursement intégral</li>
-              <li><strong>Entre 24 et 48 heures avant :</strong> Remboursement à [%] ou crédit pour une consultation ultérieure</li>
-              <li><strong>Moins de 24 heures avant :</strong> Aucun remboursement, possibilité de report selon disponibilité</li>
-              <li><strong>Non-présentation :</strong> Aucun remboursement</li>
+            <Typography variant="body1" paragraph>
+              Les rendez-vous peuvent être annulés ou reportés directement depuis votre espace personnel selon les conditions suivantes :
             </Typography>
-            <Typography variant="body1" paragraph sx={{ mt: 2, fontStyle: 'italic', color: 'text.secondary' }}>
-              Note : Ces délais sont à personnaliser selon votre politique commerciale
+            <Typography variant="body1" component="ul" sx={{ pl: 4 }}>
+              <li><strong>Plus de 48 heures avant le rendez-vous :</strong> Remboursement intégral ou report gratuit</li>
+              <li><strong>Entre 24 et 48 heures avant :</strong> Remboursement à 50% ou crédit pour une consultation ultérieure</li>
+              <li><strong>Moins de 24 heures avant :</strong> Aucun remboursement, possibilité de report selon disponibilité de l'intervenant (des frais peuvent s'appliquer)</li>
+              <li><strong>Non-présentation sans annulation :</strong> Aucun remboursement ni crédit</li>
+            </Typography>
+            <Typography variant="body1" paragraph sx={{ mt: 2 }}>
+              Pour annuler ou reporter un rendez-vous, rendez-vous dans votre espace "Mes rendez-vous" ou contactez-nous à contact@fl2m.fr.
             </Typography>
 
             <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mt: 2 }}>
@@ -351,7 +356,10 @@ const CGUPage: React.FC = () => {
               7.3. Procédure de remboursement
             </Typography>
             <Typography variant="body1" paragraph>
-              Les remboursements sont effectués dans un délai maximum de [NOMBRE] jours ouvrés sur le même moyen de paiement que celui utilisé pour la transaction initiale.
+              Les remboursements sont effectués dans un délai maximum de 14 jours ouvrés sur le même moyen de paiement que celui utilisé pour la transaction initiale (carte bancaire via Stripe).
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Vous recevrez une confirmation par email une fois le remboursement traité. Le délai d'apparition sur votre relevé bancaire dépend de votre établissement financier (généralement 2 à 5 jours ouvrés supplémentaires).
             </Typography>
           </Box>
 
@@ -614,9 +622,12 @@ const CGUPage: React.FC = () => {
               Pour toute question concernant les présentes CGU, vous pouvez nous contacter :
             </Typography>
             <Typography variant="body1" sx={{ pl: 2 }}>
-              <strong>Email :</strong> [ADRESSE EMAIL]<br />
-              <strong>Téléphone :</strong> [NUMÉRO DE TÉLÉPHONE]<br />
-              <strong>Courrier :</strong> [ADRESSE POSTALE]
+              <strong>Email :</strong> contact@fl2m.fr<br />
+              <strong>Courrier :</strong> FL2M IPS, 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
+              <strong>Formulaire de contact :</strong>{' '}
+              <a href="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+                https://fl2m.fr/contact
+              </a>
             </Typography>
           </Box>
 
