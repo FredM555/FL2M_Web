@@ -73,7 +73,8 @@
       "Bash(stripe:*)",
       "Bash(scoop --version:*)",
       "Bash(ls:*)",
-      "Bash(git clean:*)"
+      "Bash(git clean:*)",
+      "Bash(npm run dev:*)"
     ],
     "deny": [],
     "ask": []

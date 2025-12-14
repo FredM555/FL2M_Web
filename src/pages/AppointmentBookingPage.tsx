@@ -1,6 +1,6 @@
 // src/pages/AppointmentBookingPage.tsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Container,
@@ -99,19 +99,25 @@ const AppointmentBookingPage: React.FC = () => {
   const location = useLocation();
   const { user, profile } = useAuth();
   const state = location.state as LocationState || {};
-  
+  const [searchParams] = useSearchParams();
+
   // État actif
   const [activeStep, setActiveStep] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  
+
+  // Mode intervenant dédié
+  const [isDedicatedMode, setIsDedicatedMode] = useState(false);
+  const [dedicatedPractitioner, setDedicatedPractitioner] = useState<Practitioner | null>(null);
+  const [practitionerNotFound, setPractitionerNotFound] = useState(false);
+
   // Données des étapes
   const [serviceCategories, setServiceCategories] = useState<string[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>(state.preSelectedCategory || '');
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
-  
+
   const [availableWeeks, setAvailableWeeks] = useState<WeekInfo[]>([]);
   const [selectedWeek, setSelectedWeek] = useState<WeekInfo | null>(null);
   const [practitioners, setPractitioners] = useState<Practitioner[]>([]);
@@ -130,7 +136,50 @@ const AppointmentBookingPage: React.FC = () => {
   const [duplicateConfirmationOpen, setDuplicateConfirmationOpen] = useState(false);
   const [pendingBeneficiaryData, setPendingBeneficiaryData] = useState<CreateBeneficiaryData | null>(null);
   const [existingBeneficiaries, setExistingBeneficiaries] = useState<any[]>([]);
-  
+
+  // Vérifier si un intervenant est spécifié dans l'URL
+  useEffect(() => {
+    const consultantParam = searchParams.get('consultant');
+    if (consultantParam) {
+      // Mode dédié activé
+      setIsDedicatedMode(true);
+      loadDedicatedPractitioner(consultantParam);
+    }
+  }, [searchParams]);
+
+  // Charger l'intervenant dédié (par slug ou UUID)
+  const loadDedicatedPractitioner = async (consultantIdOrSlug: string) => {
+    try {
+      const { data: allPractitioners } = await getPractitioners();
+      if (!allPractitioners) {
+        setPractitionerNotFound(true);
+        return;
+      }
+
+      // Vérifier si c'est un UUID ou un slug
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(consultantIdOrSlug);
+
+      let practitioner: Practitioner | undefined;
+      if (isUUID) {
+        practitioner = allPractitioners.find(p => p.id === consultantIdOrSlug);
+      } else {
+        // Rechercher par slug
+        practitioner = allPractitioners.find(p => (p as any).slug === consultantIdOrSlug);
+      }
+
+      if (practitioner) {
+        setDedicatedPractitioner(practitioner);
+        setSelectedPractitioner(practitioner.id);
+        setPractitionerNotFound(false);
+      } else {
+        setPractitionerNotFound(true);
+      }
+    } catch (err) {
+      console.error('Erreur lors du chargement de l\'intervenant dédié:', err);
+      setPractitionerNotFound(true);
+    }
+  };
+
   // Charger les catégories et services initiaux
   useEffect(() => {
     const loadInitialData = async () => {
@@ -669,6 +718,23 @@ const AppointmentBookingPage: React.FC = () => {
 
     return (
       <Box sx={{ mb: 4 }}>
+        {/* Alerte si l'intervenant n'existe pas */}
+        {practitionerNotFound && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            L'intervenant demandé n'a pas été trouvé. Vous pouvez choisir un autre intervenant dans la liste des disponibilités.
+          </Alert>
+        )}
+
+        {/* Alerte si l'intervenant n'a pas de modules disponibles */}
+        {isDedicatedMode && dedicatedPractitioner && !practitionerNotFound && (
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <strong>Réservation pour {dedicatedPractitioner.display_name ||
+              `${dedicatedPractitioner.profile?.first_name} ${dedicatedPractitioner.profile?.last_name}`}</strong>
+            <br />
+            Sélectionnez un service ci-dessous. Seuls les créneaux disponibles pour cet intervenant seront affichés.
+          </Alert>
+        )}
+
         {serviceCategories.length > 0 && (
           <FormControl fullWidth margin="normal">
             <InputLabel id="category-select-label">Catégorie</InputLabel>
@@ -848,6 +914,7 @@ const AppointmentBookingPage: React.FC = () => {
                   value={selectedPractitioner}
                   onChange={handlePractitionerChange}
                   label="Intervenant"
+                  disabled={isDedicatedMode}
                 >
                   <MenuItem value="all">Tous les intervenants</MenuItem>
                   {practitioners.map((practitioner) => {
@@ -864,6 +931,12 @@ const AppointmentBookingPage: React.FC = () => {
                   })}
                 </Select>
               </FormControl>
+              {isDedicatedMode && dedicatedPractitioner && (
+                <Typography variant="caption" color="primary" sx={{ mt: 0.5, display: 'block' }}>
+                  Rendez-vous réservé pour {dedicatedPractitioner.display_name ||
+                    `${dedicatedPractitioner.profile?.first_name} ${dedicatedPractitioner.profile?.last_name}`}
+                </Typography>
+              )}
             </Grid>
           )}
         </Grid>
@@ -881,8 +954,11 @@ const AppointmentBookingPage: React.FC = () => {
             category={selectedCategory}
           />
         ) : (
-          <Alert severity="info">
-            Aucune disponibilité trouvée pour ce service.
+          <Alert severity={isDedicatedMode ? "warning" : "info"}>
+            {isDedicatedMode && dedicatedPractitioner
+              ? `Aucune disponibilité trouvée pour ${dedicatedPractitioner.display_name ||
+                  `${dedicatedPractitioner.profile?.first_name} ${dedicatedPractitioner.profile?.last_name}`} avec ce service. Cet intervenant n'a peut-être pas configuré de créneaux pour ce module.`
+              : "Aucune disponibilité trouvée pour ce service."}
           </Alert>
         )}
       </Box>

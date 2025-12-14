@@ -29,6 +29,7 @@ interface Consultant {
   user_id: string;
   bio: string;
   priority: number;
+  slug?: string;
   display_name?: string;
   title?: string;
   summary?: string;
@@ -65,6 +66,7 @@ const ConsultantsPage: React.FC = () => {
         .from('practitioners')
         .select(`
           *,
+          slug,
           profile:profiles(first_name, last_name, email, phone, avatar_url)
         `)
         .eq('is_active', true)
@@ -372,7 +374,7 @@ const ConsultantsPage: React.FC = () => {
                     >
                       <IconButton
                         component={RouterLink}
-                        to={`/consultants/${consultant.id}`}
+                        to={`/consultants/${consultant.slug || consultant.id}`}
                         sx={{
                           mb: 2,
                           p: 0,
@@ -424,7 +426,7 @@ const ConsultantsPage: React.FC = () => {
                           variant="contained"
                           fullWidth
                           component={RouterLink}
-                          to={`/prendre-rendez-vous?consultant=${consultant.id}`}
+                          to={`/prendre-rendez-vous?consultant=${consultant.slug || consultant.id}`}
                           startIcon={<CalendarMonthIcon />}
                           sx={{
                             mb: 1.5,
@@ -447,7 +449,7 @@ const ConsultantsPage: React.FC = () => {
                           variant="outlined"
                           fullWidth
                           component={RouterLink}
-                          to={`/consultants/${consultant.id}`}
+                          to={`/consultants/${consultant.slug || consultant.id}`}
                           startIcon={<PersonIcon />}
                           sx={{
                             borderColor: 'rgba(255, 215, 0, 0.5)',

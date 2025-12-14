@@ -577,7 +577,8 @@ export const getAvailableAppointments = async (
   const { data: activePractitioners, error: practitionersError } = await supabase
     .from('practitioners')
     .select('id')
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .eq('profile_visible', true);
 
   if (practitionersError) {
     return { data: null, error: practitionersError };
@@ -591,6 +592,11 @@ export const getAvailableAppointments = async (
     return { data: [], error: null };
   }
 
+  // S'assurer que startDate est au minimum l'heure actuelle pour bloquer les créneaux passés
+  const now = new Date();
+  const currentDateTime = now.toISOString();
+  const effectiveStartDate = startDate > currentDateTime ? startDate : currentDateTime;
+
   // Construire la requête de base
   let query = supabase
     .from('appointments')
@@ -603,7 +609,7 @@ export const getAvailableAppointments = async (
       service:services(*)
     `)
     .is('client_id', null) // Uniquement les créneaux non réservés
-    .gte('start_time', startDate)
+    .gte('start_time', effectiveStartDate) // Utiliser la date effective (jamais dans le passé)
     .lte('start_time', endDate)
     .not('status', 'eq', 'cancelled')
     .eq('service_id', serviceId)
@@ -679,11 +685,12 @@ export const getAvailableWeeks = async (
   endDate?: string
 ) => {
   // Définir les dates par défaut si non fournies
-  const today = new Date();
-  const defaultStartDate = format(today, "yyyy-MM-dd'T'00:00:00'Z'");
+  const now = new Date();
+  // Utiliser l'heure actuelle pour bloquer les créneaux passés (même jour)
+  const defaultStartDate = now.toISOString();
 
-  const threeMonthsLater = new Date(today);
-  threeMonthsLater.setMonth(today.getMonth() + 3);
+  const threeMonthsLater = new Date(now);
+  threeMonthsLater.setMonth(now.getMonth() + 3);
   const defaultEndDate = format(threeMonthsLater, "yyyy-MM-dd'T'23:59:59'Z'");
 
   // Utiliser les dates fournies ou les dates par défaut
@@ -695,7 +702,8 @@ export const getAvailableWeeks = async (
     const { data: activePractitioners, error: practitionersError } = await supabase
       .from('practitioners')
       .select('id')
-      .eq('is_active', true);
+      .eq('is_active', true)
+      .eq('profile_visible', true);
 
     if (practitionersError) throw practitionersError;
 

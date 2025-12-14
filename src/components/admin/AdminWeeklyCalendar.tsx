@@ -127,6 +127,13 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
   const [copyInterval, setCopyInterval] = useState<number>(1);
   const [copyIntervalUnit, setCopyIntervalUnit] = useState<'days' | 'weeks'>('days');
   const [showCopyOptions, setShowCopyOptions] = useState<boolean>(false);
+
+  // États pour la répétition hebdomadaire (mode création et copie)
+  const [enableWeeklyRepeat, setEnableWeeklyRepeat] = useState<boolean>(false);
+  const [weeklyRepeatCount, setWeeklyRepeatCount] = useState<number>(4);
+  const [weeklyRepeatInterval, setWeeklyRepeatInterval] = useState<number>(1); // 1 = chaque semaine, 2 = toutes les 2 semaines, etc.
+  const [selectedWeekDays, setSelectedWeekDays] = useState<number[]>([]); // 0 = dimanche, 1 = lundi, ..., 6 = samedi
+  const [excludedDates, setExcludedDates] = useState<string[]>([]); // Dates à exclure au format 'YYYY-MM-DD'
   
   // État pour les détails de rendez-vous (panneau d'informations)
   const [detailsOpen, setDetailsOpen] = useState(false);
@@ -430,6 +437,12 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
     setShowCopyOptions(false);
     setCustomPrice(null);
     setPriceError(null);
+    // Réinitialiser les options de répétition hebdomadaire
+    setEnableWeeklyRepeat(false);
+    setWeeklyRepeatCount(4);
+    setWeeklyRepeatInterval(1);
+    setSelectedWeekDays([]);
+    setExcludedDates([]);
   };
   
   // Enregistrer un rendez-vous
@@ -453,7 +466,13 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
         setPriceError(null);
       }
 
-      // Si c'est une copie multiple
+      // Si répétition avancée activée (mode création ou copie)
+      if (enableWeeklyRepeat && weeklyRepeatCount > 1) {
+        await handleWeeklyRepeat();
+        return;
+      }
+
+      // Si c'est une copie multiple simple (ancien mode)
       if (dialogMode === 'copy' && showCopyOptions && copyCount > 1) {
         await handleMultipleCopy();
         return;
@@ -604,7 +623,131 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
       if (setError) setError(`Erreur lors de la création des copies : ${err.message}`);
     }
   };
-  
+
+  // Gérer la répétition hebdomadaire (avec options avancées)
+  const handleWeeklyRepeat = async () => {
+    try {
+      if (!selectedDate || !selectedTime || !currentAppointment.practitioner_id || !currentAppointment.service_id) {
+        throw new Error('Informations incomplètes pour la répétition');
+      }
+
+      // Trouver la durée du service pour calculer end_time
+      const selectedService = services.find(s => s.id === currentAppointment.service_id);
+      const duration = selectedService?.duration || 60; // Par défaut 60 minutes
+
+      // Valider le prix personnalisé si présent (mode intervenant)
+      if (isPractitionerView && customPrice !== null && selectedService) {
+        if (customPrice < selectedService.price) {
+          if (setError) setError(`Le prix personnalisé ne peut pas être inférieur au prix du service (${selectedService.price} €)`);
+          return;
+        }
+      }
+
+      // Préparer la base du rendez-vous
+      const baseAppointmentData: any = {
+        client_id: null, // Créneaux disponibles
+        practitioner_id: currentAppointment.practitioner_id,
+        service_id: currentAppointment.service_id,
+        status: 'pending',
+        payment_status: 'unpaid',
+        notes: currentAppointment.notes,
+      };
+
+      // Ajouter le prix personnalisé si défini
+      if (customPrice !== null && customPrice !== undefined) {
+        baseAppointmentData.custom_price = customPrice;
+      }
+
+      // Créer les rendez-vous un par un en validant chacun
+      let successCount = 0;
+      let conflictCount = 0;
+      let skippedCount = 0;
+      const errors: string[] = [];
+
+      // Déterminer les jours de la semaine à créer
+      const daysToCreate = selectedWeekDays.length > 0
+        ? selectedWeekDays
+        : [selectedDate.getDay()]; // Si aucun jour sélectionné, utiliser le jour de selectedDate
+
+      // Pour chaque semaine
+      for (let weekIndex = 0; weekIndex < weeklyRepeatCount; weekIndex++) {
+        // Pour chaque jour sélectionné
+        for (const targetDay of daysToCreate) {
+          // Calculer la date de base pour cette semaine
+          const baseDate = addWeeks(selectedDate, weekIndex * weeklyRepeatInterval);
+
+          // Calculer la différence de jours pour atteindre le jour cible
+          const currentDay = baseDate.getDay();
+          let dayDiff = targetDay - currentDay;
+
+          // Si le jour cible est dans la semaine suivante (ex: on est jeudi et on veut lundi)
+          if (dayDiff < 0) {
+            dayDiff += 7;
+          }
+
+          // Calculer la date finale pour ce créneau
+          let appointmentDate = addDays(baseDate, dayDiff);
+          appointmentDate = new Date(
+            appointmentDate.getFullYear(),
+            appointmentDate.getMonth(),
+            appointmentDate.getDate(),
+            selectedTime.getHours(),
+            selectedTime.getMinutes()
+          );
+
+          // Vérifier si cette date est exclue
+          const dateString = format(appointmentDate, 'yyyy-MM-dd');
+          if (excludedDates.includes(dateString)) {
+            skippedCount++;
+            continue; // Passer cette date
+          }
+
+          // Calculer l'heure de fin
+          const endTime = addMinutes(appointmentDate, duration);
+
+          const appointmentData = {
+            ...baseAppointmentData,
+            start_time: appointmentDate.toISOString(),
+            end_time: endTime.toISOString(),
+          };
+
+          // Utiliser createAppointment pour bénéficier de la validation
+          const { error } = await createAppointment(appointmentData);
+
+          if (error) {
+            if (error.code === 'APPOINTMENT_CONFLICT') {
+              conflictCount++;
+              errors.push(`${format(appointmentDate, 'EEE dd/MM/yyyy HH:mm', { locale: fr })} : conflit de créneau`);
+            } else {
+              errors.push(`${format(appointmentDate, 'EEE dd/MM/yyyy HH:mm', { locale: fr })} : ${error.message}`);
+            }
+          } else {
+            successCount++;
+          }
+        }
+      }
+
+      // Fermer le dialogue et rafraîchir la liste
+      handleCloseDialog();
+      notifyAppointmentChange();
+
+      // Afficher un résumé
+      const totalExpected = weeklyRepeatCount * daysToCreate.length;
+      let message = `${successCount} rendez-vous créé(s) avec succès`;
+
+      if (conflictCount > 0) message += `\n${conflictCount} conflit(s) détecté(s)`;
+      if (skippedCount > 0) message += `\n${skippedCount} date(s) exclue(s)`;
+      if (errors.length > 0) message += `\n${errors.length > 3 ? errors.slice(0, 3).join('\n') + '\n...' : errors.join('\n')}`;
+
+      if (conflictCount > 0 || skippedCount > 0 || errors.length > 0) {
+        if (setError) setError(message);
+      }
+
+    } catch (err: any) {
+      if (setError) setError(`Erreur lors de la répétition hebdomadaire : ${err.message}`);
+    }
+  };
+
   // Formatage du statut
   const getStatusChip = (status: string) => {
     const statusConfig: Record<string, { color: "success" | "warning" | "error" | "default" | "primary" | "info", label: string }> = {
@@ -1279,7 +1422,197 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                     />
                   </LocalizationProvider>
                 </Grid>
-                
+
+                {/* Options de répétition hebdomadaire - visible en mode création ET copie */}
+                {(dialogMode === 'create' || dialogMode === 'copy') && (
+                  <Grid item xs={12}>
+                    <Box sx={{ mt: 2, mb: 2, p: 2, bgcolor: 'rgba(255, 215, 0, 0.05)', borderRadius: 2, border: '1px solid rgba(255, 215, 0, 0.2)' }}>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={enableWeeklyRepeat}
+                            onChange={(e) => {
+                              setEnableWeeklyRepeat(e.target.checked);
+                              if (!e.target.checked) {
+                                setWeeklyRepeatCount(4);
+                                setWeeklyRepeatInterval(1);
+                                setSelectedWeekDays([]);
+                                setExcludedDates([]);
+                              }
+                            }}
+                          />
+                        }
+                        label={
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                              Répétition avancée
+                            </Typography>
+                            <Chip label="Options avancées" size="small" color="primary" />
+                          </Box>
+                        }
+                        sx={{ mb: enableWeeklyRepeat ? 2 : 0 }}
+                      />
+
+                      {enableWeeklyRepeat && (
+                        <Box>
+                          <Grid container spacing={2}>
+                            <Grid item xs={12}>
+                              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                                Créer automatiquement plusieurs créneaux avec des options personnalisées.
+                              </Typography>
+                            </Grid>
+
+                            {/* Intervalle de répétition */}
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth>
+                                <InputLabel>Fréquence</InputLabel>
+                                <Select
+                                  value={weeklyRepeatInterval}
+                                  onChange={(e) => setWeeklyRepeatInterval(e.target.value as number)}
+                                  label="Fréquence"
+                                >
+                                  <MenuItem value={1}>Chaque semaine</MenuItem>
+                                  <MenuItem value={2}>Toutes les 2 semaines</MenuItem>
+                                  <MenuItem value={3}>Toutes les 3 semaines</MenuItem>
+                                  <MenuItem value={4}>Toutes les 4 semaines</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Grid>
+
+                            {/* Nombre d'occurrences */}
+                            <Grid item xs={12} sm={6}>
+                              <FormControl fullWidth>
+                                <InputLabel>Nombre d'occurrences</InputLabel>
+                                <Select
+                                  value={weeklyRepeatCount}
+                                  onChange={(e) => setWeeklyRepeatCount(e.target.value as number)}
+                                  label="Nombre d'occurrences"
+                                >
+                                  <MenuItem value={2}>2 fois</MenuItem>
+                                  <MenuItem value={4}>4 fois (1 mois)</MenuItem>
+                                  <MenuItem value={8}>8 fois (2 mois)</MenuItem>
+                                  <MenuItem value={12}>12 fois (3 mois)</MenuItem>
+                                  <MenuItem value={16}>16 fois (4 mois)</MenuItem>
+                                  <MenuItem value={24}>24 fois (6 mois)</MenuItem>
+                                  <MenuItem value={52}>52 fois (1 an)</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </Grid>
+
+                            {/* Sélection multi-jours */}
+                            <Grid item xs={12}>
+                              <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                                Jours de la semaine (laissez vide pour utiliser le jour sélectionné)
+                              </Typography>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                                {[
+                                  { value: 1, label: 'Lun' },
+                                  { value: 2, label: 'Mar' },
+                                  { value: 3, label: 'Mer' },
+                                  { value: 4, label: 'Jeu' },
+                                  { value: 5, label: 'Ven' },
+                                  { value: 6, label: 'Sam' },
+                                  { value: 0, label: 'Dim' }
+                                ].map((day) => (
+                                  <Chip
+                                    key={day.value}
+                                    label={day.label}
+                                    onClick={() => {
+                                      const isSelected = selectedWeekDays.includes(day.value);
+                                      if (isSelected) {
+                                        setSelectedWeekDays(selectedWeekDays.filter(d => d !== day.value));
+                                      } else {
+                                        setSelectedWeekDays([...selectedWeekDays, day.value].sort());
+                                      }
+                                    }}
+                                    color={selectedWeekDays.includes(day.value) ? "primary" : "default"}
+                                    variant={selectedWeekDays.includes(day.value) ? "filled" : "outlined"}
+                                    sx={{ cursor: 'pointer' }}
+                                  />
+                                ))}
+                              </Box>
+                              {selectedWeekDays.length > 0 && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                                  {selectedWeekDays.length} jour(s) sélectionné(s) = {weeklyRepeatCount * selectedWeekDays.length} créneaux au total
+                                </Typography>
+                              )}
+                            </Grid>
+
+                            {/* Dates à exclure */}
+                            <Grid item xs={12}>
+                              <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                                Dates à exclure (vacances, jours fériés...)
+                              </Typography>
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, alignItems: 'center' }}>
+                                <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={fr}>
+                                  <DatePicker
+                                    label="Ajouter une date à exclure"
+                                    value={null}
+                                    onChange={(date) => {
+                                      if (date) {
+                                        const dateStr = format(date, 'yyyy-MM-dd');
+                                        if (!excludedDates.includes(dateStr)) {
+                                          setExcludedDates([...excludedDates, dateStr].sort());
+                                        }
+                                      }
+                                    }}
+                                    slotProps={{
+                                      textField: {
+                                        size: "small",
+                                        sx: { width: 200 }
+                                      }
+                                    }}
+                                  />
+                                </LocalizationProvider>
+                                {excludedDates.map((dateStr) => (
+                                  <Chip
+                                    key={dateStr}
+                                    label={format(parseISO(dateStr), 'dd/MM/yyyy')}
+                                    onDelete={() => setExcludedDates(excludedDates.filter(d => d !== dateStr))}
+                                    size="small"
+                                    color="error"
+                                    variant="outlined"
+                                  />
+                                ))}
+                              </Box>
+                            </Grid>
+
+                            {/* Résumé */}
+                            <Grid item xs={12}>
+                              <Alert severity="info">
+                                {selectedDate && selectedTime ? (
+                                  <Box>
+                                    {selectedWeekDays.length > 0 ? (
+                                      <>
+                                        <strong>Jusqu'à {weeklyRepeatCount * selectedWeekDays.length} créneaux</strong> seront créés
+                                        {weeklyRepeatInterval > 1 && ` toutes les ${weeklyRepeatInterval} semaines`}
+                                        , les <strong>{selectedWeekDays.map(d => ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][d]).join(', ')}</strong> à{' '}
+                                        <strong>{format(selectedTime, 'HH:mm')}</strong>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <strong>{weeklyRepeatCount} créneaux</strong> seront créés
+                                        {weeklyRepeatInterval > 1 && ` toutes les ${weeklyRepeatInterval} semaines`},
+                                        le <strong>{format(selectedDate, 'EEEE', { locale: fr })}</strong> à{' '}
+                                        <strong>{format(selectedTime, 'HH:mm')}</strong>
+                                      </>
+                                    )}
+                                    {excludedDates.length > 0 && (
+                                      <><br/><Typography variant="caption">({excludedDates.length} date(s) exclue(s))</Typography></>
+                                    )}
+                                  </Box>
+                                ) : (
+                                  'Sélectionnez une date et une heure'
+                                )}
+                              </Alert>
+                            </Grid>
+                          </Grid>
+                        </Box>
+                      )}
+                    </Box>
+                  </Grid>
+                )}
+
                 {/* Options de copie multiple - visible uniquement en mode copie */}
                 {dialogMode === 'copy' && (
                   <Grid item xs={12}>

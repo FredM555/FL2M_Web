@@ -120,19 +120,29 @@ const ConsultantDetailPage: React.FC = () => {
     }
   };
 
-  const fetchConsultant = async (consultantId: string) => {
+  const fetchConsultant = async (consultantIdOrSlug: string) => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Vérifier si c'est un UUID (format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(consultantIdOrSlug);
+
+      let query = supabase
         .from('practitioners')
         .select(`
           *,
           profile:profiles(first_name, last_name, email, phone, avatar_url)
         `)
-        .eq('id', consultantId)
         .eq('is_active', true)
-        .eq('profile_visible', true)
-        .single();
+        .eq('profile_visible', true);
+
+      // Chercher par ID ou slug selon le format
+      if (isUUID) {
+        query = query.eq('id', consultantIdOrSlug);
+      } else {
+        query = query.eq('slug', consultantIdOrSlug);
+      }
+
+      const { data, error } = await query.single();
 
       if (error) throw error;
 

@@ -5,12 +5,16 @@ import { Paper, BottomNavigation, BottomNavigationAction, useTheme, useMediaQuer
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import GroupIcon from '@mui/icons-material/Group';
+import EventNoteIcon from '@mui/icons-material/EventNote';
+import HomeIcon from '@mui/icons-material/Home';
+import { useAuth } from '../../context/AuthContext';
 
 const MobileBottomNav: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const { user } = useAuth();
 
   // Ne pas afficher le bandeau si on n'est pas en mobile
   if (!isMobile) {
@@ -19,23 +23,43 @@ const MobileBottomNav: React.FC = () => {
 
   // Déterminer quelle page est active
   const getValue = () => {
-    if (location.pathname.startsWith('/particuliers')) return 0;
-    if (location.pathname === '/prendre-rendez-vous') return 1;
-    if (location.pathname.startsWith('/consultants')) return 2;
+    if (location.pathname === '/') return 0;
+    if (user && location.pathname.startsWith('/mes-rendez-vous')) return 1;
+    if (location.pathname === '/prendre-rendez-vous') return user ? 2 : 1;
+    if (location.pathname.startsWith('/consultants')) return user ? 3 : 2;
     return -1;
   };
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    switch (newValue) {
-      case 0:
-        navigate('/particuliers');
-        break;
-      case 1:
-        navigate('/prendre-rendez-vous');
-        break;
-      case 2:
-        navigate('/consultants');
-        break;
+    if (user) {
+      // Navigation pour utilisateur connecté (4 boutons)
+      switch (newValue) {
+        case 0:
+          navigate('/');
+          break;
+        case 1:
+          navigate('/mes-rendez-vous');
+          break;
+        case 2:
+          navigate('/prendre-rendez-vous');
+          break;
+        case 3:
+          navigate('/consultants');
+          break;
+      }
+    } else {
+      // Navigation pour utilisateur non connecté (3 boutons)
+      switch (newValue) {
+        case 0:
+          navigate('/');
+          break;
+        case 1:
+          navigate('/prendre-rendez-vous');
+          break;
+        case 2:
+          navigate('/consultants');
+          break;
+      }
     }
   };
 
@@ -73,8 +97,9 @@ const MobileBottomNav: React.FC = () => {
           },
         }}
       >
+        {/* Accueil - toujours affiché */}
         <BottomNavigationAction
-          icon={<PersonIcon />}
+          icon={<HomeIcon />}
           sx={{
             '&.Mui-selected': {
               '& .MuiSvgIcon-root': {
@@ -83,6 +108,22 @@ const MobileBottomNav: React.FC = () => {
             },
           }}
         />
+
+        {/* Mes rendez-vous - seulement si connecté */}
+        {user && (
+          <BottomNavigationAction
+            icon={<EventNoteIcon />}
+            sx={{
+              '&.Mui-selected': {
+                '& .MuiSvgIcon-root': {
+                  color: '#FFD700',
+                },
+              },
+            }}
+          />
+        )}
+
+        {/* Prendre RDV - toujours affiché */}
         <BottomNavigationAction
           icon={<CalendarMonthIcon />}
           sx={{
@@ -93,6 +134,8 @@ const MobileBottomNav: React.FC = () => {
             },
           }}
         />
+
+        {/* Consultants - toujours affiché */}
         <BottomNavigationAction
           icon={<GroupIcon />}
           sx={{
