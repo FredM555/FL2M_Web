@@ -1,5 +1,6 @@
 // src/services/stripe.ts
 import { loadStripe, Stripe } from '@stripe/stripe-js';
+import { logger } from '../utils/logger';
 
 let stripePromise: Promise<Stripe | null>;
 
@@ -11,7 +12,7 @@ export const getStripe = (): Promise<Stripe | null> => {
     const publishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
     if (!publishableKey) {
-      console.error('VITE_STRIPE_PUBLISHABLE_KEY non définie dans les variables d\'environnement');
+      logger.error('VITE_STRIPE_PUBLISHABLE_KEY non définie dans les variables d\'environnement');
       return Promise.resolve(null);
     }
 
@@ -189,7 +190,7 @@ export const validateAppointment = async (
     .eq('id', appointmentId);
 
   if (statusError) {
-    console.error('[Validation] Erreur lors du changement de status:', statusError);
+    logger.error('[Validation] Erreur lors du changement de status:', statusError);
     throw new Error(`Erreur lors du changement de status: ${statusError.message}`);
   }
 
@@ -219,7 +220,7 @@ export const validateAppointment = async (
     .single();
 
   if (validationError) {
-    console.error('[Validation] Erreur lors de la création du log:', validationError);
+    logger.error('[Validation] Erreur lors de la création du log:', validationError);
     // Ne pas bloquer si le log échoue, le status a déjà été changé
   }
 
@@ -262,7 +263,7 @@ export const sendContestationEmail = async (appointmentId: string, problemDescri
   const { data: { session } } = await supabase.auth.getSession();
 
   if (!session) {
-    console.error('[Email] Pas de session utilisateur');
+    logger.error('[Email] Pas de session utilisateur');
     return;
   }
 
@@ -284,15 +285,15 @@ export const sendContestationEmail = async (appointmentId: string, problemDescri
 
     if (!response.ok) {
       const error = await response.json();
-      console.error('[Email] Erreur lors de l\'envoi:', error);
+      logger.error('[Email] Erreur lors de l\'envoi:', error);
       // Ne pas bloquer si l'email échoue
       return;
     }
 
     const result = await response.json();
-    console.log('[Email] Email de contestation envoyé:', result);
+    logger.info('[Email] Email de contestation envoyé:', result);
   } catch (error) {
-    console.error('[Email] Erreur lors de l\'envoi de l\'email:', error);
+    logger.error('[Email] Erreur lors de l\'envoi de l\'email:', error);
     // Ne pas bloquer si l'email échoue
   }
 };
@@ -339,7 +340,7 @@ export const restoreAppointment = async (appointmentId: string) => {
     .eq('id', appointmentId);
 
   if (statusError) {
-    console.error('[Restore] Erreur lors du rétablissement:', statusError);
+    logger.error('[Restore] Erreur lors du rétablissement:', statusError);
     throw new Error(`Erreur lors du rétablissement: ${statusError.message}`);
   }
 

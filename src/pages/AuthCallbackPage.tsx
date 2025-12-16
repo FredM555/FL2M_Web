@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Box, CircularProgress, Typography, Alert } from '@mui/material';
 import { supabase } from '../services/supabase';
+import { logger } from '../utils/logger';
 
 /**
  * Page de callback OAuth
@@ -16,7 +17,7 @@ const AuthCallbackPage = () => {
 
   useEffect(() => {
     const handleOAuthCallback = async () => {
-      console.log('[AUTH_CALLBACK] Début du traitement du callback OAuth');
+      logger.debug('[AUTH_CALLBACK] Début du traitement du callback OAuth');
 
       try {
         // Vérifier s'il y a un code d'erreur dans l'URL
@@ -25,7 +26,7 @@ const AuthCallbackPage = () => {
         const errorDescription = urlParams.get('error_description');
 
         if (errorCode) {
-          console.error('[AUTH_CALLBACK] Erreur OAuth:', errorCode, errorDescription);
+          logger.error('[AUTH_CALLBACK] Erreur OAuth:', errorCode, errorDescription);
           setError(errorDescription || 'Une erreur est survenue lors de la connexion');
           setStatus('error');
 
@@ -41,12 +42,12 @@ const AuthCallbackPage = () => {
         const { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
-          console.error('[AUTH_CALLBACK] Erreur récupération session:', sessionError);
+          logger.error('[AUTH_CALLBACK] Erreur récupération session:', sessionError);
           throw sessionError;
         }
 
         if (!session) {
-          console.warn('[AUTH_CALLBACK] Aucune session trouvée');
+          logger.warn('[AUTH_CALLBACK] Aucune session trouvée');
           setError('Aucune session trouvée. Redirection vers la page de connexion...');
           setStatus('error');
           setTimeout(() => {
@@ -55,7 +56,7 @@ const AuthCallbackPage = () => {
           return;
         }
 
-        console.log('[AUTH_CALLBACK] Session OAuth récupérée:', session.user.id);
+        logger.debug('[AUTH_CALLBACK] Session OAuth récupérée:', session.user.id);
 
         // Vérifier si le profil existe et est complet
         setStatus('checking_profile');
@@ -66,9 +67,9 @@ const AuthCallbackPage = () => {
           .single();
 
         if (profileError) {
-          console.error('[AUTH_CALLBACK] Erreur récupération profil:', profileError);
+          logger.error('[AUTH_CALLBACK] Erreur récupération profil:', profileError);
           // Le profil n'existe peut-être pas encore, rediriger vers la complétion
-          console.log('[AUTH_CALLBACK] Profil non trouvé, redirection vers complétion');
+          logger.debug('[AUTH_CALLBACK] Profil non trouvé, redirection vers complétion');
           setStatus('redirecting');
           navigate('/complete-profile', { replace: true });
           return;
@@ -78,7 +79,7 @@ const AuthCallbackPage = () => {
         // Un profil est considéré comme complet s'il a au minimum un pseudo
         const isProfileComplete = profile && profile.pseudo;
 
-        console.log('[AUTH_CALLBACK] Profil trouvé:', {
+        logger.debug('[AUTH_CALLBACK] Profil trouvé:', {
           id: profile?.id,
           pseudo: profile?.pseudo,
           isComplete: isProfileComplete
@@ -88,11 +89,11 @@ const AuthCallbackPage = () => {
 
         if (!isProfileComplete) {
           // Profil incomplet, rediriger vers la page de complétion
-          console.log('[AUTH_CALLBACK] Profil incomplet, redirection vers complétion');
+          logger.debug('[AUTH_CALLBACK] Profil incomplet, redirection vers complétion');
           navigate('/complete-profile', { replace: true });
         } else {
           // Profil complet, rediriger vers la page d'accueil
-          console.log('[AUTH_CALLBACK] Profil complet, redirection vers accueil');
+          logger.debug('[AUTH_CALLBACK] Profil complet, redirection vers accueil');
 
           // Vérifier s'il y a un état de redirection sauvegardé
           const savedRedirect = sessionStorage.getItem('oauth_redirect');
@@ -105,7 +106,7 @@ const AuthCallbackPage = () => {
         }
 
       } catch (err) {
-        console.error('[AUTH_CALLBACK] Erreur lors du traitement:', err);
+        logger.error('[AUTH_CALLBACK] Erreur lors du traitement:', err);
         setError('Une erreur est survenue. Veuillez réessayer.');
         setStatus('error');
 

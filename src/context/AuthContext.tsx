@@ -2,6 +2,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase, Profile, getProfile, logActivity } from '../services/supabase';
+import { logger } from '../utils/logger';
 
 interface AuthContextType {
   user: User | null;
@@ -40,9 +41,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   
   // Debug log pour chaque changement d'état
   useEffect(() => {
-    console.log("[AUTH_STATE] État actuel:", { 
-      userExists: !!user, 
-      profileExists: !!profile, 
+    logger.debug("[AUTH_STATE] État actuel:", {
+      userExists: !!user,
+      profileExists: !!profile,
       loading,
       time: new Date().toISOString()
     });
@@ -51,16 +52,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Fonction sécurisée pour mettre à jour l'état
   const safeSetState = (setter: any, value: any, stateName: string) => {
     if (isMounted.current) {
-      console.log(`[SAFE_STATE] Mise à jour de ${stateName}:`, value);
+      logger.debug(`[SAFE_STATE] Mise à jour de ${stateName}:`, value);
       setter(value);
     } else {
-      console.log(`[SAFE_STATE] Ignoré: ${stateName} - composant démonté`);
+      logger.debug(`[SAFE_STATE] Ignoré: ${stateName} - composant démonté`);
     }
   };
 
   // Récupération du profil sans await
   const fetchUserProfile = (userId: string): Promise<Profile | null> => {
-    console.log('[FETCH_PROFILE] Début récupération profil pour ID:', userId);
+    logger.debug('[FETCH_PROFILE] Début récupération profil pour ID:', userId);
 
     // Attendre 500ms pour donner le temps aux politiques RLS de s'appliquer
     return new Promise(resolve => setTimeout(resolve, 500))
@@ -89,12 +90,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const { data: profileData, error } = profileResult;
 
         if (error) {
-          console.error('[FETCH_PROFILE] Erreur récupération profil:', error);
+          logger.error('[FETCH_PROFILE] Erreur récupération profil:', error);
           return null;
         }
 
         if (!profileData) {
-          console.warn('[FETCH_PROFILE] Aucun profil trouvé pour l\'utilisateur:', userId);
+          logger.warn('[FETCH_PROFILE] Aucun profil trouvé pour l\'utilisateur:', userId);
           return null;
         }
 
@@ -106,21 +107,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
             : beneficiaryResult.data.beneficiary;
 
           if (beneficiaryData) {
-            console.log('[FETCH_PROFILE] Données numérologie récupérées:', beneficiaryData);
+            logger.debug('[FETCH_PROFILE] Données numérologie récupérées:', beneficiaryData);
             profileData.racine1 = beneficiaryData.racine_1 || undefined;
             profileData.racine2 = beneficiaryData.racine_2 || undefined;
             profileData.tronc = beneficiaryData.tronc || undefined;
             profileData.dynamique_de_vie = beneficiaryData.dynamique_de_vie || undefined;
           }
         } else {
-          console.log('[FETCH_PROFILE] Aucun bénéficiaire "self" trouvé');
+          logger.debug('[FETCH_PROFILE] Aucun bénéficiaire "self" trouvé');
         }
 
-        console.log('[FETCH_PROFILE] Profil récupéré avec succès:', profileData);
+        logger.debug('[FETCH_PROFILE] Profil récupéré avec succès:', profileData);
         return profileData;
       })
       .catch(e => {
-        console.error('[FETCH_PROFILE] Exception lors de la récupération du profil:', e);
+        logger.error('[FETCH_PROFILE] Exception lors de la récupération du profil:', e);
         return null;
       });
   };
@@ -129,11 +130,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
 const logUserLogin = (userId: string, isDirectAuth = false, email?: string) => {
   // Ne logger que les vraies connexions, pas les restaurations de session
   if (!isDirectAuth) {
-    console.log('[LOG_LOGIN] Rafraîchissement de page détecté, pas de journalisation');
+    logger.debug('[LOG_LOGIN] Rafraîchissement de page détecté, pas de journalisation');
     return Promise.resolve();
   }
 
-  console.log('[LOG_LOGIN] Nouvelle connexion détectée, début enregistrement pour:', userId);
+  logger.info('[LOG_LOGIN] Nouvelle connexion détectée, début enregistrement pour:', userId);
 
   // Utiliser le nouveau système de logging
   logActivity({
@@ -141,7 +142,7 @@ const logUserLogin = (userId: string, isDirectAuth = false, email?: string) => {
     actionType: 'login',
     actionDescription: `Connexion réussie${email ? ` - ${email}` : ''}`
   }).catch(error => {
-    console.warn('[LOG_LOGIN] Non critique - Erreur log connexion:', error);
+    logger.warn('[LOG_LOGIN] Non critique - Erreur log connexion:', error);
   });
 
   return Promise.resolve();
@@ -149,7 +150,7 @@ const logUserLogin = (userId: string, isDirectAuth = false, email?: string) => {
 
 // Enregistrer la déconnexion
 const logUserLogout = (userId: string) => {
-  console.log('[LOG_LOGOUT] Enregistrement déconnexion pour:', userId);
+  logger.info('[LOG_LOGOUT] Enregistrement déconnexion pour:', userId);
 
   // Utiliser le nouveau système de logging
   logActivity({
@@ -157,7 +158,7 @@ const logUserLogout = (userId: string) => {
     actionType: 'logout',
     actionDescription: 'Déconnexion'
   }).catch(error => {
-    console.warn('[LOG_LOGOUT] Non critique - Erreur log déconnexion:', error);
+    logger.warn('[LOG_LOGOUT] Non critique - Erreur log déconnexion:', error);
   });
 
   return Promise.resolve();
@@ -165,12 +166,12 @@ const logUserLogout = (userId: string) => {
 
 // Enregistrer un échec de connexion
 const logLoginFailed = (email: string, reason?: string) => {
-  console.log('[LOG_LOGIN_FAILED] Échec de connexion pour:', email);
+  logger.info('[LOG_LOGIN_FAILED] Échec de connexion pour:', email);
 
   // Note: on ne peut pas logger avec userId puisque la connexion a échoué
   // On loggera avec un userId factice ou on pourrait modifier la table pour accepter NULL
   // Pour l'instant, on log juste dans la console
-  console.warn('[LOG_LOGIN_FAILED] Email:', email, 'Raison:', reason);
+  logger.warn('[LOG_LOGIN_FAILED] Email:', email, 'Raison:', reason);
 
   return Promise.resolve();
 };
@@ -178,16 +179,16 @@ const logLoginFailed = (email: string, reason?: string) => {
   // Initialiser l'authentification sans awaits
   const initializeAuth = () => {
     if (authInitialized.current) {
-      console.log('[AUTH_INIT] Déjà initialisé, ignoré');
+      logger.debug('[AUTH_INIT] Déjà initialisé, ignoré');
       return;
     }
-    
+
     authInitialized.current = true;
-    console.log('[AUTH_INIT] Début initialisation authentification');
-    
+    logger.debug('[AUTH_INIT] Début initialisation authentification');
+
     // Créer un timeout global pour l'initialisation
     const authInitTimeout = setTimeout(() => {
-      console.warn('[AUTH_INIT] TIMEOUT - Initialisation trop longue, force loading=false');
+      logger.warn('[AUTH_INIT] TIMEOUT - Initialisation trop longue, force loading=false');
       if (isMounted.current) {
         safeSetState(setLoading, false, 'loading (timeout)');
       }
@@ -197,27 +198,27 @@ const logLoginFailed = (email: string, reason?: string) => {
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
         if (!isMounted.current) {
-          console.log('[AUTH_INIT] Composant démonté pendant l\'initialisation');
+          logger.debug('[AUTH_INIT] Composant démonté pendant l\'initialisation');
           return;
         }
-        
+
         if (session) {
-          console.log('[AUTH_INIT] Session existante trouvée:', session.user.id);
+          logger.debug('[AUTH_INIT] Session existante trouvée:', session.user.id);
           safeSetState(setUser, session.user, 'user');
-          
+
           // Récupération du profil
           return fetchUserProfile(session.user.id)
             .then(profileData => {
               if (!isMounted.current) return;
-              
+
               if (profileData) {
                 safeSetState(setProfile, profileData, 'profile');
               } else {
-                console.warn('[AUTH_INIT] Aucun profil trouvé ou erreur');
+                logger.warn('[AUTH_INIT] Aucun profil trouvé ou erreur');
               }
             })
             .catch(profileError => {
-              console.error('[AUTH_INIT] Erreur profil avec timeout:', profileError);
+              logger.error('[AUTH_INIT] Erreur profil avec timeout:', profileError);
             })
             .finally(() => {
               // Toujours terminer le chargement, même en cas d'erreur
@@ -225,13 +226,13 @@ const logLoginFailed = (email: string, reason?: string) => {
               clearTimeout(authInitTimeout);
             });
         } else {
-          console.log('[AUTH_INIT] Aucune session existante');
+          logger.debug('[AUTH_INIT] Aucune session existante');
           safeSetState(setLoading, false, 'loading (pas de session)');
           clearTimeout(authInitTimeout);
         }
       })
       .catch(error => {
-        console.error('[AUTH_INIT] Erreur initialisation auth:', error);
+        logger.error('[AUTH_INIT] Erreur initialisation auth:', error);
         safeSetState(setLoading, false, 'loading (erreur)');
         clearTimeout(authInitTimeout);
       });
@@ -239,16 +240,16 @@ const logLoginFailed = (email: string, reason?: string) => {
 
   // Hook principal d'authentification
   useEffect(() => {
-    console.log('[AUTH_EFFECT] Début du hook d\'authentification');
+    logger.debug('[AUTH_EFFECT] Début du hook d\'authentification');
     isMounted.current = true;
-    
+
     // Configurer l'écouteur d'événements d'authentification
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        console.log('[AUTH_EVENT] Événement auth reçu:', event, 'Session:', session ? 'présente' : 'absente');
-        
+        logger.debug('[AUTH_EVENT] Événement auth reçu:', event, 'Session:', session ? 'présente' : 'absente');
+
         if (!isMounted.current) {
-          console.log('[AUTH_EVENT] Ignoré - composant démonté');
+          logger.debug('[AUTH_EVENT] Ignoré - composant démonté');
           return;
         }
         
@@ -257,20 +258,20 @@ const logLoginFailed = (email: string, reason?: string) => {
         
         // Timeout global pour l'événement
         const eventTimeout = setTimeout(() => {
-          console.warn(`[AUTH_EVENT] TIMEOUT - Traitement de l'événement ${event} trop long`);
+          logger.warn(`[AUTH_EVENT] TIMEOUT - Traitement de l'événement ${event} trop long`);
           if (isMounted.current && loading) {
             //safeSetState(setLoading, false, 'loading (event timeout)');
             setLoading(false);
           }
         }, 8000);
-        
+
         // Traiter l'événement
         if (event === 'SIGNED_IN' && session) {
-          console.log('[HANDLE_SIGNED_IN] Traitement SIGNED_IN');
+          logger.debug('[HANDLE_SIGNED_IN] Traitement SIGNED_IN');
 
           // Log non bloquant en parallèle
           logUserLogin(session.user.id, true, session.user.email).catch(e =>
-            console.warn('[HANDLE_SIGNED_IN] Erreur log:', e)
+            logger.warn('[HANDLE_SIGNED_IN] Erreur log:', e)
           );
 
           // Récupérer le profil sans await
@@ -281,29 +282,29 @@ const logLoginFailed = (email: string, reason?: string) => {
               if (profileData) {
                 safeSetState(setProfile, profileData, 'profile (signed_in)');
               } else {
-                console.warn('[HANDLE_SIGNED_IN] Aucun profil trouvé ou erreur');
+                logger.warn('[HANDLE_SIGNED_IN] Aucun profil trouvé ou erreur');
               }
             })
             .catch(profileError => {
-              console.error('[HANDLE_SIGNED_IN] Erreur profil avec timeout:', profileError);
+              logger.error('[HANDLE_SIGNED_IN] Erreur profil avec timeout:', profileError);
             })
             .finally(() => {
               safeSetState(setLoading, false, 'loading (après signed_in)');
               clearTimeout(eventTimeout);
             });
         } else if (event === 'SIGNED_OUT') {
-          console.log('[AUTH_EVENT] Traitement SIGNED_OUT');
+          logger.debug('[AUTH_EVENT] Traitement SIGNED_OUT');
           safeSetState(setProfile, null, 'profile (signed_out)');
           safeSetState(setLoading, false, 'loading (après signed_out)');
           clearTimeout(eventTimeout);
         } else if (event === 'INITIAL_SESSION') {
-          console.log('[AUTH_EVENT] Traitement INITIAL_SESSION');
+          logger.debug('[AUTH_EVENT] Traitement INITIAL_SESSION');
           // Gérer la session initiale - typiquement déjà traitée par initializeAuth
           // Mais au cas où, forcer loading=false
           safeSetState(setLoading, false, 'loading (après INITIAL_SESSION)');
           clearTimeout(eventTimeout);
         } else if (event === 'USER_UPDATED') {
-          console.log('[AUTH_EVENT] Traitement USER_UPDATED');
+          logger.debug('[AUTH_EVENT] Traitement USER_UPDATED');
           // Recharger le profil si l'utilisateur est mis à jour
           if (session?.user) {
             fetchUserProfile(session.user.id)
@@ -313,14 +314,14 @@ const logLoginFailed = (email: string, reason?: string) => {
                 }
               })
               .catch(e => {
-                console.error('[AUTH_EVENT] Erreur lors du rechargement du profil:', e);
+                logger.error('[AUTH_EVENT] Erreur lors du rechargement du profil:', e);
               });
           }
           safeSetState(setLoading, false, 'loading (après USER_UPDATED)');
           clearTimeout(eventTimeout);
         } else {
           // Pour tous les autres événements
-          console.log(`[AUTH_EVENT] Fin traitement ${event}`);
+          logger.debug(`[AUTH_EVENT] Fin traitement ${event}`);
           // Forcer loading=false quoi qu'il arrive
           if (loading) {
             safeSetState(setLoading, false, `loading (après ${event})`);
@@ -335,34 +336,34 @@ const logLoginFailed = (email: string, reason?: string) => {
     
     // Fonction de nettoyage
     return () => {
-      console.log('[AUTH_EFFECT] Démontage AuthProvider');
+      logger.debug('[AUTH_EFFECT] Démontage AuthProvider');
       isMounted.current = false;
       subscription?.unsubscribe();
     };
   }, []); // Dépendances vides pour n'exécuter qu'une fois
-  
+
   // Forcer loading=false après 15 secondes quoi qu'il arrive
   useEffect(() => {
     const globalTimeout = setTimeout(() => {
       if (loading && isMounted.current) {
-        console.warn('[GLOBAL_TIMEOUT] Force désactivation loading après timeout global');
+        logger.warn('[GLOBAL_TIMEOUT] Force désactivation loading après timeout global');
         safeSetState(setLoading, false, 'loading (timeout global)');
       }
     }, 15000);
-    
+
     return () => clearTimeout(globalTimeout);
   }, [loading]);
 
   const signInWithEmail = (email: string, password: string) => {
-    console.log('[SIGNIN_EMAIL] Tentative de connexion avec email');
+    logger.info('[SIGNIN_EMAIL] Tentative de connexion avec email');
     return supabase.auth.signInWithPassword({ email, password })
       .then(({ data, error }) => {
         if (error) {
-          console.error('[SIGNIN_EMAIL] Erreur connexion:', error.message);
+          logger.error('[SIGNIN_EMAIL] Erreur connexion:', error.message);
           // Logger l'échec de connexion
           logLoginFailed(email, error.message);
         } else {
-          console.log('[SIGNIN_EMAIL] Connexion réussie');
+          logger.info('[SIGNIN_EMAIL] Connexion réussie');
           // Ici, c'est une vraie connexion
           if (data?.user) {
             logUserLogin(data.user.id, true, email);
@@ -371,14 +372,14 @@ const logLoginFailed = (email: string, reason?: string) => {
         return { error: error ? new Error(error.message) : null };
       })
       .catch(error => {
-        console.error('[SIGNIN_EMAIL] Exception lors de la connexion:', error);
+        logger.error('[SIGNIN_EMAIL] Exception lors de la connexion:', error);
         logLoginFailed(email, error.message);
         return { error: error as Error };
       });
   };
 
   const signInWithGoogle = () => {
-    console.log('[SIGNIN_GOOGLE] Tentative de connexion avec Google');
+    logger.info('[SIGNIN_GOOGLE] Tentative de connexion avec Google');
 
     // Sauvegarder la page actuelle pour redirection après OAuth
     const currentPath = window.location.pathname;
@@ -400,13 +401,13 @@ const logLoginFailed = (email: string, reason?: string) => {
         return { error: error ? new Error(error.message) : null };
       })
       .catch(error => {
-        console.error('[SIGNIN_GOOGLE] Exception lors de la connexion:', error);
+        logger.error('[SIGNIN_GOOGLE] Exception lors de la connexion:', error);
         return { error: error as Error };
       });
   };
 
   const signInWithApple = () => {
-    console.log('[SIGNIN_APPLE] Tentative de connexion avec Apple');
+    logger.info('[SIGNIN_APPLE] Tentative de connexion avec Apple');
 
     // Sauvegarder la page actuelle pour redirection après OAuth
     const currentPath = window.location.pathname;
@@ -424,18 +425,18 @@ const logLoginFailed = (email: string, reason?: string) => {
         return { error: error ? new Error(error.message) : null };
       })
       .catch(error => {
-        console.error('[SIGNIN_APPLE] Exception lors de la connexion:', error);
+        logger.error('[SIGNIN_APPLE] Exception lors de la connexion:', error);
         return { error: error as Error };
       });
   };
 
   const signUpWithEmail = (email: string, password: string, userData: Partial<Profile>) => {
-    console.log('[SIGNUP_EMAIL] Tentative d\'inscription avec email');
+    logger.info('[SIGNUP_EMAIL] Tentative d\'inscription avec email');
     return supabase.auth.signUp({ email, password })
       .then(({ data, error }) => {
         if (!error && data?.user) {
-          console.log('[SIGNUP_EMAIL] Inscription réussie, création du profil');
-          
+          logger.info('[SIGNUP_EMAIL] Inscription réussie, création du profil');
+
           return supabase
             .from('profiles')
             .update(userData)
@@ -444,29 +445,29 @@ const logLoginFailed = (email: string, reason?: string) => {
             .single()
             .then(({ error: profileError }) => {
               if (profileError) {
-                console.error('[SIGNUP_EMAIL] Erreur création profil:', profileError.message);
+                logger.error('[SIGNUP_EMAIL] Erreur création profil:', profileError.message);
               } else {
-                console.log('[SIGNUP_EMAIL] Profil créé avec succès');
+                logger.info('[SIGNUP_EMAIL] Profil créé avec succès');
               }
-              
+
               return { error: profileError ? new Error(profileError.message) : null };
             });
         }
-        
+
         if (error) {
-          console.error('[SIGNUP_EMAIL] Erreur inscription:', error.message);
+          logger.error('[SIGNUP_EMAIL] Erreur inscription:', error.message);
         }
-        
+
         return { error: error ? new Error(error.message) : null };
       })
       .catch(error => {
-        console.error('[SIGNUP_EMAIL] Exception lors de l\'inscription:', error);
+        logger.error('[SIGNUP_EMAIL] Exception lors de l\'inscription:', error);
         return { error: error as Error };
       });
   };
 
   const signOut = () => {
-    console.log('[SIGNOUT] Tentative de déconnexion');
+    logger.info('[SIGNOUT] Tentative de déconnexion');
 
     // Logger la déconnexion avant de déconnecter (car on aura plus accès à user.id après)
     if (user?.id) {
@@ -476,35 +477,35 @@ const logLoginFailed = (email: string, reason?: string) => {
     return supabase.auth.signOut()
       .then(({ error }) => {
         if (error) {
-          console.error('[SIGNOUT] Erreur déconnexion:', error.message);
+          logger.error('[SIGNOUT] Erreur déconnexion:', error.message);
         } else {
-          console.log('[SIGNOUT] Déconnexion réussie');
+          logger.info('[SIGNOUT] Déconnexion réussie');
         }
         return { error: error ? new Error(error.message) : null };
       })
       .catch(error => {
-        console.error('[SIGNOUT] Exception lors de la déconnexion:', error);
+        logger.error('[SIGNOUT] Exception lors de la déconnexion:', error);
         return { error: error as Error };
       });
   };
 
   const updateProfile = (profileData: Partial<Profile>) => {
     if (!user) {
-      console.error('[UPDATE_PROFILE] Tentative de mise à jour du profil sans être authentifié');
+      logger.error('[UPDATE_PROFILE] Tentative de mise à jour du profil sans être authentifié');
       return Promise.resolve({ error: new Error('Non authentifié') });
     }
 
-    console.log('[UPDATE_PROFILE] Tentative de mise à jour du profil:', profileData);
+    logger.info('[UPDATE_PROFILE] Tentative de mise à jour du profil:', profileData);
 
     // D'abord mettre à jour la BDD
     return (supabase.from('profiles').update(profileData).eq('id', user.id) as any)
       .then(({ error: updateError }: any) => {
         if (updateError) {
-          console.error('[UPDATE_PROFILE] Erreur mise à jour profil:', updateError.message);
+          logger.error('[UPDATE_PROFILE] Erreur mise à jour profil:', updateError.message);
           throw updateError;
         }
 
-        console.log('[UPDATE_PROFILE] Mise à jour BDD réussie');
+        logger.debug('[UPDATE_PROFILE] Mise à jour BDD réussie');
 
         // Ensuite récupérer le profil complet depuis la BDD
         return supabase
@@ -515,7 +516,7 @@ const logLoginFailed = (email: string, reason?: string) => {
       })
       .then(({ data, error: fetchError }: any) => {
         if (fetchError) {
-          console.error('[UPDATE_PROFILE] Erreur récupération profil après update:', fetchError.message);
+          logger.error('[UPDATE_PROFILE] Erreur récupération profil après update:', fetchError.message);
           // Même si on ne peut pas récupérer, on met à jour le contexte localement
           safeSetState(setProfile, (prev: any) => {
             if (!prev) {
@@ -526,14 +527,14 @@ const logLoginFailed = (email: string, reason?: string) => {
               } as Profile;
             }
             const updated = { ...prev, ...profileData };
-            console.log('[UPDATE_PROFILE] Nouvel état profil (local):', updated);
+            logger.debug('[UPDATE_PROFILE] Nouvel état profil (local):', updated);
             return updated;
           }, 'profile (update local)');
 
           return { error: null }; // Ne pas bloquer même si la récupération échoue
         }
 
-        console.log('[UPDATE_PROFILE] Profil récupéré avec succès:', data);
+        logger.debug('[UPDATE_PROFILE] Profil récupéré avec succès:', data);
 
         // Mettre à jour le contexte avec les données fraîches de la BDD
         if (data) {
@@ -543,7 +544,7 @@ const logLoginFailed = (email: string, reason?: string) => {
         return { error: null };
       })
       .catch((error: any) => {
-        console.error('[UPDATE_PROFILE] Exception lors de la mise à jour du profil:', error);
+        logger.error('[UPDATE_PROFILE] Exception lors de la mise à jour du profil:', error);
         return { error: error as Error };
       });
   };
@@ -560,10 +561,10 @@ const logLoginFailed = (email: string, reason?: string) => {
     updateProfile,
   };
 
-  console.log("[RENDER] AuthProvider:", { 
-    user: user ? 'Présent' : 'Null', 
-    profile: profile ? 'Présent' : 'Null', 
-    loading, 
+  logger.debug("[RENDER] AuthProvider:", {
+    user: user ? 'Présent' : 'Null',
+    profile: profile ? 'Présent' : 'Null',
+    loading,
     time: new Date().toISOString()
   });
 

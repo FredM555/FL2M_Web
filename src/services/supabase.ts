@@ -1,6 +1,7 @@
 // src/services/supabase.ts
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { ContractType } from '../types/payments';
+import { logger } from '../utils/logger';
 
 // Types pour la base de données
 export type Profile = {
@@ -236,7 +237,7 @@ export const supabase: SupabaseClient = createClient(supabaseUrl, supabaseAnonKe
 
 // Profils
 export const getProfile = (userId: string) => {
-  console.log('[GET_PROFILE] Début récupération profil pour utilisateur:', userId);
+  logger.debug('[GET_PROFILE] Début récupération profil pour utilisateur:', userId);
   try {
     const result = supabase
       .from('profiles')
@@ -244,10 +245,10 @@ export const getProfile = (userId: string) => {
       .eq('id', userId)
       .single();
 
-    console.log('[GET_PROFILE] Requête envoyée:', result);
+    logger.debug('[GET_PROFILE] Requête envoyée:', result);
     return result;
   } catch (error) {
-    console.error('[GET_PROFILE] Exception dans getProfile:', error);
+    logger.error('[GET_PROFILE] Exception dans getProfile:', error);
     throw error;
   }
 };
@@ -417,7 +418,7 @@ export const getMyPractitionerProfile = async () => {
         .limit(1)
         .maybeSingle();
 
-      console.log('[getMyPractitionerProfile] Données bénéficiaire récupérées:', beneficiaryData);
+      logger.debug('[getMyPractitionerProfile] Données bénéficiaire récupérées:', beneficiaryData);
 
       // Ajouter les données de numérologie au profil si disponibles
       if (!beneficiaryError && beneficiaryData?.beneficiary && result.data.profile) {
@@ -431,7 +432,7 @@ export const getMyPractitionerProfile = async () => {
           result.data.profile.racine1 = benef.racine_1;
           result.data.profile.racine2 = benef.racine_2;
           result.data.profile.dynamique_de_vie = benef.dynamique_de_vie;
-          console.log('[getMyPractitionerProfile] Données numérologie ajoutées au profil:', {
+          logger.debug('[getMyPractitionerProfile] Données numérologie ajoutées au profil:', {
             tronc: result.data.profile.tronc,
             racine1: result.data.profile.racine1,
             racine2: result.data.profile.racine2,
@@ -439,10 +440,10 @@ export const getMyPractitionerProfile = async () => {
           });
         }
       } else if (beneficiaryError) {
-        console.warn('[getMyPractitionerProfile] Erreur récupération bénéficiaire:', beneficiaryError);
+        logger.warn('[getMyPractitionerProfile] Erreur récupération bénéficiaire:', beneficiaryError);
       }
     } catch (err) {
-      console.error('[getMyPractitionerProfile] Exception lors de la récupération des données numérologie:', err);
+      logger.error('[getMyPractitionerProfile] Exception lors de la récupération des données numérologie:', err);
     }
   }
 
@@ -585,7 +586,7 @@ export const createAppointment = async (appointmentData: Partial<Appointment>) =
         };
       }
     } catch (error) {
-      console.error('Erreur lors de la vérification des conflits:', error);
+      logger.error('Erreur lors de la vérification des conflits:', error);
     }
   }
 
@@ -607,7 +608,7 @@ export const createAppointment = async (appointmentData: Partial<Appointment>) =
         service_id: appointmentData.service_id,
         start_time: appointmentData.start_time
       }
-    }).catch(err => console.warn('Erreur log création RDV:', err));
+    }).catch(err => logger.warn('Erreur log création RDV:', err));
   }
 
   return result;
@@ -654,7 +655,7 @@ export const updateAppointment = async (appointmentId: string, appointmentData: 
         }
       }
     } catch (error) {
-      console.error('Erreur lors de la vérification des conflits:', error);
+      logger.error('Erreur lors de la vérification des conflits:', error);
     }
   }
 
@@ -674,7 +675,7 @@ export const updateAppointment = async (appointmentId: string, appointmentData: 
       result.data.end_time,
       appointmentId
     ).catch(err =>
-      console.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
+      logger.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
     );
   }
 
@@ -689,7 +690,7 @@ export const updateAppointment = async (appointmentId: string, appointmentData: 
         entityType: 'appointment',
         entityId: appointmentId,
         metadata: appointmentData
-      }).catch(err => console.warn('Erreur log modification RDV:', err));
+      }).catch(err => logger.warn('Erreur log modification RDV:', err));
     }
   }
 
@@ -713,7 +714,7 @@ export const updateAppointmentStatus = async (appointmentId: string, status: str
       result.data.end_time,
       appointmentId
     ).catch(err =>
-      console.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
+      logger.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
     );
   }
 
@@ -733,7 +734,7 @@ export const updateAppointmentStatus = async (appointmentId: string, status: str
       entityType: 'appointment',
       entityId: appointmentId,
       metadata: { status }
-    }).catch(err => console.warn('Erreur log statut RDV:', err));
+    }).catch(err => logger.warn('Erreur log statut RDV:', err));
   }
 
   return result;
@@ -880,7 +881,7 @@ export const uploadAppointmentDocument = async (
     // 3. Envoyer un email au client si le document est visible pour lui
     if (data && visibleToClient) {
       sendDocumentNotificationEmail(appointmentId, file.name, fileType, description).catch(err =>
-        console.error('Erreur lors de l\'envoi de l\'email de notification de document:', err)
+        logger.error('Erreur lors de l\'envoi de l\'email de notification de document:', err)
       );
     }
 
@@ -920,7 +921,7 @@ const sendDocumentNotificationEmail = async (
       .single();
 
     if (appointmentError || !appointment) {
-      console.error('Impossible de récupérer les informations du rendez-vous');
+      logger.error('Impossible de récupérer les informations du rendez-vous');
       return;
     }
 
@@ -1065,9 +1066,9 @@ const sendDocumentNotificationEmail = async (
       });
     }
 
-    console.log('Email de notification de document envoyé avec succès');
+    logger.info('Email de notification de document envoyé avec succès');
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email de notification de document:', error);
+    logger.error('Erreur lors de l\'envoi de l\'email de notification de document:', error);
     throw error;
   }
 };
@@ -1104,7 +1105,7 @@ export const getSignedDocumentUrl = async (filePath: string): Promise<string> =>
     .createSignedUrl(filePath, 3600); // 1 heure
 
   if (error) {
-    console.error('Erreur lors de la création de l\'URL signée:', error);
+    logger.error('Erreur lors de la création de l\'URL signée:', error);
     // Fallback sur l'URL publique
     return getDocumentUrl(filePath);
   }
@@ -1128,7 +1129,7 @@ export const getDocumentBlob = async (filePath: string): Promise<string | null> 
       .download(filePath);
 
     if (error) {
-      console.error('Erreur lors du téléchargement du blob:', error);
+      logger.error('Erreur lors du téléchargement du blob:', error);
       return null;
     }
 
@@ -1140,7 +1141,7 @@ export const getDocumentBlob = async (filePath: string): Promise<string | null> 
 
     return null;
   } catch (error) {
-    console.error('Exception lors du téléchargement du blob:', error);
+    logger.error('Exception lors du téléchargement du blob:', error);
     return null;
   }
 };
@@ -1204,7 +1205,7 @@ const sendCommentNotificationEmail = async (
       .single();
 
     if (appointmentError || !appointment) {
-      console.error('Impossible de récupérer les informations du rendez-vous');
+      logger.error('Impossible de récupérer les informations du rendez-vous');
       return;
     }
 
@@ -1364,9 +1365,9 @@ const sendCommentNotificationEmail = async (
       });
     }
 
-    console.log('Email de notification de commentaire envoyé avec succès');
+    logger.info('Email de notification de commentaire envoyé avec succès');
   } catch (error) {
-    console.error('Erreur lors de l\'envoi de l\'email de notification de commentaire:', error);
+    logger.error('Erreur lors de l\'envoi de l\'email de notification de commentaire:', error);
     throw error;
   }
 };
@@ -1408,7 +1409,7 @@ export const createAppointmentComment = async (
     // Envoyer un email au client si le commentaire est public
     if (data && !isPrivate) {
       sendCommentNotificationEmail(appointmentId, content, data.author).catch(err =>
-        console.error('Erreur lors de l\'envoi de l\'email de notification de commentaire:', err)
+        logger.error('Erreur lors de l\'envoi de l\'email de notification de commentaire:', err)
       );
     }
 
@@ -1492,13 +1493,13 @@ export const logUserLogin = async (
     });
 
     if (error) {
-      console.error('Erreur lors du log de connexion:', error);
+      logger.error('Erreur lors du log de connexion:', error);
       return { data: null, error };
     }
 
     return { data, error: null };
   } catch (err) {
-    console.error('Exception lors du log de connexion:', err);
+    logger.error('Exception lors du log de connexion:', err);
     return { data: null, error: err };
   }
 };
@@ -1766,12 +1767,12 @@ export const logActivity = async (params: {
     });
 
     if (error) {
-      console.error('Erreur lors de l\'enregistrement du log:', error);
+      logger.error('Erreur lors de l\'enregistrement du log:', error);
     }
 
     return { data, error };
   } catch (err) {
-    console.error('Exception lors de l\'enregistrement du log:', err);
+    logger.error('Exception lors de l\'enregistrement du log:', err);
     return { data: null, error: err };
   }
 };
@@ -1824,7 +1825,7 @@ export const getActivityLogs = async (params?: {
 
     return { data: data as ActivityLog[] || [], error, count };
   } catch (err) {
-    console.error('Erreur lors de la récupération des logs:', err);
+    logger.error('Erreur lors de la récupération des logs:', err);
     return { data: [], error: err, count: 0 };
   }
 };
@@ -1866,7 +1867,7 @@ export const getActivityStats = async (params?: {
 
     return { data: stats, error: null };
   } catch (err) {
-    console.error('Erreur lors de la récupération des stats:', err);
+    logger.error('Erreur lors de la récupération des stats:', err);
     return { data: null, error: err };
   }
 };
@@ -1888,7 +1889,7 @@ export const getActionTypes = async () => {
 
     return { data: uniqueTypes, error: null };
   } catch (err) {
-    console.error('Erreur lors de la récupération des types d\'action:', err);
+    logger.error('Erreur lors de la récupération des types d\'action:', err);
     return { data: [], error: err };
   }
 };
@@ -1933,7 +1934,7 @@ export const updateNumerologyValues = async (userId: string) => {
 
     return { data: numerology, error: null };
   } catch (err) {
-    console.error('Erreur lors de la mise à jour des valeurs de numérologie:', err);
+    logger.error('Erreur lors de la mise à jour des valeurs de numérologie:', err);
     return { data: null, error: err };
   }
 };
@@ -1978,7 +1979,7 @@ export const recalculateAllNumerology = async () => {
 
         successCount++;
       } catch (err) {
-        console.error(`Erreur pour le profil ${profile.id}:`, err);
+        logger.error(`Erreur pour le profil ${profile.id}:`, err);
         errorCount++;
       }
     }
@@ -1988,7 +1989,7 @@ export const recalculateAllNumerology = async () => {
       error: null
     };
   } catch (err) {
-    console.error('Erreur lors du recalcul des valeurs de numérologie:', err);
+    logger.error('Erreur lors du recalcul des valeurs de numérologie:', err);
     return { data: null, error: err };
   }
 };

@@ -58,6 +58,7 @@ import { Service, Practitioner, Appointment } from '../services/supabase';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import WeeklyCalendar from '../components/appointments/WeeklyCalendar'; // Importer le nouveau composant
+import { logger } from '../utils/logger';
 
 // Type des paramètres d'URL
 interface LocationState {
@@ -177,7 +178,7 @@ const AppointmentBookingPage: React.FC = () => {
         setPractitionerNotFound(true);
       }
     } catch (err) {
-      console.error('Erreur lors du chargement de l\'intervenant dédié:', err);
+      logger.error('Erreur lors du chargement de l\'intervenant dédié:', err);
       setPractitionerNotFound(true);
     }
   };
@@ -239,7 +240,7 @@ const AppointmentBookingPage: React.FC = () => {
           }
         }
       } catch (err) {
-        console.error('Erreur lors du chargement des services:', err);
+        logger.error('Erreur lors du chargement des services:', err);
         setError('Impossible de charger les services. Veuillez réessayer.');
       } finally {
         setLoading(false);
@@ -272,7 +273,7 @@ const AppointmentBookingPage: React.FC = () => {
         setPractitioners(practitionersData);
       }
     } catch (err) {
-      console.error('Erreur lors du chargement des semaines disponibles:', err);
+      logger.error('Erreur lors du chargement des semaines disponibles:', err);
       setError('Impossible de charger les disponibilités. Veuillez réessayer.');
     } finally {
       setLoading(false);
@@ -297,7 +298,7 @@ const AppointmentBookingPage: React.FC = () => {
         setAppointmentSlots(slots as unknown as AppointmentSlot[]);
       }
     } catch (err) {
-      console.error('Erreur lors du chargement des créneaux:', err);
+      logger.error('Erreur lors du chargement des créneaux:', err);
       setError('Impossible de charger les créneaux disponibles. Veuillez réessayer.');
     } finally {
       setLoading(false);
@@ -450,7 +451,7 @@ const AppointmentBookingPage: React.FC = () => {
               true
             );
           } catch (linkError) {
-            console.error('Erreur lors de la liaison du bénéficiaire:', linkError);
+            logger.error('Erreur lors de la liaison du bénéficiaire:', linkError);
             // Ne pas bloquer si la liaison échoue, juste logger
           }
         }
@@ -513,7 +514,7 @@ const AppointmentBookingPage: React.FC = () => {
             throw new Error('Utilisateur non connecté');
           }
 
-          console.log('[PAYMENT] Création du paiement pour:', {
+          logger.debug('[PAYMENT] Création du paiement pour:', {
             appointmentId: appointmentData.id,
             price,
             practitionerId: selectedSlot.practitioner.id,
@@ -529,18 +530,18 @@ const AppointmentBookingPage: React.FC = () => {
             `${serviceName} avec ${practitionerName}`
           );
 
-          console.log('[PAYMENT] Session Stripe reçue:', {
+          logger.debug('[PAYMENT] Session Stripe reçue:', {
             sessionId: session.sessionId,
             checkoutUrl: session.url
           });
 
-          console.log('[PAYMENT] Redirection vers Stripe Checkout...');
+          logger.debug('[PAYMENT] Redirection vers Stripe Checkout...');
           // Rediriger vers Stripe Checkout
           await redirectToCheckout(session.url);
         }
       }
     } catch (err) {
-      console.error('Erreur lors de la réservation:', err);
+      logger.error('Erreur lors de la réservation:', err);
       setError('La réservation a échoué. Veuillez réessayer.');
       setLoading(false);
     }
@@ -656,7 +657,7 @@ const AppointmentBookingPage: React.FC = () => {
       // Pas de doublon ou pas de date de naissance, créer directement
       await confirmCreateBeneficiary(beneficiaryData);
     } catch (err: any) {
-      console.error('Erreur lors de la création du bénéficiaire:', err);
+      logger.error('Erreur lors de la création du bénéficiaire:', err);
       setError(err.message || 'Erreur lors de la création du bénéficiaire');
       throw err;
     } finally {
@@ -692,7 +693,7 @@ const AppointmentBookingPage: React.FC = () => {
         setPendingBeneficiaryData(null);
       }
     } catch (err: any) {
-      console.error('Erreur lors de la création du bénéficiaire:', err);
+      logger.error('Erreur lors de la création du bénéficiaire:', err);
       setError(err.message || 'Erreur lors de la création du bénéficiaire');
       throw err;
     } finally {
@@ -723,7 +724,7 @@ const AppointmentBookingPage: React.FC = () => {
         const { data } = await getUserBeneficiaries();
         setUserBeneficiaries(data || []);
       } catch (err) {
-        console.error('Erreur lors du chargement des bénéficiaires:', err);
+        logger.error('Erreur lors du chargement des bénéficiaires:', err);
       }
     };
 
