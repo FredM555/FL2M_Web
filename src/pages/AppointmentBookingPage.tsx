@@ -40,7 +40,8 @@ import {
   getPractitioners,
   getAvailableWeeks,
   getAvailableAppointmentsByWeek,
-  bookAppointment
+  bookAppointment,
+  checkServiceAvailability
 } from '../services/supabase-appointments';
 import { createAppointmentCheckout, redirectToCheckout } from '../services/stripe';
 import { BeneficiarySelector } from '../components/beneficiaries/BeneficiarySelector';
@@ -117,6 +118,7 @@ const AppointmentBookingPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>(state.preSelectedCategory || '');
   const [services, setServices] = useState<Service[]>([]);
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [serviceAvailability, setServiceAvailability] = useState<Map<string, boolean>>(new Map());
 
   const [availableWeeks, setAvailableWeeks] = useState<WeekInfo[]>([]);
   const [selectedWeek, setSelectedWeek] = useState<WeekInfo | null>(null);
@@ -180,6 +182,21 @@ const AppointmentBookingPage: React.FC = () => {
     }
   };
 
+  // Charger les disponibilités des services pour l'intervenant dédié
+  const loadServiceAvailabilities = async (servicesList: Service[], practitionerId: string) => {
+    const availabilityMap = new Map<string, boolean>();
+
+    // Vérifier la disponibilité pour chaque service
+    await Promise.all(
+      servicesList.map(async (service) => {
+        const hasAvailability = await checkServiceAvailability(service.id, practitionerId);
+        availabilityMap.set(service.id, hasAvailability);
+      })
+    );
+
+    setServiceAvailability(availabilityMap);
+  };
+
   // Charger les catégories et services initiaux
   useEffect(() => {
     const loadInitialData = async () => {
@@ -187,23 +204,28 @@ const AppointmentBookingPage: React.FC = () => {
       try {
         // Charger les services
         const { data: servicesData, error: servicesError } = await getServices();
-        
+
         if (servicesError) throw servicesError;
-        
+
         if (servicesData) {
           setServices(servicesData);
-          
+
           // Extraire les catégories uniques
           const categories = [...new Set(servicesData.map(service => service.category))];
           setServiceCategories(categories);
-          
+
           // Si une catégorie est présélectionnée, la définir
           if (state.preSelectedCategory && categories.includes(state.preSelectedCategory)) {
             setSelectedCategory(state.preSelectedCategory);
           } else if (categories.length > 0) {
             setSelectedCategory(categories[0]);
           }
-          
+
+          // Si en mode dédié et qu'on a un intervenant, charger les disponibilités
+          if (isDedicatedMode && dedicatedPractitioner) {
+            await loadServiceAvailabilities(servicesData, dedicatedPractitioner.id);
+          }
+
           // Si un service est présélectionné, le définir
           if (state.preSelectedServiceId) {
             const preSelectedService = servicesData.find(s => s.id === state.preSelectedServiceId);
@@ -223,9 +245,9 @@ const AppointmentBookingPage: React.FC = () => {
         setLoading(false);
       }
     };
-    
+
     loadInitialData();
-  }, [state.preSelectedServiceId, state.preSelectedCategory]);
+  }, [state.preSelectedServiceId, state.preSelectedCategory, isDedicatedMode, dedicatedPractitioner]);
   
   // Chargement des données de la semaine quand un service est sélectionné
   const loadWeeksData = async (serviceId: string) => {
@@ -233,13 +255,17 @@ const AppointmentBookingPage: React.FC = () => {
     try {
       const { data: weeksData } = await getAvailableWeeks(serviceId);
       setAvailableWeeks(weeksData || []);
-      
+
       if (weeksData && weeksData.length > 0) {
         setSelectedWeek(weeksData[0]);
-        // Charger les créneaux pour la première semaine
-        await loadSlotsForWeek(serviceId, weeksData[0].weekStart);
+        // Charger les créneaux pour la première semaine en tenant compte de l'intervenant sélectionné
+        await loadSlotsForWeek(
+          serviceId,
+          weeksData[0].weekStart,
+          selectedPractitioner === 'all' ? undefined : selectedPractitioner
+        );
       }
-      
+
       // Charger la liste des praticiens
       const { data: practitionersData } = await getPractitioners();
       if (practitionersData) {
@@ -526,8 +552,56 @@ const AppointmentBookingPage: React.FC = () => {
     setSelectedCategory(category);
     setSelectedService(null);
   };
-  
+
+  // Fonction pour mapper le subcategory du service vers le nom de module attendu par la page contact
+  const getModuleName = (service: Service): string => {
+    const subcategory = service.subcategory?.toLowerCase();
+
+    // Mapping des subcategories vers les noms de modules
+    const moduleMapping: { [key: string]: string } = {
+      'adultes': 'Module Adultes',
+      'couples': 'Module Couples',
+      'enfants': 'Module Enfants',
+      'suivi_annuel': 'Module Suivi Annuel',
+      'suivi annuel': 'Module Suivi Annuel',
+      'coequipiers': 'Module Coéquipiers',
+      'coéquipiers': 'Module Coéquipiers',
+      'equipe': 'Module Équipe',
+      'équipe': 'Module Équipe',
+      'candidats': 'Module Candidats',
+      'associes': 'Module Associés',
+      'associés': 'Module Associés',
+      'strategies': 'Module Stratégies',
+      'stratégies': 'Module Stratégies',
+      'solo': 'Module Solo',
+      'team': 'Module Team'
+    };
+
+    // Si le subcategory correspond à un mapping, l'utiliser
+    if (subcategory && moduleMapping[subcategory]) {
+      return moduleMapping[subcategory];
+    }
+
+    // Sinon, si le nom du service commence déjà par "Module", l'utiliser tel quel
+    if (service.name.startsWith('Module ')) {
+      return service.name;
+    }
+
+    // Sinon, ajouter "Module " devant le nom du service
+    return `Module ${service.name}`;
+  };
+
   const handleServiceSelect = (service: Service) => {
+    // Si le service est "nous consulter" (prix 9999), rediriger vers la page de contact
+    if (service.price === 9999) {
+      const params = new URLSearchParams({
+        subject: 'Informations sur une prestation',
+        module: getModuleName(service)
+      });
+      navigate(`/contact?${params.toString()}`);
+      return;
+    }
+
     setSelectedService(service);
   };
   
@@ -844,6 +918,64 @@ const AppointmentBookingPage: React.FC = () => {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 2, lineHeight: 1.7 }}>
                       {service.description}
                     </Typography>
+
+                    {/* Badge de disponibilité en mode dédié */}
+                    {isDedicatedMode && dedicatedPractitioner && serviceAvailability.has(service.id) && (
+                      <Box sx={{ mb: 2 }}>
+                        {serviceAvailability.get(service.id) ? (
+                          <Box
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 2,
+                              backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                              border: '1px solid rgba(76, 175, 80, 0.3)',
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                backgroundColor: '#4caf50',
+                              }}
+                            />
+                            <Typography variant="caption" sx={{ color: '#2e7d32', fontWeight: 500 }}>
+                              Créneaux disponibles
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Box
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 2,
+                              backgroundColor: 'rgba(255, 152, 0, 0.1)',
+                              border: '1px solid rgba(255, 152, 0, 0.3)',
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '50%',
+                                backgroundColor: '#ff9800',
+                              }}
+                            />
+                            <Typography variant="caption" sx={{ color: '#e65100', fontWeight: 500 }}>
+                              Pas de créneaux disponibles pour le moment
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+                    )}
+
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 'auto', pt: 2 }}>
                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                         Durée: {service.duration} min

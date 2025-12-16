@@ -183,7 +183,7 @@ const ConsultantDetailPage: React.FC = () => {
       setConsultant(data);
 
       // Trouver l'index de l'intervenant courant
-      const index = allConsultants.findIndex(c => c.id === consultantId);
+      const index = allConsultants.findIndex(c => c.id === data.id);
       if (index !== -1) {
         setCurrentIndex(index);
       }

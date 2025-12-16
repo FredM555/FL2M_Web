@@ -154,6 +154,43 @@ export const suspendConflictingAppointments = async (
 };
 
 /**
+ * Vérifie si un service a des créneaux disponibles pour un intervenant donné
+ * @param serviceId ID du service
+ * @param practitionerId ID de l'intervenant
+ * @returns true s'il y a au moins un créneau disponible, false sinon
+ */
+export const checkServiceAvailability = async (
+  serviceId: string,
+  practitionerId: string
+): Promise<boolean> => {
+  try {
+    const now = new Date();
+    const currentDateTime = now.toISOString();
+
+    // Vérifier s'il existe au moins un créneau disponible
+    const { data, error } = await supabase
+      .from('appointments')
+      .select('id')
+      .eq('service_id', serviceId)
+      .eq('practitioner_id', practitionerId)
+      .is('client_id', null)
+      .not('status', 'eq', 'cancelled')
+      .gte('start_time', currentDateTime)
+      .limit(1);
+
+    if (error) {
+      console.error('Erreur lors de la vérification de disponibilité:', error);
+      return false;
+    }
+
+    return data && data.length > 0;
+  } catch (error) {
+    console.error('Exception dans checkServiceAvailability:', error);
+    return false;
+  }
+};
+
+/**
  * Récupérer les services disponibles, éventuellement filtrés par catégorie
  * @param category Catégorie optionnelle pour filtrer les services
  * @returns Liste des services

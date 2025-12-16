@@ -21,6 +21,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
+import { createMessageThread } from '../services/messaging';
 
 // Interface pour le formulaire de contact
 interface ContactFormData {
@@ -59,19 +60,32 @@ const ContactPage = () => {
 
   const [formData, setFormData] = useState<ContactFormData>(initialFormState);
 
-  // Pré-remplir le formulaire à partir des paramètres URL
+  // Pré-remplir le formulaire à partir des paramètres URL et du profil
   useEffect(() => {
     const subjectParam = searchParams.get('subject');
     const moduleParam = searchParams.get('module');
 
-    if (subjectParam || moduleParam) {
-      setFormData(prev => ({
+    setFormData(prev => {
+      const updatedData = {
         ...prev,
-        subject: subjectParam || prev.subject,
-        module: moduleParam || prev.module
-      }));
-    }
-  }, [searchParams]);
+        // Mettre à jour les infos du profil si disponibles et pas déjà remplies
+        first_name: prev.first_name || profile?.first_name || '',
+        last_name: prev.last_name || profile?.last_name || '',
+        email: prev.email || profile?.email || user?.email || '',
+        phone: prev.phone || profile?.phone || ''
+      };
+
+      // Les paramètres URL ont priorité absolue
+      if (subjectParam) {
+        updatedData.subject = subjectParam;
+      }
+      if (moduleParam) {
+        updatedData.module = moduleParam;
+      }
+
+      return updatedData;
+    });
+  }, [searchParams, profile, user]);
 
   // Sujets prédéfinis
   const subjects = [
@@ -112,30 +126,35 @@ const ContactPage = () => {
     e.preventDefault();
     setLoading(true);
     setError(null);
-    
+
     try {
-      // Créer le message dans la base de données
-      const newMessage: Omit<ContactMessage, 'createdAt'> = {
-        ...formData,
-        status: 'new'
-      };
-      
-      // Insérer le message dans la table messages (anciennement contact_messages)
-      const { error: insertError } = await supabase
-        .from('messages')
-        .insert([{
-          ...newMessage,
-          category: 'contact', // Catégorie pour les messages du formulaire de contact
-          sender_type: 'public' // Type d'expéditeur pour les messages publics
-        }]);
-      
+      // Créer le thread de message avec la fonction appropriée
+      const { data: messageData, error: insertError } = await createMessageThread({
+        first_name: formData.first_name,
+        last_name: formData.last_name,
+        email: formData.email,
+        phone: formData.phone,
+        subject: formData.subject,
+        message: `${formData.module ? `[${formData.module}] ` : ''}${formData.message}`,
+        category: 'contact'
+      });
+
       if (insertError) throw insertError;
       
       // Envoyer l'email via la fonction Supabase qui utilise Resend
       try {
         const { data: emailData, error: emailError } = await supabase.functions.invoke('send-contact-email', {
           body: {
-            message: newMessage,
+            message: {
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              email: formData.email,
+              phone: formData.phone,
+              subject: formData.subject,
+              module: formData.module,
+              message: formData.message,
+              status: 'new'
+            },
             adminEmail: 'contact@fl2m.fr' // Email de destination
           }
         });
