@@ -50,13 +50,13 @@ BEGIN
     RETURN;
   END IF;
 
-  -- Vérifier si le praticien existe déjà
+  -- Vérifier si le intervenant existe déjà
   SELECT EXISTS(
     SELECT 1 FROM public.practitioners
     WHERE practitioners.user_id = v_request.user_id
   ) INTO v_practitioner_exists;
 
-  -- Si le praticien n'existe pas, le créer avec les informations proposées
+  -- Si le intervenant n'existe pas, le créer avec les informations proposées
   IF NOT v_practitioner_exists THEN
     INSERT INTO public.practitioners (
       user_id,
@@ -81,7 +81,7 @@ BEGIN
     )
     RETURNING id INTO v_new_practitioner_id;
   ELSE
-    -- Récupérer l'ID du praticien existant
+    -- Récupérer l'ID du intervenant existant
     SELECT id INTO v_new_practitioner_id
     FROM public.practitioners
     WHERE user_id = v_request.user_id;

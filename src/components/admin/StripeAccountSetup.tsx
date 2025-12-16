@@ -178,7 +178,7 @@ const StripeAccountSetup: React.FC<StripeAccountSetupProps> = ({
 
           <Alert severity="success" sx={{ mt: 2 }}>
             <Typography variant="body2">
-              Le praticien peut maintenant recevoir des paiements via Stripe
+              Le intervenant peut maintenant recevoir des paiements via Stripe
             </Typography>
           </Alert>
         </CardContent>
@@ -218,7 +218,7 @@ const StripeAccountSetup: React.FC<StripeAccountSetupProps> = ({
 
         <Alert severity="info" sx={{ mb: 3 }}>
           <Typography variant="body2">
-            Pour recevoir des paiements, le praticien doit avoir un compte Stripe Connect.
+            Pour recevoir des paiements, le intervenant doit avoir un compte Stripe Connect.
             {' '}Vous pouvez créer un nouveau compte ou lier un compte existant.
           </Typography>
         </Alert>
@@ -258,7 +258,7 @@ const StripeAccountSetup: React.FC<StripeAccountSetupProps> = ({
           <Collapse in={expanded}>
             <Box sx={{ mt: 2, p: 2, backgroundColor: 'rgba(0,0,0,0.02)', borderRadius: 2 }}>
               <Typography variant="body2" color="text.secondary" paragraph>
-                Si le praticien possède déjà un compte Stripe Connect, vous pouvez entrer son ID ici :
+                Si l'intervenant possède déjà un compte Stripe Connect, vous pouvez entrer son ID ici :
               </Typography>
 
               <TextField

@@ -62,12 +62,12 @@ CREATE INDEX IF NOT EXISTS idx_transactions_stripe_payment ON public.transaction
 -- Commentaires
 COMMENT ON TABLE public.transactions IS 'Transactions de paiement pour les rendez-vous';
 COMMENT ON COLUMN public.transactions.amount_total IS 'Montant total payé par le client';
-COMMENT ON COLUMN public.transactions.amount_practitioner IS 'Montant reversé au praticien';
+COMMENT ON COLUMN public.transactions.amount_practitioner IS 'Montant reversé au intervenant';
 COMMENT ON COLUMN public.transactions.amount_platform_commission IS 'Commission prélevée par la plateforme';
 
 -- =====================================================
 -- TABLE: subscription_payments
--- Description: Paiements d'abonnement mensuel des praticiens
+-- Description: Paiements d'abonnement mensuel des intervenants
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.subscription_payments (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -115,13 +115,13 @@ CREATE INDEX IF NOT EXISTS idx_subscription_payments_period ON public.subscripti
 CREATE INDEX IF NOT EXISTS idx_subscription_payments_payment_date ON public.subscription_payments(payment_date DESC);
 
 -- Commentaires
-COMMENT ON TABLE public.subscription_payments IS 'Paiements d''abonnement mensuel des praticiens';
+COMMENT ON TABLE public.subscription_payments IS 'Paiements d''abonnement mensuel des intervenants';
 COMMENT ON COLUMN public.subscription_payments.period_start_date IS 'Date de début de la période couverte';
 COMMENT ON COLUMN public.subscription_payments.period_end_date IS 'Date de fin de la période couverte';
 
 -- =====================================================
 -- TABLE: payouts
--- Description: Virements aux praticiens (regroupement de transactions)
+-- Description: Virements aux intervenants (regroupement de transactions)
 -- =====================================================
 CREATE TABLE IF NOT EXISTS public.payouts (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -172,7 +172,7 @@ CREATE INDEX IF NOT EXISTS idx_payouts_period ON public.payouts(period_start_dat
 CREATE INDEX IF NOT EXISTS idx_payouts_scheduled ON public.payouts(scheduled_date) WHERE scheduled_date IS NOT NULL;
 
 -- Commentaires
-COMMENT ON TABLE public.payouts IS 'Virements aux praticiens (regroupement de transactions)';
+COMMENT ON TABLE public.payouts IS 'Virements aux intervenants (regroupement de transactions)';
 COMMENT ON COLUMN public.payouts.amount_transactions IS 'Montant total des transactions incluses';
 COMMENT ON COLUMN public.payouts.amount_adjustments IS 'Ajustements manuels (positifs ou négatifs)';
 
@@ -185,7 +185,7 @@ ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.subscription_payments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payouts ENABLE ROW LEVEL SECURITY;
 
--- Transactions: Les praticiens voient leurs propres transactions
+-- Transactions: Les intervenants voient leurs propres transactions
 CREATE POLICY "Practitioners can view their own transactions"
   ON public.transactions
   FOR SELECT
@@ -213,7 +213,7 @@ CREATE POLICY "Admins can view all transactions"
     )
   );
 
--- Subscription Payments: Les praticiens voient leurs propres paiements
+-- Subscription Payments: Les intervenants voient leurs propres paiements
 CREATE POLICY "Practitioners can view their own subscription payments"
   ON public.subscription_payments
   FOR SELECT
@@ -235,7 +235,7 @@ CREATE POLICY "Admins can view all subscription payments"
     )
   );
 
--- Payouts: Les praticiens voient leurs propres virements
+-- Payouts: Les intervenants voient leurs propres virements
 CREATE POLICY "Practitioners can view their own payouts"
   ON public.payouts
   FOR SELECT

@@ -72,9 +72,9 @@ CREATE TRIGGER trigger_update_transactions_timestamp
 -- Commentaires pour la documentation
 COMMENT ON TABLE public.transactions IS 'Table des transactions de paiement avec intégration Stripe';
 COMMENT ON COLUMN public.transactions.amount_total IS 'Montant total payé par le client en euros';
-COMMENT ON COLUMN public.transactions.amount_practitioner IS 'Part nette reversée au praticien en euros';
+COMMENT ON COLUMN public.transactions.amount_practitioner IS 'Part nette reversée au intervenant en euros';
 COMMENT ON COLUMN public.transactions.amount_platform_commission IS 'Commission de la plateforme en euros';
 COMMENT ON COLUMN public.transactions.amount_stripe_fees IS 'Frais Stripe prélevés en euros';
 COMMENT ON COLUMN public.transactions.is_free_appointment IS 'TRUE si c''est un RDV gratuit selon forfait (STARTER: 2, PRO: 4, PREMIUM: tous)';
-COMMENT ON COLUMN public.transactions.appointment_number IS 'Numéro séquentiel du RDV pour ce praticien';
+COMMENT ON COLUMN public.transactions.appointment_number IS 'Numéro séquentiel du RDV pour ce intervenant';
 COMMENT ON COLUMN public.transactions.status IS 'Statut de la transaction: pending, processing, succeeded, failed, refunded, cancelled';

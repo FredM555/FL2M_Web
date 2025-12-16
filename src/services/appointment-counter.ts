@@ -1,5 +1,5 @@
 // src/services/appointment-counter.ts
-// Service de comptage des rendez-vous praticiens
+// Service de comptage des rendez-vous intervenants
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -12,7 +12,7 @@ const supabase = createClient(supabaseUrl, supabaseKey);
  */
 export class AppointmentCounter {
   /**
-   * Compte le nombre total de RDV d'un praticien (non annulés)
+   * Compte le nombre total de RDV d'un intervenant (non annulés)
    */
   static async countPractitionerAppointments(
     practitionerId: string,
@@ -38,7 +38,7 @@ export class AppointmentCounter {
   }
 
   /**
-   * Compte le nombre de RDV d'un praticien pour une période donnée
+   * Compte le nombre de RDV d'un intervenant pour une période donnée
    */
   static async countPractitionerAppointmentsByPeriod(
     practitionerId: string,
@@ -68,7 +68,7 @@ export class AppointmentCounter {
   }
 
   /**
-   * Compte le nombre de RDV du mois en cours pour un praticien
+   * Compte le nombre de RDV du mois en cours pour un intervenant
    */
   static async countPractitionerAppointmentsThisMonth(
     practitionerId: string
@@ -85,7 +85,7 @@ export class AppointmentCounter {
   }
 
   /**
-   * Vérifie si un praticien a encore des RDV gratuits disponibles
+   * Vérifie si un intervenant a encore des RDV gratuits disponibles
    */
   static async hasFreeAppointmentsRemaining(
     practitionerId: string
@@ -105,7 +105,7 @@ export class AppointmentCounter {
   }
 
   /**
-   * Récupère le numéro du prochain RDV pour un praticien
+   * Récupère le numéro du prochain RDV pour un intervenant
    */
   static async getNextAppointmentNumber(
     practitionerId: string
@@ -115,7 +115,7 @@ export class AppointmentCounter {
   }
 
   /**
-   * Récupère des statistiques détaillées sur les RDV d'un praticien
+   * Récupère des statistiques détaillées sur les RDV d'un intervenant
    */
   static async getPractitionerAppointmentStats(
     practitionerId: string
@@ -164,7 +164,7 @@ export class AppointmentCounter {
   }
 
   /**
-   * Liste les RDV d'un praticien avec leurs numéros séquentiels
+   * Liste les RDV d'un intervenant avec leurs numéros séquentiels
    */
   static async getPractitionerAppointmentsWithNumbers(
     practitionerId: string,
@@ -208,7 +208,7 @@ export class AppointmentCounter {
   }
 
   /**
-   * Récupère les statistiques de tous les praticiens
+   * Récupère les statistiques de tous les intervenants
    */
   static async getAllPractitionersStats(): Promise<
     Array<{
@@ -223,7 +223,7 @@ export class AppointmentCounter {
       .select('id');
 
     if (practitionersError) {
-      console.error('Erreur lors de la récupération des praticiens:', practitionersError);
+      console.error('Erreur lors de la récupération des intervenants:', practitionersError);
       return [];
     }
 

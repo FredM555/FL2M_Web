@@ -2,7 +2,7 @@
 -- Migration: Création de la table practitioner_requests
 -- Description: Table pour gérer les demandes d'inscription en tant qu'intervenant
 -- Date: 2025-01-26
--- Sprint: 2 - Gestion des demandes praticiens
+-- Sprint: 2 - Gestion des demandes intervenants
 -- =====================================================
 
 -- Création de la table practitioner_requests
@@ -109,13 +109,13 @@ BEGIN
     RAISE EXCEPTION 'Demande non trouvée ou déjà traitée';
   END IF;
 
-  -- Vérifier si le praticien existe déjà
+  -- Vérifier si le intervenant existe déjà
   SELECT EXISTS(
     SELECT 1 FROM public.practitioners
     WHERE practitioners.user_id = v_request.user_id
   ) INTO v_practitioner_exists;
 
-  -- Si le praticien n'existe pas, le créer avec les informations proposées
+  -- Si le intervenant n'existe pas, le créer avec les informations proposées
   IF NOT v_practitioner_exists THEN
     INSERT INTO public.practitioners (
       user_id,

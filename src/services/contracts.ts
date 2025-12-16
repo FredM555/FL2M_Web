@@ -1,5 +1,5 @@
 // src/services/contracts.ts
-// Service de gestion des contrats praticiens
+// Service de gestion des contrats intervenants
 
 import { createClient } from '@supabase/supabase-js';
 import {
@@ -16,11 +16,11 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 /**
- * Service de gestion des contrats praticiens
+ * Service de gestion des contrats intervenants
  */
 export class ContractsService {
   /**
-   * Récupère le contrat actif d'un praticien
+   * Récupère le contrat actif d'un intervenant
    */
   static async getActiveContract(
     practitionerId: string
@@ -45,7 +45,7 @@ export class ContractsService {
   }
 
   /**
-   * Récupère tous les contrats d'un praticien (historique)
+   * Récupère tous les contrats d'un intervenant (historique)
    */
   static async getPractitionerContracts(
     practitionerId: string
@@ -65,7 +65,7 @@ export class ContractsService {
   }
 
   /**
-   * Crée un nouveau contrat pour un praticien
+   * Crée un nouveau contrat pour un intervenant
    */
   static async createContract(
     contractData: CreateContractData,
@@ -198,7 +198,7 @@ export class ContractsService {
   ): Promise<void> {
     const contract = await this.getActiveContract(practitionerId);
     if (!contract) {
-      throw new Error(`Aucun contrat actif trouvé pour le praticien ${practitionerId}`);
+      throw new Error(`Aucun contrat actif trouvé pour le intervenant ${practitionerId}`);
     }
 
     const { error } = await supabase
@@ -297,7 +297,7 @@ export class ContractsService {
   }
 
   /**
-   * Vérifie si un praticien peut prendre un nouveau RDV
+   * Vérifie si un intervenant peut prendre un nouveau RDV
    * (selon les limites du contrat starter)
    */
   static async canPractitionerBookAppointment(

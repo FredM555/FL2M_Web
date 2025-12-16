@@ -46,7 +46,7 @@ serve(async (req) => {
       throw new Error('Ce contrat n\'est pas en attente de paiement');
     }
 
-    // Récupérer les informations du praticien
+    // Récupérer les informations du intervenant
     const { data: practitioner, error: practitionerError } = await supabase
       .from('practitioners')
       .select(`
@@ -63,7 +63,7 @@ serve(async (req) => {
       .single();
 
     if (practitionerError || !practitioner) {
-      throw new Error('Praticien non trouvé');
+      throw new Error('intervenant non trouvé');
     }
 
     const profile = practitioner.profiles;

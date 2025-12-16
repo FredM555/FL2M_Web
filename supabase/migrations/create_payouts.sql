@@ -1,11 +1,11 @@
 -- =====================================================
 -- Migration: Création de la table payouts
--- Description: Table pour gérer les virements aux praticiens
+-- Description: Table pour gérer les virements aux intervenants
 -- Date: 2025-01-25
 -- Sprint: 1 - Infrastructure BDD
 -- =====================================================
 
--- Création de la table payouts (virements aux praticiens)
+-- Création de la table payouts (virements aux intervenants)
 CREATE TABLE IF NOT EXISTS public.payouts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS public.payouts (
 
   -- Identifiants Stripe
   stripe_payout_id VARCHAR(255) UNIQUE,
-  stripe_account_id VARCHAR(255), -- Compte Stripe Connect du praticien
+  stripe_account_id VARCHAR(255), -- Compte Stripe Connect du intervenant
 
   -- Période couverte par le virement
   period_start_date DATE NOT NULL,
@@ -92,15 +92,15 @@ CREATE TRIGGER trigger_update_payouts_timestamp
   EXECUTE FUNCTION update_payouts_updated_at();
 
 -- Commentaires pour la documentation
-COMMENT ON TABLE public.payouts IS 'Table des virements effectués aux praticiens';
-COMMENT ON COLUMN public.payouts.practitioner_id IS 'Praticien bénéficiaire du virement';
+COMMENT ON TABLE public.payouts IS 'Table des virements effectués aux intervenants';
+COMMENT ON COLUMN public.payouts.practitioner_id IS 'intervenant bénéficiaire du virement';
 COMMENT ON COLUMN public.payouts.stripe_payout_id IS 'Identifiant du virement Stripe';
 COMMENT ON COLUMN public.payouts.period_start_date IS 'Date de début de la période couverte';
 COMMENT ON COLUMN public.payouts.period_end_date IS 'Date de fin de la période couverte';
 COMMENT ON COLUMN public.payouts.amount_total IS 'Montant total du virement en euros';
 COMMENT ON COLUMN public.payouts.transaction_count IS 'Nombre de transactions incluses dans ce virement';
 COMMENT ON COLUMN public.payouts.scheduled_date IS 'Date prévue du virement (généralement J+7)';
-COMMENT ON COLUMN public.payouts.paid_date IS 'Date effective du versement sur le compte du praticien';
+COMMENT ON COLUMN public.payouts.paid_date IS 'Date effective du versement sur le compte du intervenant';
 COMMENT ON COLUMN public.payouts.status IS 'Statut: pending, processing, paid, failed, cancelled';
 
 COMMENT ON TABLE public.payout_transactions IS 'Table de liaison entre virements et transactions';

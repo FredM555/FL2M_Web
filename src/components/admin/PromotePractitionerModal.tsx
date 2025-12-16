@@ -75,7 +75,7 @@ const PromotePractitionerModal: React.FC<PromotePractitionerModalProps> = ({
     setError(null);
 
     try {
-      // Créer le contrat pour le praticien
+      // Créer le contrat pour le intervenant
       await ContractsService.createContract(
         {
           practitioner_id: practitionerId,
@@ -133,7 +133,7 @@ const PromotePractitionerModal: React.FC<PromotePractitionerModalProps> = ({
               Uploadez le contrat signé (optionnel) :
             </Typography>
             <Typography variant="body2" color="text.secondary" paragraph>
-              Le document sera accessible au praticien depuis son espace personnel.
+              Le document sera accessible au intervenant depuis son espace personnel.
               Vous pouvez aussi l'ajouter plus tard.
             </Typography>
             <ContractUploader
@@ -157,7 +157,7 @@ const PromotePractitionerModal: React.FC<PromotePractitionerModalProps> = ({
 
             <Box sx={{ mb: 3 }}>
               <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-                Praticien
+                intervenant
               </Typography>
               <Typography variant="body1" sx={{ fontWeight: 600, mb: 2 }}>
                 {practitionerName}

@@ -2,12 +2,12 @@
 // Types pour le système de paiement et de redistribution (Modèle D)
 
 /**
- * Type de contrat praticien selon le Modèle D
+ * Type de contrat intervenant selon le Modèle D
  */
 export type ContractType = 'decouverte' | 'starter' | 'pro' | 'premium';
 
 /**
- * Statut d'un contrat praticien
+ * Statut d'un contrat intervenant
  */
 export type ContractStatus = 'pending_payment' | 'pending_activation' | 'active' | 'suspended' | 'terminated';
 
@@ -48,7 +48,7 @@ export type InvoiceStatus =
   | 'refunded';
 
 /**
- * Contrat d'un praticien
+ * Contrat d'un intervenant
  */
 export interface PractitionerContract {
   id: string;
@@ -138,7 +138,7 @@ export interface Transaction {
 }
 
 /**
- * Virement aux praticiens
+ * Virement aux intervenants
  */
 export interface Payout {
   id: string;
@@ -354,7 +354,7 @@ export interface CreateTransactionData {
 }
 
 /**
- * Statistiques de paiement pour un praticien
+ * Statistiques de paiement pour un intervenant
  */
 export interface PractitionerPaymentStats {
   practitioner_id: string;

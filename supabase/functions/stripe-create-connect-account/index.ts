@@ -38,7 +38,7 @@ serve(async (req) => {
       throw new Error('Non autorisé');
     }
 
-    // Récupérer les informations du praticien
+    // Récupérer les informations du intervenant
     const { data: practitioner, error: practitionerError } = await supabase
       .from('practitioners')
       .select(`
@@ -58,7 +58,7 @@ serve(async (req) => {
       .single();
 
     if (practitionerError || !practitioner) {
-      throw new Error('Praticien non trouvé');
+      throw new Error('intervenant non trouvé');
     }
 
     const profile = practitioner.profiles;
@@ -88,7 +88,7 @@ serve(async (req) => {
 
     const formattedPhone = formatPhoneForStripe(profile.phone);
 
-    // Si le praticien a déjà un compte Stripe Connect
+    // Si le intervenant a déjà un compte Stripe Connect
     if (practitioner.stripe_account_id) {
       // Vérifier le statut du compte
       const account = await stripe.accounts.retrieve(practitioner.stripe_account_id);
@@ -152,7 +152,7 @@ serve(async (req) => {
       }
     });
 
-    console.log(`[Stripe Connect] Compte créé: ${account.id} pour praticien ${practitioner.id}`);
+    console.log(`[Stripe Connect] Compte créé: ${account.id} pour intervenant ${practitioner.id}`);
 
     // Enregistrer l'account ID dans la base de données
     const { error: updateError } = await supabase

@@ -677,7 +677,7 @@ async function handleAccountUpdated(
     return;
   }
 
-  console.log(`[Webhook] Compte Connect mis à jour: ${accountId} pour praticien ${practitionerId}`);
+  console.log(`[Webhook] Compte Connect mis à jour: ${accountId} pour intervenant ${practitionerId}`);
 
   // Déterminer le statut du compte
   const status = account.details_submitted && account.charges_enabled

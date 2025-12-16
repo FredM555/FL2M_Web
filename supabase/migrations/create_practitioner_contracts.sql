@@ -1,6 +1,6 @@
 -- =====================================================
 -- Migration: Création de la table practitioner_contracts
--- Description: Table pour gérer les contrats des praticiens (Modèle D)
+-- Description: Table pour gérer les contrats des intervenants (Modèle D)
 -- Date: 2025-01-25
 -- Sprint: 1 - Infrastructure BDD
 -- =====================================================
@@ -65,7 +65,7 @@ CREATE TRIGGER trigger_update_contracts_timestamp
   EXECUTE FUNCTION update_contracts_updated_at();
 
 -- Commentaires pour la documentation
-COMMENT ON TABLE public.practitioner_contracts IS 'Table des contrats des praticiens - Modèle D v4.0 avec 4 paliers';
+COMMENT ON TABLE public.practitioner_contracts IS 'Table des contrats des intervenants - Modèle D v4.0 avec 4 paliers';
 COMMENT ON COLUMN public.practitioner_contracts.contract_type IS 'Type de contrat: decouverte (9€/mois), starter (49€/mois), pro (99€/mois), premium (159€/mois)';
 COMMENT ON COLUMN public.practitioner_contracts.monthly_fee IS 'Frais mensuels en euros';
 COMMENT ON COLUMN public.practitioner_contracts.commission_fixed IS 'Commission fixe par RDV en euros';
@@ -77,5 +77,5 @@ COMMENT ON COLUMN public.practitioner_contracts.total_appointments IS 'Compteur 
 
 -- =====================================================
 -- IMPORTANT: Les données de test seront insérées manuellement
--- après vérification des UUIDs existants des praticiens
+-- après vérification des UUIDs existants des intervenants
 -- =====================================================

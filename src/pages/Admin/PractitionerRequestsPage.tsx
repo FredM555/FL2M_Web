@@ -141,7 +141,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
 
       if (error) throw error;
 
-      showSnackbar('Praticien promu avec succès ! Le contrat a été créé.', 'success');
+      showSnackbar('intervenant promu avec succès ! Le contrat a été créé.', 'success');
       setPromotionModalOpen(false);
       await fetchRequests();
     } catch (err: any) {

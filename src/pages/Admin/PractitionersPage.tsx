@@ -103,7 +103,7 @@ const AdminPractitionersPage: React.FC = () => {
 
       if (practitionersError) throw practitionersError;
 
-      // Chargement des contrats actifs pour chaque praticien
+      // Chargement des contrats actifs pour chaque intervenant
       const practitionersWithContracts = await Promise.all(
         (practitionersData || []).map(async (practitioner) => {
           try {
@@ -114,7 +114,7 @@ const AdminPractitionersPage: React.FC = () => {
             };
           } catch (contractError) {
             // Si le chargement du contrat échoue, continuer sans contrat
-            console.warn(`Impossible de charger le contrat pour le praticien ${practitioner.id}:`, contractError);
+            console.warn(`Impossible de charger le contrat pour le intervenant ${practitioner.id}:`, contractError);
             return {
               ...practitioner,
               activeContract: null

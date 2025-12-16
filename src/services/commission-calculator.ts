@@ -37,7 +37,7 @@ export class CommissionCalculator {
 
   /**
    * Calcule la commission pour un RDV en utilisant la fonction SQL
-   * @param practitionerId ID du praticien
+   * @param practitionerId ID du intervenant
    * @param appointmentPrice Prix du RDV en euros
    * @param appointmentDate Date du RDV (optionnel, par défaut aujourd'hui)
    * @returns Résultat du calcul de commission
@@ -210,7 +210,7 @@ export class CommissionCalculator {
   }
 
   /**
-   * Calcule les statistiques de commission pour un praticien
+   * Calcule les statistiques de commission pour un intervenant
    */
   static async getPractitionerCommissionStats(
     practitionerId: string,
@@ -271,7 +271,7 @@ export class CommissionCalculator {
   }
 
   /**
-   * Estime le revenu mensuel d'un praticien selon son contrat
+   * Estime le revenu mensuel d'un intervenant selon son contrat
    */
   static estimateMonthlyRevenue(
     appointmentsPerMonth: number,

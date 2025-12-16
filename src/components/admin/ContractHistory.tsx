@@ -272,7 +272,7 @@ const ContractHistory: React.FC<ContractHistoryProps> = ({ practitionerId }) => 
     return (
       <Paper sx={{ p: 4, textAlign: 'center' }}>
         <Typography variant="body1" color="text.secondary">
-          Aucun contrat n'a encore été créé pour ce praticien
+          Aucun contrat n'a encore été créé pour ce intervenant
         </Typography>
       </Paper>
     );

@@ -31,9 +31,9 @@ console.log(migrationSQL);
 console.log('─'.repeat(80));
 console.log('\n✋ Cette migration va:');
 console.log('   1. Activer RLS sur practitioner_contracts');
-console.log('   2. Permettre aux praticiens de voir leurs propres contrats');
-console.log('   3. Permettre aux praticiens de mettre à jour leurs propres contrats');
-console.log('   4. Permettre aux praticiens de supprimer leurs contrats en pending_payment');
+console.log('   2. Permettre aux intervenants de voir leurs propres contrats');
+console.log('   3. Permettre aux intervenants de mettre à jour leurs propres contrats');
+console.log('   4. Permettre aux intervenants de supprimer leurs contrats en pending_payment');
 console.log('   5. Donner tous les droits aux admins\n');
 
 console.log('💡 Pour appliquer manuellement:');

@@ -267,7 +267,7 @@ const AppointmentBookingPage: React.FC = () => {
         );
       }
 
-      // Charger la liste des praticiens
+      // Charger la liste des intervenants
       const { data: practitionersData } = await getPractitioners();
       if (practitionersData) {
         setPractitioners(practitionersData);
@@ -1037,7 +1037,7 @@ const AppointmentBookingPage: React.FC = () => {
             </FormControl>
           </Grid>
 
-          {/* Filtre par praticien */}
+          {/* Filtre par intervenant */}
           {selectedWeek && practitioners.length > 0 && (
             <Grid item xs={12} md={6}>
               <FormControl fullWidth size="small">

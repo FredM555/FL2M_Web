@@ -95,7 +95,7 @@ serve(async (req) => {
       name: `${client.first_name || ''} ${client.last_name || ''}`.trim() || 'Non renseigné'
     });
 
-    // Récupérer les informations du praticien
+    // Récupérer les informations du intervenant
     const { data: practitioner, error: practitionerError } = await supabase
       .from('practitioners')
       .select('id, stripe_account_id')
@@ -103,7 +103,7 @@ serve(async (req) => {
       .single();
 
     if (practitionerError || !practitioner) {
-      throw new Error('Praticien non trouvé');
+      throw new Error('intervenant non trouvé');
     }
 
     // Créer ou récupérer le client Stripe
@@ -130,7 +130,7 @@ serve(async (req) => {
     }
 
     // Calculer la commission pour la plateforme
-    // On va chercher le contrat du praticien pour calculer la commission
+    // On va chercher le contrat du intervenant pour calculer la commission
     const { data: contract } = await supabase
       .from('practitioner_contracts')
       .select('contract_type, commission_fixed, commission_percentage, commission_cap, appointments_this_month')
@@ -202,7 +202,7 @@ serve(async (req) => {
     console.log(`  - Cancel URL: ${cancelUrl}`);
 
     // Créer la session Stripe Checkout
-    // Si le praticien a un compte Stripe Connect, utiliser application_fee_amount
+    // Si le intervenant a un compte Stripe Connect, utiliser application_fee_amount
     const sessionParams: any = {
       customer: stripeCustomerId,
       mode: 'payment',
@@ -240,7 +240,7 @@ serve(async (req) => {
       }
     };
 
-    // Si le praticien a un compte Stripe Connect, ajouter le transfert
+    // Si le intervenant a un compte Stripe Connect, ajouter le transfert
     if (practitioner.stripe_account_id && practitionerAmount > 0) {
       sessionParams.payment_intent_data.application_fee_amount = Math.round(platformFee * 100);
       sessionParams.payment_intent_data.transfer_data = {

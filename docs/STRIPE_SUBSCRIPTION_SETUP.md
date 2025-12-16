@@ -32,7 +32,7 @@ FL2M Services propose 4 forfaits d'abonnement mensuels pour les intervenants :
 
 #### Produit 2: Forfait Starter
 - **Nom** : Forfait Starter - FL2M Services
-- **Description** : Pour les praticiens réguliers qui veulent optimiser leurs coûts. 20 RDV max/mois, commission 8% (min 6€, max 25€), 2 premiers RDV gratuits/mois
+- **Description** : Pour les intervenants réguliers qui veulent optimiser leurs coûts. 20 RDV max/mois, commission 8% (min 6€, max 25€), 2 premiers RDV gratuits/mois
 - **Prix** :
   - Modèle de tarification : **Récurrent**
   - Prix : **49,00 EUR**
@@ -41,7 +41,7 @@ FL2M Services propose 4 forfaits d'abonnement mensuels pour les intervenants :
 
 #### Produit 3: Forfait Pro
 - **Nom** : Forfait Pro - FL2M Services
-- **Description** : Pour les praticiens installés qui veulent maîtriser leurs coûts. RDV illimités, commission 3€ fixe, 4 premiers RDV gratuits/mois
+- **Description** : Pour les intervenants installés qui veulent maîtriser leurs coûts. RDV illimités, commission 3€ fixe, 4 premiers RDV gratuits/mois
 - **Prix** :
   - Modèle de tarification : **Récurrent**
   - Prix : **99,00 EUR**

@@ -20,4 +20,4 @@ ADD CONSTRAINT practitioner_contracts_contract_type_check
 CHECK (contract_type IN ('decouverte', 'starter', 'pro', 'premium'));
 
 -- 5. Commenter la migration
-COMMENT ON TABLE practitioner_contracts IS 'Contrats des praticiens - Forfait découverte à 10€/mois avec commission de 10€ fixe par RDV';
+COMMENT ON TABLE practitioner_contracts IS 'Contrats des intervenants - Forfait découverte à 10€/mois avec commission de 10€ fixe par RDV';

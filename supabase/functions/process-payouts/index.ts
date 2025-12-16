@@ -71,9 +71,9 @@ serve(async (req) => {
     // Traiter chaque transaction
     for (const transaction of eligibleTransactions) {
       try {
-        // Vérifier que le praticien a un compte Stripe Connect
+        // Vérifier que le intervenant a un compte Stripe Connect
         if (!transaction.practitioners?.stripe_account_id) {
-          console.log(`[Payouts] Praticien ${transaction.practitioner_id} sans compte Stripe Connect - Skip`);
+          console.log(`[Payouts] intervenant ${transaction.practitioner_id} sans compte Stripe Connect - Skip`);
 
           await supabase
             .from('transactions')
@@ -87,7 +87,7 @@ serve(async (req) => {
           continue;
         }
 
-        // Créer le transfert Stripe vers le compte Connect du praticien
+        // Créer le transfert Stripe vers le compte Connect du intervenant
         const transfer = await stripe.transfers.create({
           amount: Math.round(transaction.amount_practitioner * 100), // en centimes
           currency: 'eur',

@@ -47,7 +47,7 @@ static async calculateCommission(
 ```
 
 **Paramètres:**
-- `practitionerId`: UUID du praticien
+- `practitionerId`: UUID du intervenant
 - `appointmentPrice`: Prix du RDV en euros
 - `appointmentDate`: Date du RDV (optionnel, par défaut aujourd'hui)
 
@@ -55,7 +55,7 @@ static async calculateCommission(
 ```typescript
 {
   commission_amount: number;     // Montant de la commission en €
-  practitioner_amount: number;   // Montant net pour le praticien en €
+  practitioner_amount: number;   // Montant net pour le intervenant en €
   is_free: boolean;             // true si RDV gratuit selon forfait (STARTER: 1-2, PRO: 1-4, PREMIUM: tous)
   appointment_number: number;    // Numéro séquentiel du RDV
   contract_type: ContractType;   // Type de contrat actif
@@ -65,7 +65,7 @@ static async calculateCommission(
 **Exemple:**
 ```typescript
 const result = await CommissionCalculator.calculateCommission(
-  'uuid-praticien',
+  'uuid-intervenant',
   60.00
 );
 
@@ -145,7 +145,7 @@ simulations.forEach(sim => {
 
 #### `estimateMonthlyRevenue()`
 
-Estime les revenus mensuels d'un praticien selon son contrat.
+Estime les revenus mensuels d'un intervenant selon son contrat.
 
 ```typescript
 static estimateMonthlyRevenue(
@@ -247,7 +247,7 @@ console.log(`Point d'équilibre: ${breakeven.breakEvenAppointments} RDV/mois`);
 
 #### `getPractitionerCommissionStats()`
 
-Récupère les statistiques de commission d'un praticien.
+Récupère les statistiques de commission d'un intervenant.
 
 ```typescript
 static async getPractitionerCommissionStats(
@@ -267,7 +267,7 @@ static async getPractitionerCommissionStats(
 **Exemple:**
 ```typescript
 const stats = await CommissionCalculator.getPractitionerCommissionStats(
-  'uuid-praticien',
+  'uuid-intervenant',
   '2025-01-01',
   '2025-01-31'
 );
@@ -279,7 +279,7 @@ console.log(`Total commission: ${stats.total_commission}€`);
 
 ## 2️⃣ ContractsService
 
-Service de gestion des contrats praticiens.
+Service de gestion des contrats intervenants.
 
 ### Import
 
@@ -293,7 +293,7 @@ import { ContractsService } from '@/services/contracts';
 
 #### `getActiveContract()`
 
-Récupère le contrat actif d'un praticien.
+Récupère le contrat actif d'un intervenant.
 
 ```typescript
 static async getActiveContract(
@@ -303,7 +303,7 @@ static async getActiveContract(
 
 **Exemple:**
 ```typescript
-const contract = await ContractsService.getActiveContract('uuid-praticien');
+const contract = await ContractsService.getActiveContract('uuid-intervenant');
 
 if (contract) {
   console.log(`Type: ${contract.contract_type}`);
@@ -315,7 +315,7 @@ if (contract) {
 
 #### `createContract()`
 
-Crée un nouveau contrat pour un praticien.
+Crée un nouveau contrat pour un intervenant.
 
 ```typescript
 static async createContract(
@@ -328,7 +328,7 @@ static async createContract(
 ```typescript
 const newContract = await ContractsService.createContract(
   {
-    practitioner_id: 'uuid-praticien',
+    practitioner_id: 'uuid-intervenant',
     contract_type: 'pro',
     start_date: '2025-01-01',
     admin_notes: 'Contrat négocié le 15/12/2024'
@@ -367,7 +367,7 @@ await ContractsService.updateContract(
 
 #### `canPractitionerBookAppointment()`
 
-Vérifie si un praticien peut prendre un nouveau RDV (limite starter).
+Vérifie si un intervenant peut prendre un nouveau RDV (limite starter).
 
 ```typescript
 static async canPractitionerBookAppointment(
@@ -377,7 +377,7 @@ static async canPractitionerBookAppointment(
 
 **Exemple:**
 ```typescript
-const check = await ContractsService.canPractitionerBookAppointment('uuid-praticien');
+const check = await ContractsService.canPractitionerBookAppointment('uuid-intervenant');
 
 if (!check.can_book) {
   alert(`Impossible de réserver: ${check.reason}`);
@@ -440,7 +440,7 @@ import { AppointmentCounter } from '@/services/appointment-counter';
 
 #### `countPractitionerAppointments()`
 
-Compte le nombre total de RDV d'un praticien.
+Compte le nombre total de RDV d'un intervenant.
 
 ```typescript
 static async countPractitionerAppointments(
@@ -451,7 +451,7 @@ static async countPractitionerAppointments(
 
 **Exemple:**
 ```typescript
-const count = await AppointmentCounter.countPractitionerAppointments('uuid-praticien');
+const count = await AppointmentCounter.countPractitionerAppointments('uuid-intervenant');
 console.log(`Total RDV: ${count}`);
 ```
 
@@ -459,7 +459,7 @@ console.log(`Total RDV: ${count}`);
 
 #### `hasFreeAppointmentsRemaining()`
 
-Vérifie si un praticien a encore des RDV gratuits.
+Vérifie si un intervenant a encore des RDV gratuits.
 
 ```typescript
 static async hasFreeAppointmentsRemaining(
@@ -469,7 +469,7 @@ static async hasFreeAppointmentsRemaining(
 
 **Exemple:**
 ```typescript
-const hasFree = await AppointmentCounter.hasFreeAppointmentsRemaining('uuid-praticien');
+const hasFree = await AppointmentCounter.hasFreeAppointmentsRemaining('uuid-intervenant');
 
 if (hasFree) {
   console.log('Ce RDV sera gratuit (0€ commission)');
@@ -480,7 +480,7 @@ if (hasFree) {
 
 #### `getNextAppointmentNumber()`
 
-Récupère le numéro du prochain RDV pour un praticien.
+Récupère le numéro du prochain RDV pour un intervenant.
 
 ```typescript
 static async getNextAppointmentNumber(
@@ -490,7 +490,7 @@ static async getNextAppointmentNumber(
 
 **Exemple:**
 ```typescript
-const nextNumber = await AppointmentCounter.getNextAppointmentNumber('uuid-praticien');
+const nextNumber = await AppointmentCounter.getNextAppointmentNumber('uuid-intervenant');
 console.log(`Prochain RDV: #${nextNumber}`);
 ```
 
@@ -517,7 +517,7 @@ static async getPractitionerAppointmentStats(
 
 **Exemple:**
 ```typescript
-const stats = await AppointmentCounter.getPractitionerAppointmentStats('uuid-praticien');
+const stats = await AppointmentCounter.getPractitionerAppointmentStats('uuid-intervenant');
 
 console.log(`RDV ce mois: ${stats.this_month}`);
 console.log(`RDV gratuits restants: ${stats.free_remaining ? 'Oui' : 'Non'}`);
@@ -557,9 +557,9 @@ Les tests couvrent :
 
 Les services communiquent avec Supabase et nécessitent :
 
-1. **Lecture des contrats:** Praticien peut voir ses propres contrats
+1. **Lecture des contrats:** intervenant peut voir ses propres contrats
 2. **Création/Modification de contrats:** Admin uniquement
-3. **Lecture des transactions:** Praticien voit ses transactions, Admin voit tout
+3. **Lecture des transactions:** intervenant voit ses transactions, Admin voit tout
 4. **Calcul de commission:** Accessible à tous (utilise RLS sur la fonction SQL)
 
 ### RLS (Row Level Security)
@@ -567,8 +567,8 @@ Les services communiquent avec Supabase et nécessitent :
 À configurer sur Supabase :
 
 ```sql
--- Praticiens peuvent lire leurs propres contrats
-CREATE POLICY "Praticiens can read own contracts"
+-- intervenants peuvent lire leurs propres contrats
+CREATE POLICY "intervenants can read own contracts"
 ON practitioner_contracts FOR SELECT
 USING (practitioner_id IN (
   SELECT id FROM practitioners WHERE user_id = auth.uid()
@@ -626,7 +626,7 @@ async function processAppointmentPayment(
 
 ---
 
-### Exemple 2 : Afficher les options de contrat à un praticien
+### Exemple 2 : Afficher les options de contrat à un intervenant
 
 ```typescript
 function PractitionerContractComparison() {
@@ -656,7 +656,7 @@ function PractitionerContractComparison() {
 
 ---
 
-### Exemple 3 : Dashboard praticien
+### Exemple 3 : Dashboard intervenant
 
 ```typescript
 async function PractitionerDashboard({ practitionerId }: Props) {
@@ -699,7 +699,7 @@ async function PractitionerDashboard({ practitionerId }: Props) {
 Sprint 3 :
 - [ ] Interface admin de gestion des contrats
 - [ ] Modal de création/modification de contrat
-- [ ] Dashboard praticien avec graphiques
+- [ ] Dashboard intervenant avec graphiques
 
 Sprint 4 :
 - [ ] Intégration Stripe Checkout

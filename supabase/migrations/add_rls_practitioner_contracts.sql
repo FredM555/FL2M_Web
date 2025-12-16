@@ -7,7 +7,7 @@
 -- Activer RLS sur la table
 ALTER TABLE public.practitioner_contracts ENABLE ROW LEVEL SECURITY;
 
--- Policy SELECT: Les praticiens peuvent voir leurs propres contrats
+-- Policy SELECT: Les intervenants peuvent voir leurs propres contrats
 CREATE POLICY "Practitioners can view their own contracts"
   ON public.practitioner_contracts
   FOR SELECT
@@ -17,7 +17,7 @@ CREATE POLICY "Practitioners can view their own contracts"
     )
   );
 
--- Policy UPDATE: Les praticiens peuvent mettre à jour leurs propres contrats
+-- Policy UPDATE: Les intervenants peuvent mettre à jour leurs propres contrats
 -- (nécessaire pour réinitialiser end_date lors de l'annulation)
 CREATE POLICY "Practitioners can update their own contracts"
   ON public.practitioner_contracts
@@ -33,7 +33,7 @@ CREATE POLICY "Practitioners can update their own contracts"
     )
   );
 
--- Policy DELETE: Les praticiens peuvent supprimer leurs contrats en attente de paiement
+-- Policy DELETE: Les intervenants peuvent supprimer leurs contrats en attente de paiement
 CREATE POLICY "Practitioners can delete their pending contracts"
   ON public.practitioner_contracts
   FOR DELETE

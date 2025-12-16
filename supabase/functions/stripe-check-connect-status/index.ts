@@ -38,7 +38,7 @@ serve(async (req) => {
       throw new Error('Non autorisé');
     }
 
-    // Récupérer les informations du praticien
+    // Récupérer les informations du intervenant
     const { data: practitioner, error: practitionerError } = await supabase
       .from('practitioners')
       .select('id, stripe_account_id, stripe_account_status')
@@ -46,7 +46,7 @@ serve(async (req) => {
       .single();
 
     if (practitionerError || !practitioner) {
-      throw new Error('Praticien non trouvé');
+      throw new Error('intervenant non trouvé');
     }
 
     // Si pas de compte Stripe Connect

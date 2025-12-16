@@ -189,7 +189,7 @@ const EditIbanModal: React.FC<EditIbanModalProps> = ({
 
         <Alert severity="info" sx={{ mb: 3 }}>
           <Typography variant="body2">
-            L'IBAN sera utilisé pour effectuer les virements manuels au praticien.
+            L'IBAN sera utilisé pour effectuer les virements manuels au intervenant.
             <br />
             Format attendu : <strong>FR76 1234 5678 9012 3456 7890 123</strong>
           </Typography>

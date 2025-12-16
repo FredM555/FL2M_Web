@@ -58,7 +58,7 @@ const PractitionerSubscriptionPage: React.FC = () => {
     setError(null);
 
     try {
-      // Récupérer l'ID du praticien
+      // Récupérer l'ID du intervenant
       const { data: practitionerData, error: practitionerError } = await supabase
         .from('practitioners')
         .select('id')
@@ -115,7 +115,7 @@ const PractitionerSubscriptionPage: React.FC = () => {
     setError(null);
 
     try {
-      // Récupérer l'ID du praticien
+      // Récupérer l'ID du intervenant
       const { data: practitionerData, error: practitionerError } = await supabase
         .from('practitioners')
         .select('id')
@@ -123,7 +123,7 @@ const PractitionerSubscriptionPage: React.FC = () => {
         .single();
 
       if (practitionerError || !practitionerData) {
-        throw new Error('Praticien non trouvé');
+        throw new Error('intervenant non trouvé');
       }
 
       // Calculer la date de début du nouveau contrat (date anniversaire)

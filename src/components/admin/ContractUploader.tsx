@@ -261,7 +261,7 @@ const ContractUploader: React.FC<ContractUploaderProps> = ({
       )}
 
       <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 2 }}>
-        💡 Le contrat signé sera accessible au praticien depuis son espace personnel
+        💡 Le contrat signé sera accessible au intervenant depuis son espace personnel
       </Typography>
     </Box>
   );

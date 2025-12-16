@@ -36,7 +36,7 @@ L'intervenant voit :
   - Date de la transaction
   - Type de contrat applicable
   - Montant total (payé par le client)
-  - Part du praticien (montant reçu)
+  - Part du intervenant (montant reçu)
   - Commission prélevée
   - Statut de la transaction
 
@@ -47,7 +47,7 @@ L'intervenant voit :
 ### **Nouvelles tables créées**
 
 #### `subscription_payments`
-Stocke tous les paiements d'abonnement des praticiens.
+Stocke tous les paiements d'abonnement des intervenants.
 
 ```sql
 CREATE TABLE subscription_payments (
@@ -176,7 +176,7 @@ INSERT INTO transactions (
 ```
 
 #### `payouts`
-Stocke les virements groupés aux praticiens.
+Stocke les virements groupés aux intervenants.
 
 ```sql
 CREATE TABLE payouts (
@@ -224,15 +224,15 @@ CREATE TABLE payouts (
 
 Les policies Row Level Security garantissent que :
 
-### **Praticiens**
+### **intervenants**
 - ✅ Peuvent voir **leurs propres** transactions de rendez-vous
 - ✅ Peuvent voir **leurs propres** paiements d'abonnement
 - ✅ Peuvent voir **leurs propres** virements
-- ❌ Ne peuvent pas voir les données d'autres praticiens
+- ❌ Ne peuvent pas voir les données d'autres intervenants
 
 ### **Clients**
 - ✅ Peuvent voir **leurs propres** paiements de rendez-vous
-- ❌ Ne peuvent pas voir les données des praticiens
+- ❌ Ne peuvent pas voir les données des intervenants
 
 ### **Administrateurs**
 - ✅ Peuvent voir **toutes** les transactions
@@ -246,7 +246,7 @@ Les policies Row Level Security garantissent que :
 ### **`PractitionerTransactions.tsx`**
 
 **Props** :
-- `practitionerId: string` - ID du praticien
+- `practitionerId: string` - ID du intervenant
 
 **État** :
 - `tabValue` - Onglet actif (0 = Abonnements, 1 = Rendez-vous)
