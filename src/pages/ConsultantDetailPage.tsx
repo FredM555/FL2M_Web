@@ -390,7 +390,10 @@ const ConsultantDetailPage: React.FC = () => {
           right: 0,
           bottom: 0,
           zIndex: 0,
-          backgroundImage: 'url(/images/IntervenantDetail.jpg)',
+          backgroundImage: {
+            xs: 'none',
+            md: 'url(/images/IntervenantDetail.jpg)'
+          },
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -417,8 +420,8 @@ const ConsultantDetailPage: React.FC = () => {
           background: 'rgba(245, 247, 250, 0.6)',
           backdropFilter: 'blur(2px)',
           minHeight: '100vh',
-          py: 4,
-          mt: { xs: '23px', md: '40px' },
+          py: { xs: 2, md: 4 },
+          mt: { xs: '80px', md: '40px' },
           position: 'relative',
           zIndex: 1,
         }}

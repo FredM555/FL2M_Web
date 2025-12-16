@@ -17,14 +17,21 @@ import {
   Switch,
   FormControlLabel,
   CircularProgress,
-  Snackbar
+  Snackbar,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Paper,
+  Button
 } from '@mui/material';
 import {
   Email as EmailIcon,
   Phone as PhoneIcon,
   CheckCircle as CheckCircleIcon,
   Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon
+  VisibilityOff as VisibilityOffIcon,
+  ContentCopy as ContentCopyIcon,
+  Share as ShareIcon
 } from '@mui/icons-material';
 import { Practitioner } from '../../services/supabase';
 import { UserAvatar } from '../profile/UserAvatar';
@@ -32,9 +39,16 @@ import { UserAvatar } from '../profile/UserAvatar';
 interface PractitionerProfilePreviewProps {
   practitioner: Practitioner;
   onUpdateVisibility: (visible: boolean) => Promise<void>;
+  getPublicLink: () => string;
+  onCopyLink: () => Promise<void>;
 }
 
-const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({ practitioner, onUpdateVisibility }) => {
+const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({
+  practitioner,
+  onUpdateVisibility,
+  getPublicLink,
+  onCopyLink
+}) => {
   const [updating, setUpdating] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
@@ -159,8 +173,9 @@ const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({
           },
         }}
       >
-        <CardContent>
-          <Box sx={{ p: 2, bgcolor: practitioner.profile_visible && practitioner.is_active ? 'rgba(76, 175, 80, 0.1)' : 'rgba(158, 158, 158, 0.1)', borderRadius: 2, border: '1px solid', borderColor: practitioner.profile_visible && practitioner.is_active ? 'success.light' : 'grey.300' }}>
+        <CardContent sx={{ p: 2 }}>
+          {/* Switch de visibilité */}
+          <Box sx={{ p: 1.5, bgcolor: practitioner.profile_visible && practitioner.is_active ? 'rgba(76, 175, 80, 0.1)' : 'rgba(158, 158, 158, 0.1)', borderRadius: 1, border: '1px solid', borderColor: practitioner.profile_visible && practitioner.is_active ? 'success.light' : 'grey.300', mb: 2 }}>
             <FormControlLabel
               control={
                 <Switch
@@ -168,32 +183,121 @@ const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({
                   onChange={handleVisibilityChange}
                   disabled={updating || !practitioner.is_active}
                   color="success"
+                  size="small"
                 />
               }
               label={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
                   {updating ? (
-                    <CircularProgress size={24} sx={{ color: '#FFA500' }} />
+                    <CircularProgress size={20} sx={{ color: '#FFA500' }} />
                   ) : (
-                    practitioner.profile_visible && practitioner.is_active ? <VisibilityIcon /> : <VisibilityOffIcon />
+                    practitioner.profile_visible && practitioner.is_active ? <VisibilityIcon fontSize="small" /> : <VisibilityOffIcon fontSize="small" />
                   )}
-                  <Box>
-                    <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                      {!practitioner.is_active
-                        ? 'Profil inactif (masqué)'
-                        : practitioner.profile_visible ? 'Profil visible' : 'Profil masqué'}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      {!practitioner.is_active
-                        ? 'Profil inactif - invisible pour le public'
-                        : practitioner.profile_visible
-                        ? 'Votre profil est visible dans la liste des intervenants'
-                        : 'Votre profil est masqué de la liste publique des intervenants'}
-                    </Typography>
-                  </Box>
+                  <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                    {!practitioner.is_active
+                      ? 'Profil inactif'
+                      : practitioner.profile_visible ? 'Profil visible' : 'Profil masqué'}
+                  </Typography>
                 </Box>
               }
             />
+          </Box>
+
+          {/* Lien de partage */}
+          <Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
+              <ShareIcon fontSize="small" sx={{ color: '#FFA500' }} />
+              <Typography variant="body2" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
+                Lien de partage
+              </Typography>
+            </Box>
+
+            {/* Message à partager par email */}
+            <Box
+              sx={{
+                p: 1.5,
+                borderRadius: 1,
+                bgcolor: practitioner.profile_visible && practitioner.is_active ? 'rgba(255, 215, 0, 0.05)' : 'rgba(158, 158, 158, 0.05)',
+                border: '1px solid',
+                borderColor: practitioner.profile_visible && practitioner.is_active ? 'rgba(255, 215, 0, 0.3)' : 'rgba(158, 158, 158, 0.2)',
+              }}
+            >
+              <Typography variant="caption" sx={{ fontSize: '0.8rem', lineHeight: 1.4, display: 'block', mb: 1 }}>
+                <Box component="span" sx={{ color: practitioner.profile_visible && practitioner.is_active ? 'text.primary' : 'text.disabled' }}>
+                  Prenez rendez-vous avec {displayName} :{' '}
+                </Box>
+                <Typography
+                  component="a"
+                  href={practitioner.profile_visible && practitioner.is_active ? getPublicLink() : undefined}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  sx={{
+                    fontSize: '0.8rem',
+                    color: practitioner.profile_visible && practitioner.is_active ? '#FFA500' : 'text.disabled',
+                    textDecoration: practitioner.profile_visible && practitioner.is_active ? 'underline' : 'none',
+                    cursor: practitioner.profile_visible && practitioner.is_active ? 'pointer' : 'default',
+                    '&:hover': {
+                      color: practitioner.profile_visible && practitioner.is_active ? '#FF8C00' : 'text.disabled',
+                    },
+                  }}
+                  onClick={(e) => {
+                    if (!practitioner.profile_visible || !practitioner.is_active) {
+                      e.preventDefault();
+                    }
+                  }}
+                >
+                  {getPublicLink()}
+                </Typography>
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, mt: 1 }}>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ContentCopyIcon sx={{ fontSize: 16 }} />}
+                  onClick={async () => {
+                    const message = `Prenez rendez-vous avec ${displayName} :\n${getPublicLink()}`;
+                    await navigator.clipboard.writeText(message);
+                    onCopyLink();
+                  }}
+                  disabled={!practitioner.profile_visible || !practitioner.is_active}
+                  sx={{
+                    fontSize: '0.75rem',
+                    py: 0.5,
+                    px: 1,
+                    minWidth: 'auto',
+                    borderColor: practitioner.profile_visible && practitioner.is_active ? '#FFA500' : 'rgba(0, 0, 0, 0.12)',
+                    color: practitioner.profile_visible && practitioner.is_active ? '#FFA500' : 'rgba(0, 0, 0, 0.26)',
+                    '&:hover': {
+                      borderColor: practitioner.profile_visible && practitioner.is_active ? '#FF8C00' : 'rgba(0, 0, 0, 0.12)',
+                      backgroundColor: practitioner.profile_visible && practitioner.is_active ? 'rgba(255, 165, 0, 0.08)' : 'transparent',
+                    },
+                  }}
+                >
+                  Message
+                </Button>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ContentCopyIcon sx={{ fontSize: 16 }} />}
+                  onClick={onCopyLink}
+                  disabled={!practitioner.profile_visible || !practitioner.is_active}
+                  sx={{
+                    fontSize: '0.75rem',
+                    py: 0.5,
+                    px: 1,
+                    minWidth: 'auto',
+                    borderColor: practitioner.profile_visible && practitioner.is_active ? '#FFA500' : 'rgba(0, 0, 0, 0.12)',
+                    color: practitioner.profile_visible && practitioner.is_active ? '#FFA500' : 'rgba(0, 0, 0, 0.26)',
+                    '&:hover': {
+                      borderColor: practitioner.profile_visible && practitioner.is_active ? '#FF8C00' : 'rgba(0, 0, 0, 0.12)',
+                      backgroundColor: practitioner.profile_visible && practitioner.is_active ? 'rgba(255, 165, 0, 0.08)' : 'transparent',
+                    },
+                  }}
+                >
+                  Lien seul
+                </Button>
+              </Box>
+            </Box>
           </Box>
         </CardContent>
       </Card>

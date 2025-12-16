@@ -226,8 +226,8 @@ const MessagesPageNew: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
+    <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
+      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3, fontSize: { xs: '1.5rem', md: '2rem' } }}>
         💬 Mes messages
       </Typography>
 
@@ -237,9 +237,16 @@ const MessagesPageNew: React.FC = () => {
         </Alert>
       )}
 
-      <Grid container spacing={0} sx={{ height: 'calc(100vh - 220px)', minHeight: '600px' }}>
+      <Grid container spacing={0} sx={{
+        height: { xs: 'auto', md: 'calc(100vh - 220px)' },
+        minHeight: { xs: '400px', md: '600px' },
+        flexDirection: { xs: 'column', md: 'row' }
+      }}>
         {/* Liste des conversations */}
-        <Grid item xs={12} md={4} sx={{ height: '100%' }}>
+        <Grid item xs={12} md={4} sx={{
+          height: { xs: '300px', md: '100%' },
+          minHeight: { xs: '300px', md: 'auto' }
+        }}>
           <Paper sx={{ height: '100%', overflow: 'auto', borderRight: '1px solid #e0e0e0' }}>
             {threads.length === 0 ? (
               <Box sx={{ p: 4, textAlign: 'center' }}>
@@ -295,7 +302,10 @@ const MessagesPageNew: React.FC = () => {
         </Grid>
 
         {/* Zone de chat */}
-        <Grid item xs={12} md={8} sx={{ height: '100%' }}>
+        <Grid item xs={12} md={8} sx={{
+          height: { xs: 'calc(100vh - 500px)', md: '100%' },
+          minHeight: { xs: '500px', md: 'auto' }
+        }}>
           <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {selectedThread ? (
               <>

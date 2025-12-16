@@ -14,7 +14,10 @@ const PolitiqueConfidentialitePage: React.FC = () => {
           right: 0,
           bottom: 0,
           zIndex: 0,
-          backgroundImage: 'url(/images/Politique.jpg)',
+          backgroundImage: {
+            xs: 'none',
+            md: 'url(/images/Politique.jpg)'
+          },
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

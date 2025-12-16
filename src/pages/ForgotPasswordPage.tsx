@@ -61,7 +61,10 @@ const ForgotPasswordPage: React.FC = () => {
           right: 0,
           bottom: 0,
           zIndex: 0,
-          backgroundImage: 'url(/images/MonProfil.jpg)',
+          backgroundImage: {
+            xs: 'none',
+            md: 'url(/images/MonProfil.jpg)'
+          },
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -86,10 +89,10 @@ const ForgotPasswordPage: React.FC = () => {
       <Container
         maxWidth="sm"
         sx={{
-          py: 8,
+          py: { xs: 4, md: 8 },
           position: 'relative',
           zIndex: 1,
-          mt: { xs: '23px', md: '40px' }
+          mt: { xs: '80px', md: '40px' }
         }}
       >
         <Paper

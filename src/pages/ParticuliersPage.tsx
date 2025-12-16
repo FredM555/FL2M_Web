@@ -62,35 +62,40 @@ const ParticuliersPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px' }}>
-      <Typography 
-        variant="h3" 
-        component="h1" 
-        gutterBottom 
-        align="center" 
-        fontWeight="bold" 
-        sx={{ mb: 6 }}
+      <Typography
+        variant="h3"
+        component="h1"
+        gutterBottom
+        align="center"
+        fontWeight="bold"
+        sx={{
+          mb: { xs: 3, md: 6 },
+          fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
+          px: { xs: 2, sm: 0 }
+        }}
       >
         Parcours Particuliers
       </Typography>
 
       {/* Introduction */}
-      <Typography 
-        variant="body1" 
-        align="center" 
-        sx={{ 
-          maxWidth: '800px', 
-          margin: '0 auto', 
-          mb: 6, 
-          color: 'text.secondary' 
+      <Typography
+        variant="body1"
+        align="center"
+        sx={{
+          maxWidth: '800px',
+          margin: '0 auto',
+          mb: { xs: 3, md: 6 },
+          color: 'text.secondary',
+          px: { xs: 2, sm: 0 }
         }}
       >
-        Découvrez nos modules personnalisés conçus pour vous accompagner 
+        Découvrez nos modules personnalisés conçus pour vous accompagner
         à chaque étape de votre développement personnel et relationnel.
       </Typography>
       
-      <Grid container spacing={6}>
+      <Grid container spacing={{ xs: 3, md: 6 }}>
         {modules.map((module) => (
-          <Grid item xs={12} md={6} lg={3} key={module.id}>
+          <Grid item xs={12} sm={6} md={6} lg={3} key={module.id}>
             <Card 
               sx={{ 
                 height: '100%', 

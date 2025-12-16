@@ -151,7 +151,10 @@ const ResetPasswordPage: React.FC = () => {
             right: 0,
             bottom: 0,
             zIndex: 0,
-            backgroundImage: 'url(/images/MonProfil.jpg)',
+            backgroundImage: {
+              xs: 'none',
+              md: 'url(/images/MonProfil.jpg)'
+            },
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
@@ -171,7 +174,7 @@ const ResetPasswordPage: React.FC = () => {
             pointerEvents: 'none',
           }}
         />
-        <Container maxWidth="sm" sx={{ py: 8, position: 'relative', zIndex: 1, mt: { xs: '23px', md: '40px' } }}>
+        <Container maxWidth="sm" sx={{ py: { xs: 4, md: 8 }, position: 'relative', zIndex: 1, mt: { xs: '80px', md: '40px' } }}>
           <Paper elevation={3} sx={{ p: 4, borderRadius: 3, textAlign: 'center' }}>
             <ErrorIcon sx={{ fontSize: 64, color: 'error.main', mb: 2 }} />
             <Typography variant="h5" gutterBottom sx={{ fontWeight: 600 }}>
@@ -210,7 +213,10 @@ const ResetPasswordPage: React.FC = () => {
           right: 0,
           bottom: 0,
           zIndex: 0,
-          backgroundImage: 'url(/images/MonProfil.jpg)',
+          backgroundImage: {
+            xs: 'none',
+            md: 'url(/images/MonProfil.jpg)'
+          },
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -234,10 +240,10 @@ const ResetPasswordPage: React.FC = () => {
       <Container
         maxWidth="sm"
         sx={{
-          py: 8,
+          py: { xs: 4, md: 8 },
           position: 'relative',
           zIndex: 1,
-          mt: { xs: '23px', md: '40px' }
+          mt: { xs: '80px', md: '40px' }
         }}
       >
         <Paper

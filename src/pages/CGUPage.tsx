@@ -14,7 +14,10 @@ const CGUPage: React.FC = () => {
           right: 0,
           bottom: 0,
           zIndex: 0,
-          backgroundImage: 'url(/images/CGU.jpg)',
+          backgroundImage: {
+            xs: 'none',
+            md: 'url(/images/CGU.jpg)'
+          },
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

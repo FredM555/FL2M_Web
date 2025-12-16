@@ -14,7 +14,10 @@ const MentionsLegalesPage: React.FC = () => {
           right: 0,
           bottom: 0,
           zIndex: 0,
-          backgroundImage: 'url(/images/MentionLegale.jpg)',
+          backgroundImage: {
+            xs: 'none',
+            md: 'url(/images/MentionLegale.jpg)'
+          },
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',

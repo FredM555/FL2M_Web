@@ -334,63 +334,111 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
               Aucun paiement d'abonnement pour le moment.
             </Alert>
           ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Période</TableCell>
-                    <TableCell>Montant</TableCell>
-                    <TableCell>Statut</TableCell>
-                    <TableCell>Date de paiement</TableCell>
-                    <TableCell>Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {subscriptionPayments.map((payment) => (
-                    <TableRow key={payment.id}>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {format(new Date(payment.period_start_date), 'MMMM yyyy', { locale: fr })}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {format(new Date(payment.period_start_date), 'dd/MM/yyyy', { locale: fr })} -{' '}
-                          {format(new Date(payment.period_end_date), 'dd/MM/yyyy', { locale: fr })}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {formatAmount(payment.amount)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{getStatusChip(payment.status)}</TableCell>
-                      <TableCell>
+            <>
+              {/* Vue mobile - Cards */}
+              <Box sx={{ display: { xs: 'block', md: 'none' }, px: 2 }}>
+                {subscriptionPayments.map((payment) => (
+                  <Card key={payment.id} sx={{ mb: 2 }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {format(new Date(payment.period_start_date), 'MMMM yyyy', { locale: fr })}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {format(new Date(payment.period_start_date), 'dd/MM/yyyy', { locale: fr })} -{' '}
+                            {format(new Date(payment.period_end_date), 'dd/MM/yyyy', { locale: fr })}
+                          </Typography>
+                        </Box>
+                        {getStatusChip(payment.status)}
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 700, color: 'primary.main', mb: 1 }}>
+                        {formatAmount(payment.amount)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
                         {payment.payment_date ? (
-                          <Typography variant="body2">
-                            {format(new Date(payment.payment_date), 'dd/MM/yyyy HH:mm', { locale: fr })}
-                          </Typography>
+                          <>Payé le {format(new Date(payment.payment_date), 'dd/MM/yyyy HH:mm', { locale: fr })}</>
                         ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            -
-                          </Typography>
+                          'En attente de paiement'
                         )}
-                      </TableCell>
-                      <TableCell>
-                        {payment.invoice_url && (
-                          <Tooltip title="Voir la facture">
-                            <IconButton
-                              size="small"
-                              onClick={() => window.open(payment.invoice_url!, '_blank')}
-                            >
-                              <ReceiptIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                      </Typography>
+                      {payment.invoice_url && (
+                        <Box sx={{ mt: 1 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => window.open(payment.invoice_url!, '_blank')}
+                            sx={{ bgcolor: 'primary.light' }}
+                          >
+                            <ReceiptIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+
+              {/* Vue desktop - Tableau */}
+              <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Période</TableCell>
+                        <TableCell>Montant</TableCell>
+                        <TableCell>Statut</TableCell>
+                        <TableCell>Date de paiement</TableCell>
+                        <TableCell>Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {subscriptionPayments.map((payment) => (
+                        <TableRow key={payment.id}>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {format(new Date(payment.period_start_date), 'MMMM yyyy', { locale: fr })}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {format(new Date(payment.period_start_date), 'dd/MM/yyyy', { locale: fr })} -{' '}
+                              {format(new Date(payment.period_end_date), 'dd/MM/yyyy', { locale: fr })}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {formatAmount(payment.amount)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>{getStatusChip(payment.status)}</TableCell>
+                          <TableCell>
+                            {payment.payment_date ? (
+                              <Typography variant="body2">
+                                {format(new Date(payment.payment_date), 'dd/MM/yyyy HH:mm', { locale: fr })}
+                              </Typography>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                -
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {payment.invoice_url && (
+                              <Tooltip title="Voir la facture">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => window.open(payment.invoice_url!, '_blank')}
+                                >
+                                  <ReceiptIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </>
           )}
         </TabPanel>
 
@@ -401,109 +449,207 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
               Aucune transaction de rendez-vous pour le moment.
             </Alert>
           ) : (
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Code RDV</TableCell>
-                    <TableCell>Type de contrat</TableCell>
-                    <TableCell align="right">Montant total</TableCell>
-                    <TableCell align="right">Votre part</TableCell>
-                    <TableCell align="right">Commission</TableCell>
-                    <TableCell align="right">Frais Stripe</TableCell>
-                    <TableCell>Statut</TableCell>
-                    <TableCell>Mode</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {appointmentTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
-                      <TableCell>
-                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                          {format(new Date(transaction.created_at), 'dd/MM/yyyy', { locale: fr })}
-                        </Typography>
-                        {transaction.payment_date && (
-                          <Typography variant="caption" color="text.secondary">
-                            Payé le {format(new Date(transaction.payment_date), 'dd/MM/yyyy', { locale: fr })}
+            <>
+              {/* Vue mobile - Cards */}
+              <Box sx={{ display: { xs: 'block', md: 'none' }, px: 2 }}>
+                {appointmentTransactions.map((transaction) => (
+                  <Card key={transaction.id} sx={{ mb: 2 }}>
+                    <CardContent>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', mb: 1 }}>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            {format(new Date(transaction.created_at), 'dd/MM/yyyy', { locale: fr })}
                           </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {transaction.appointment?.unique_code ? (
+                          {transaction.appointment?.unique_code && (
+                            <Chip
+                              label={transaction.appointment.unique_code}
+                              size="small"
+                              variant="outlined"
+                              sx={{
+                                fontFamily: 'monospace',
+                                fontSize: '0.65rem',
+                                height: '18px',
+                                mt: 0.5
+                              }}
+                            />
+                          )}
+                        </Box>
+                        <Box sx={{ display: 'flex', gap: 0.5, flexDirection: 'column', alignItems: 'flex-end' }}>
+                          {getStatusChip(transaction.status)}
                           <Chip
-                            label={transaction.appointment.unique_code}
+                            label={transaction.is_test_mode ? 'TEST' : 'PROD'}
+                            color={transaction.is_test_mode ? 'warning' : 'success'}
                             size="small"
-                            variant="outlined"
-                            sx={{
-                              fontFamily: 'monospace',
-                              fontWeight: 600,
-                              fontSize: '0.75rem'
-                            }}
+                            sx={{ fontWeight: 700, fontSize: '0.65rem', height: '18px' }}
                           />
-                        ) : (
-                          <Typography variant="caption" color="text.secondary">-</Typography>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        {transaction.commission_type ? (
+                        </Box>
+                      </Box>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1, mt: 2 }}>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Votre part
+                          </Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: 'success.main' }}>
+                            {formatAmount(transaction.amount_practitioner)}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Total
+                          </Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                            {formatAmount(transaction.amount_total)}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Commission
+                          </Typography>
+                          <Typography variant="body2">
+                            {formatAmount(transaction.amount_platform_commission)}
+                          </Typography>
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Frais Stripe
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'warning.main' }}>
+                            {formatAmount(transaction.amount_stripe_fees || 0)}
+                          </Typography>
+                        </Box>
+                      </Box>
+                      {transaction.commission_type && (
+                        <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                           <Chip
                             label={transaction.commission_type.toUpperCase()}
                             size="small"
                             variant="outlined"
+                            sx={{ fontSize: '0.7rem' }}
                           />
-                        ) : (
-                          <Typography variant="body2" color="text.secondary">
-                            -
-                          </Typography>
-                        )}
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2">
-                          {formatAmount(transaction.amount_total)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell align="right">
-                        <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
-                          {formatAmount(transaction.amount_practitioner)}
-                        </Typography>
-                      </TableCell>
-                      <Tooltip
-                        title={getCommissionTooltip(
-                          transaction.commission_type,
-                          transaction.is_free_appointment
-                        )}
-                        placement="top"
-                        arrow
-                      >
-                        <TableCell align="right" sx={{ cursor: 'help' }}>
-                          <Typography variant="body2" color="text.secondary">
-                            {formatAmount(transaction.amount_platform_commission)}
-                          </Typography>
-                        </TableCell>
-                      </Tooltip>
-                      <TableCell align="right">
-                        <Typography variant="body2" sx={{ color: 'warning.main' }}>
-                          {formatAmount(transaction.amount_stripe_fees || 0)}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{getStatusChip(transaction.status)}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={transaction.is_test_mode ? 'TEST' : 'PROD'}
-                          color={transaction.is_test_mode ? 'warning' : 'success'}
-                          size="small"
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: '0.7rem'
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                          <Tooltip
+                            title={getCommissionTooltip(
+                              transaction.commission_type,
+                              transaction.is_free_appointment
+                            )}
+                            placement="top"
+                            arrow
+                          >
+                            <InfoIcon sx={{ fontSize: '1rem', color: 'text.secondary', cursor: 'help' }} />
+                          </Tooltip>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+
+              {/* Vue desktop - Tableau */}
+              <Box sx={{ display: { xs: 'none', md: 'block' } }}>
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Date</TableCell>
+                        <TableCell>Code RDV</TableCell>
+                        <TableCell>Type de contrat</TableCell>
+                        <TableCell align="right">Montant total</TableCell>
+                        <TableCell align="right">Votre part</TableCell>
+                        <TableCell align="right">Commission</TableCell>
+                        <TableCell align="right">Frais Stripe</TableCell>
+                        <TableCell>Statut</TableCell>
+                        <TableCell>Mode</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {appointmentTransactions.map((transaction) => (
+                        <TableRow key={transaction.id}>
+                          <TableCell>
+                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                              {format(new Date(transaction.created_at), 'dd/MM/yyyy', { locale: fr })}
+                            </Typography>
+                            {transaction.payment_date && (
+                              <Typography variant="caption" color="text.secondary">
+                                Payé le {format(new Date(transaction.payment_date), 'dd/MM/yyyy', { locale: fr })}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {transaction.appointment?.unique_code ? (
+                              <Chip
+                                label={transaction.appointment.unique_code}
+                                size="small"
+                                variant="outlined"
+                                sx={{
+                                  fontFamily: 'monospace',
+                                  fontWeight: 600,
+                                  fontSize: '0.75rem'
+                                }}
+                              />
+                            ) : (
+                              <Typography variant="caption" color="text.secondary">-</Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {transaction.commission_type ? (
+                              <Chip
+                                label={transaction.commission_type.toUpperCase()}
+                                size="small"
+                                variant="outlined"
+                              />
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">
+                                -
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2">
+                              {formatAmount(transaction.amount_total)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="right">
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'success.main' }}>
+                              {formatAmount(transaction.amount_practitioner)}
+                            </Typography>
+                          </TableCell>
+                          <Tooltip
+                            title={getCommissionTooltip(
+                              transaction.commission_type,
+                              transaction.is_free_appointment
+                            )}
+                            placement="top"
+                            arrow
+                          >
+                            <TableCell align="right" sx={{ cursor: 'help' }}>
+                              <Typography variant="body2" color="text.secondary">
+                                {formatAmount(transaction.amount_platform_commission)}
+                              </Typography>
+                            </TableCell>
+                          </Tooltip>
+                          <TableCell align="right">
+                            <Typography variant="body2" sx={{ color: 'warning.main' }}>
+                              {formatAmount(transaction.amount_stripe_fees || 0)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>{getStatusChip(transaction.status)}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={transaction.is_test_mode ? 'TEST' : 'PROD'}
+                              color={transaction.is_test_mode ? 'warning' : 'success'}
+                              size="small"
+                              sx={{
+                                fontWeight: 700,
+                                fontSize: '0.7rem'
+                              }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Box>
+            </>
           )}
         </TabPanel>
       </Paper>

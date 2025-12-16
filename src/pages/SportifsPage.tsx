@@ -65,18 +65,26 @@ const SportifsPage: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ maxWidth: '1200px', mx: 'auto', p: 4 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 6 }}>
-        <DirectionsRunIcon sx={{ mr: 2, fontSize: 40, color: 'primary.main' }} />
-        <Typography variant="h3" component="h1" fontWeight="bold">
+    <Box sx={{ maxWidth: '1200px', mx: 'auto', p: { xs: 2, sm: 3, md: 4 } }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: { xs: 3, md: 6 }, flexWrap: 'wrap', gap: 1 }}>
+        <DirectionsRunIcon sx={{ fontSize: { xs: 30, md: 40 }, color: 'primary.main' }} />
+        <Typography
+          variant="h3"
+          component="h1"
+          fontWeight="bold"
+          sx={{
+            fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
+            textAlign: 'center'
+          }}
+        >
           Nos Experts Sportifs
         </Typography>
-        <FitnessCenterIcon sx={{ ml: 2, fontSize: 40, color: 'primary.main' }} />
+        <FitnessCenterIcon sx={{ fontSize: { xs: 30, md: 40 }, color: 'primary.main' }} />
       </Box>
       
-      <Grid container spacing={6}>
+      <Grid container spacing={{ xs: 3, md: 6 }}>
         {sportifs.map((sportif) => (
-          <Grid item xs={12} md={6} lg={4} key={sportif.id}>
+          <Grid item xs={12} sm={6} md={6} lg={4} key={sportif.id}>
             <Card sx={{ 
               height: '100%', 
               display: 'flex', 
@@ -138,13 +146,21 @@ const SportifsPage: React.FC = () => {
         ))}
       </Grid>
 
-      <Box sx={{ mt: 8, textAlign: 'center' }}>
-        <Typography variant="h4" component="h2" fontWeight="bold" gutterBottom>
+      <Box sx={{ mt: { xs: 4, md: 8 }, textAlign: 'center', px: { xs: 2, sm: 0 } }}>
+        <Typography
+          variant="h4"
+          component="h2"
+          fontWeight="bold"
+          gutterBottom
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+          }}
+        >
           Notre Approche Sportive
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ maxWidth: '800px', mx: 'auto' }}>
-          Nous proposons un accompagnement personnalisé pour les sportifs 
-          de tous niveaux, alliant expertise médicale, préparation physique 
+          Nous proposons un accompagnement personnalisé pour les sportifs
+          de tous niveaux, alliant expertise médicale, préparation physique
           et suivi nutritionnel pour optimiser vos performances et votre santé.
         </Typography>
       </Box>

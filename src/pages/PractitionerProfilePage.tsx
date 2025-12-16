@@ -225,7 +225,10 @@ const PractitionerProfilePage: React.FC = () => {
           right: 0,
           bottom: 0,
           zIndex: 0,
-          backgroundImage: 'url(/images/MesRendezVous.jpg)',
+          backgroundImage: {
+            xs: 'none',
+            md: 'url(/images/MesRendezVous.jpg)'
+          },
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -251,8 +254,8 @@ const PractitionerProfilePage: React.FC = () => {
         sx={{
           background: 'rgba(245, 247, 250, 0.6)',
           backdropFilter: 'blur(2px)',
-          py: 4,
-          mt: { xs: '23px', md: '10px' },
+          py: { xs: 2, md: 4 },
+          mt: { xs: '80px', md: '40px' },
           position: 'relative',
           zIndex: 1,
         }}
@@ -334,73 +337,6 @@ const PractitionerProfilePage: React.FC = () => {
               Retour au profil
             </Button>
           </Box>
-
-          {/* Lien de partage du profil public */}
-          <Paper
-            elevation={0}
-            sx={{
-              background: 'white',
-              border: '2px solid rgba(255, 215, 0, 0.3)',
-              borderRadius: 3,
-              p: 3,
-              mb: 3,
-              position: 'relative',
-              overflow: 'hidden',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                height: '4px',
-                background: 'linear-gradient(90deg, #FFD700, #FFA500)',
-              },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-              <ShareIcon sx={{ color: '#FFA500' }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
-                Mon lien de profil public
-              </Typography>
-            </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Partagez ce lien pour permettre aux clients de consulter votre profil et prendre rendez-vous avec vous.
-            </Typography>
-            <TextField
-              fullWidth
-              value={getPublicLink()}
-              InputProps={{
-                readOnly: true,
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={handleCopyLink}
-                      edge="end"
-                      sx={{
-                        color: '#FFA500',
-                        '&:hover': {
-                          backgroundColor: 'rgba(255, 165, 0, 0.08)',
-                        },
-                      }}
-                    >
-                      <ContentCopyIcon />
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  backgroundColor: 'rgba(255, 215, 0, 0.05)',
-                  '&:hover': {
-                    backgroundColor: 'rgba(255, 215, 0, 0.08)',
-                  },
-                  '&.Mui-focused': {
-                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
-                  },
-                },
-              }}
-            />
-          </Paper>
 
           {/* Onglets */}
           <Paper
@@ -503,6 +439,8 @@ const PractitionerProfilePage: React.FC = () => {
                 <PractitionerProfilePreview
                   practitioner={practitioner}
                   onUpdateVisibility={handleUpdateVisibility}
+                  getPublicLink={getPublicLink}
+                  onCopyLink={handleCopyLink}
                 />
               </TabPanel>
 

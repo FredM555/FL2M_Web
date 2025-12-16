@@ -149,9 +149,17 @@ const SignupPage: React.FC = () => {
   };
   
   return (
-    <Container maxWidth="sm" sx={{ py: 8 }}>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
+    <Container maxWidth="sm" sx={{ py: { xs: 4, sm: 6, md: 8 }, px: { xs: 2, sm: 3 } }}>
+      <Paper elevation={3} sx={{ p: { xs: 2, sm: 3, md: 4 }, borderRadius: 2 }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          align="center"
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+          }}
+        >
           Créer un compte
         </Typography>
         
@@ -163,7 +171,13 @@ const SignupPage: React.FC = () => {
         
         <Box component="form" onSubmit={handleSignup} noValidate sx={{ mt: 3 }}>
           {/* Informations de base - obligatoires */}
-          <Typography variant="h6" gutterBottom>
+          <Typography
+            variant="h6"
+            gutterBottom
+            sx={{
+              fontSize: { xs: '1.125rem', sm: '1.25rem' }
+            }}
+          >
             Informations de base
           </Typography>
           
@@ -253,8 +267,14 @@ const SignupPage: React.FC = () => {
           
           {/* Informations pour la préparation des séances - facultatives */}
           <Box sx={{ mt: 4, mb: 2 }}>
-            <Box display="flex" alignItems="center">
-              <Typography variant="h6" gutterBottom>
+            <Box display="flex" alignItems="center" flexWrap="wrap">
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{
+                  fontSize: { xs: '1.125rem', sm: '1.25rem' }
+                }}
+              >
                 Informations nécessaires pour la préparation des séances
               </Typography>
               <Tooltip title="Les informations suivantes sont indispensables pour préparé la séance:

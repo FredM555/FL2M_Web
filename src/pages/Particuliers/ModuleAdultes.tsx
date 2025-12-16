@@ -154,7 +154,10 @@ const ModuleAdultes: React.FC = () => {
           right: 0,
           bottom: 0,
           zIndex: 0,
-          backgroundImage: 'url(/images/ModuleAdulte.jpg)',
+          backgroundImage: {
+            xs: 'none',
+            md: 'url(/images/ModuleAdulte.jpg)'
+          },
           backgroundSize: 'cover',
           backgroundPosition: 'center',
           backgroundRepeat: 'no-repeat',
@@ -179,8 +182,8 @@ const ModuleAdultes: React.FC = () => {
         sx={{
           background: 'rgba(245, 247, 250, 0.6)',
           backdropFilter: 'blur(2px)',
-          py: 4,
-          mt: { xs: '23px', md: '10px' },
+          py: { xs: 2, md: 4 },
+          mt: { xs: '80px', md: '40px' },
           position: 'relative',
           zIndex: 1,
         }}

@@ -56,13 +56,24 @@ const ServicesPage: React.FC = () => {
 
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '16px' }}>
-      <Typography variant="h3" component="h1" gutterBottom align="center" fontWeight="bold" sx={{ mb: 6 }}>
+      <Typography
+        variant="h3"
+        component="h1"
+        gutterBottom
+        align="center"
+        fontWeight="bold"
+        sx={{
+          mb: { xs: 3, md: 6 },
+          fontSize: { xs: '1.75rem', sm: '2.5rem', md: '3rem' },
+          px: { xs: 2, sm: 0 }
+        }}
+      >
         Nos Services Médicaux
       </Typography>
       
-      <Grid container spacing={6}>
+      <Grid container spacing={{ xs: 3, md: 6 }}>
         {services.map((service) => (
-          <Grid item xs={12} md={6} lg={4} key={service.id}>
+          <Grid item xs={12} sm={6} md={6} lg={4} key={service.id}>
             <Card sx={{ 
               height: '100%', 
               display: 'flex', 
