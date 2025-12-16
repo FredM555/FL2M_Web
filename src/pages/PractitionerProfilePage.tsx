@@ -9,7 +9,11 @@ import {
   Button,
   Tabs,
   Tab,
-  Badge
+  Badge,
+  TextField,
+  InputAdornment,
+  IconButton,
+  Snackbar
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { ArrowBack as ArrowBackIcon } from '@mui/icons-material';
@@ -18,6 +22,8 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import PreviewIcon from '@mui/icons-material/Preview';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+import ContentCopyIcon from '@mui/icons-material/ContentCopy';
+import ShareIcon from '@mui/icons-material/Share';
 import { useAuth } from '../context/AuthContext';
 import { PractitionerProfileForm } from '../components/practitioner/PractitionerProfileForm';
 import { UserRoleBadge } from '../components/profile/UserRoleBadge';
@@ -62,6 +68,7 @@ const PractitionerProfilePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
   const [stripeStatus, setStripeStatus] = useState<StripeConnectStatus | null>(null);
+  const [copySnackbarOpen, setCopySnackbarOpen] = useState(false);
 
   useEffect(() => {
     loadPractitionerProfile();
@@ -128,6 +135,25 @@ const PractitionerProfilePage: React.FC = () => {
 
     if (data) {
       setPractitioner(data);
+    }
+  };
+
+  // Générer le lien public de l'intervenant
+  const getPublicLink = () => {
+    if (!practitioner) return '';
+    // Utiliser le slug si disponible, sinon l'ID
+    const identifier = practitioner.slug || practitioner.id;
+    return `https://www.fl2m.fr/consultants/${identifier}`;
+  };
+
+  // Copier le lien dans le presse-papier
+  const handleCopyLink = async () => {
+    const link = getPublicLink();
+    try {
+      await navigator.clipboard.writeText(link);
+      setCopySnackbarOpen(true);
+    } catch (err) {
+      console.error('Erreur lors de la copie du lien:', err);
     }
   };
 
@@ -309,6 +335,73 @@ const PractitionerProfilePage: React.FC = () => {
             </Button>
           </Box>
 
+          {/* Lien de partage du profil public */}
+          <Paper
+            elevation={0}
+            sx={{
+              background: 'white',
+              border: '2px solid rgba(255, 215, 0, 0.3)',
+              borderRadius: 3,
+              p: 3,
+              mb: 3,
+              position: 'relative',
+              overflow: 'hidden',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '4px',
+                background: 'linear-gradient(90deg, #FFD700, #FFA500)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+              <ShareIcon sx={{ color: '#FFA500' }} />
+              <Typography variant="h6" sx={{ fontWeight: 600, color: '#1a1a2e' }}>
+                Mon lien de profil public
+              </Typography>
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Partagez ce lien pour permettre aux clients de consulter votre profil et prendre rendez-vous avec vous.
+            </Typography>
+            <TextField
+              fullWidth
+              value={getPublicLink()}
+              InputProps={{
+                readOnly: true,
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={handleCopyLink}
+                      edge="end"
+                      sx={{
+                        color: '#FFA500',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                        },
+                      }}
+                    >
+                      <ContentCopyIcon />
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'rgba(255, 215, 0, 0.05)',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 215, 0, 0.08)',
+                  },
+                  '&.Mui-focused': {
+                    backgroundColor: 'rgba(255, 215, 0, 0.1)',
+                  },
+                },
+              }}
+            />
+          </Paper>
+
           {/* Onglets */}
           <Paper
             elevation={0}
@@ -428,6 +521,15 @@ const PractitionerProfilePage: React.FC = () => {
           </Paper>
         </Container>
       </Box>
+
+      {/* Snackbar de confirmation de copie */}
+      <Snackbar
+        open={copySnackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setCopySnackbarOpen(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        message="Lien copié dans le presse-papier !"
+      />
     </Box>
   );
 };

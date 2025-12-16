@@ -70,6 +70,8 @@ export type Practitioner = {
   qualifications?: string[];
   // IBAN pour les virements manuels
   iban?: string;
+  // Slug pour URL publique
+  slug?: string;
 };
 
 export type Appointment = {
