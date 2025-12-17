@@ -31,8 +31,8 @@ import {
   getMessageStatusLabel,
   getMessageStatusColor
 } from '../types/messaging';
-import {
 import { logger } from '../utils/logger';
+import {
   getUserMessageThreads,
   getThreadMessages,
   replyToMessage,

@@ -11,12 +11,29 @@ const stripe = new Stripe(Deno.env.get('STRIPE_SECRET_KEY') || '', {
 const supabaseUrl = Deno.env.get('SUPABASE_URL') || '';
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Liste des origines autorisées
+const allowedOrigins = [
+  'https://fl2m.fr',
+  'https://www.fl2m.fr',
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+];
+
+// Fonction pour obtenir les headers CORS en fonction de l'origine
+const getCorsHeaders = (origin: string | null) => {
+  const isAllowed = origin && allowedOrigins.includes(origin);
+  return {
+    'Access-Control-Allow-Origin': isAllowed ? origin : allowedOrigins[0],
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Credentials': 'true',
+  };
 };
 
 serve(async (req) => {
+  const origin = req.headers.get('origin');
+  const corsHeaders = getCorsHeaders(origin);
+
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -37,7 +54,88 @@ serve(async (req) => {
       throw new Error('Paramètres manquants');
     }
 
+    // =============================================================================
+    // VÉRIFICATION D'AUTHENTIFICATION ET D'AUTORISATION
+    // =============================================================================
+
+    // 1. Vérifier que l'utilisateur est authentifié
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('[STRIPE-PAYMENT] Aucun header Authorization');
+      return new Response(
+        JSON.stringify({ error: 'Non authentifié' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    const token = authHeader.replace('Bearer ', '');
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      console.error('[STRIPE-PAYMENT] Token invalide:', authError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Token invalide ou expiré' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 401 }
+      );
+    }
+
+    console.log('[STRIPE-PAYMENT] Utilisateur authentifié:', user.id);
+
+    // 2. Vérifier que le clientId correspond à l'utilisateur authentifié
+    if (user.id !== clientId) {
+      console.error('[STRIPE-PAYMENT] Tentative de fraude:', {
+        authenticatedUser: user.id,
+        requestedClientId: clientId
+      });
+      return new Response(
+        JSON.stringify({ error: 'Non autorisé : vous ne pouvez créer un paiement que pour vous-même' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    // 3. Vérifier que le rendez-vous existe et appartient au client
+    const { data: appointment, error: apptError } = await supabase
+      .from('appointments')
+      .select('id, client_id, status, payment_status')
+      .eq('id', appointmentId)
+      .single();
+
+    if (apptError || !appointment) {
+      console.error('[STRIPE-PAYMENT] Rendez-vous non trouvé:', apptError?.message);
+      return new Response(
+        JSON.stringify({ error: 'Rendez-vous non trouvé' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    // Vérifier que le RDV appartient bien au client authentifié
+    if (appointment.client_id !== clientId) {
+      console.error('[STRIPE-PAYMENT] RDV n\'appartient pas au client:', {
+        appointmentClientId: appointment.client_id,
+        requestedClientId: clientId
+      });
+      return new Response(
+        JSON.stringify({ error: 'Ce rendez-vous ne vous appartient pas' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
+      );
+    }
+
+    // 4. Vérifier que le RDV n'a pas déjà été payé
+    if (appointment.payment_status === 'paid') {
+      console.error('[STRIPE-PAYMENT] RDV déjà payé:', appointmentId);
+      return new Response(
+        JSON.stringify({ error: 'Ce rendez-vous a déjà été payé' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    console.log('[STRIPE-PAYMENT] Vérifications de sécurité OK - Création du paiement autorisée');
+
+    // =============================================================================
+    // FIN DES VÉRIFICATIONS - Suite du traitement normal
+    // =============================================================================
 
     // Récupérer les informations du client
     console.log('[STRIPE-PAYMENT] Recherche du client:', clientId);

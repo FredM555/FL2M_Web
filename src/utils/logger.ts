@@ -15,7 +15,6 @@
  *   Recommandé en production: 'error'
  */
 
-import { logger } from './utils/logger';
 type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'none';
 
 interface SensitivePatterns {
