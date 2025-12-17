@@ -27,6 +27,9 @@ import ReopenIcon from '@mui/icons-material/Replay';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
+import EditIcon from '@mui/icons-material/Edit';
+import SaveIcon from '@mui/icons-material/Save';
+import CancelIcon from '@mui/icons-material/Cancel';
 import { supabase } from '../../services/supabase';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -85,6 +88,10 @@ const AdminContactMessagesPageNew: React.FC = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [tabValue, setTabValue] = useState(0);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  // États pour l'édition des messages admin
+  const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
+  const [editedMessageText, setEditedMessageText] = useState('');
 
   useEffect(() => {
     loadThreads();
@@ -288,6 +295,54 @@ const AdminContactMessagesPageNew: React.FC = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  // Fonctions pour l'édition des messages admin
+  const handleStartEdit = (msg: ContactMessage) => {
+    setEditingMessageId(msg.id);
+    setEditedMessageText(msg.message);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessageId(null);
+    setEditedMessageText('');
+  };
+
+  const handleSaveEdit = async (messageId: string) => {
+    if (!editedMessageText.trim()) {
+      setError('Le message ne peut pas être vide');
+      return;
+    }
+
+    try {
+      // Mettre à jour le message dans la base
+      const { error: updateError } = await supabase
+        .from('messages')
+        .update({
+          message: editedMessageText.trim(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', messageId);
+
+      if (updateError) throw updateError;
+
+      // Mettre à jour le message dans l'état local
+      setMessages(messages.map(msg =>
+        msg.id === messageId
+          ? { ...msg, message: editedMessageText.trim(), updated_at: new Date().toISOString() }
+          : msg
+      ));
+
+      // Réinitialiser l'état d'édition
+      setEditingMessageId(null);
+      setEditedMessageText('');
+      setSuccess('Message modifié avec succès');
+
+      setTimeout(() => setSuccess(null), 2000);
+    } catch (err: any) {
+      logger.error('Erreur modification message:', err);
+      setError(err.message || 'Erreur lors de la modification du message');
     }
   };
 
@@ -528,9 +583,62 @@ const AdminContactMessagesPageNew: React.FC = () => {
                                       borderRadius: isAdmin ? '16px 16px 4px 16px' : '16px 16px 16px 4px'
                                     }}
                                   >
-                                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                                      {msg.message}
-                                    </Typography>
+                                    {editingMessageId === msg.id ? (
+                                      // Mode édition
+                                      <Box>
+                                        <TextField
+                                          fullWidth
+                                          multiline
+                                          value={editedMessageText}
+                                          onChange={(e) => setEditedMessageText(e.target.value)}
+                                          variant="standard"
+                                          sx={{
+                                            '& .MuiInput-root': {
+                                              color: 'white',
+                                              '&:before': { borderBottomColor: 'rgba(255,255,255,0.5)' },
+                                              '&:after': { borderBottomColor: 'white' }
+                                            }
+                                          }}
+                                        />
+                                        <Box sx={{ display: 'flex', gap: 1, mt: 1, justifyContent: 'flex-end' }}>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() => handleSaveEdit(msg.id)}
+                                            sx={{ color: 'white' }}
+                                            title="Enregistrer"
+                                          >
+                                            <SaveIcon fontSize="small" />
+                                          </IconButton>
+                                          <IconButton
+                                            size="small"
+                                            onClick={handleCancelEdit}
+                                            sx={{ color: 'white' }}
+                                            title="Annuler"
+                                          >
+                                            <CancelIcon fontSize="small" />
+                                          </IconButton>
+                                        </Box>
+                                      </Box>
+                                    ) : (
+                                      // Mode affichage
+                                      <Box>
+                                        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
+                                          {msg.message}
+                                        </Typography>
+                                        {isAdmin && (
+                                          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.5 }}>
+                                            <IconButton
+                                              size="small"
+                                              onClick={() => handleStartEdit(msg)}
+                                              sx={{ color: 'white', opacity: 0.7, '&:hover': { opacity: 1 } }}
+                                              title="Modifier"
+                                            >
+                                              <EditIcon fontSize="small" />
+                                            </IconButton>
+                                          </Box>
+                                        )}
+                                      </Box>
+                                    )}
                                   </Paper>
 
                                   <Typography
@@ -544,6 +652,9 @@ const AdminContactMessagesPageNew: React.FC = () => {
                                     }}
                                   >
                                     {format(parseISO(msg.created_at), 'HH:mm')}
+                                    {msg.updated_at !== msg.created_at && (
+                                      <span style={{ marginLeft: '4px', fontStyle: 'italic' }}>(modifié)</span>
+                                    )}
                                   </Typography>
                                 </Box>
                               </Box>
