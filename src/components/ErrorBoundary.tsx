@@ -1,6 +1,7 @@
 // src/components/ErrorBoundary.tsx
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { supabase } from '../services/supabase';
+import { logger } from '../utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -27,7 +28,7 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('Erreur capturée par ErrorBoundary:', error, errorInfo);
+    logger.error('Erreur capturée par ErrorBoundary:', error, errorInfo);
     
     // Vérifier si l'erreur est liée à l'authentification ou a une signature spécifique
     const errorMessage = error.message.toLowerCase();
@@ -51,7 +52,7 @@ class ErrorBoundary extends Component<Props, State> {
       const { data } = await supabase.auth.getSession();
       
       if (!data.session) {
-        console.warn('Session invalide détectée, redirection vers la page de connexion...');
+        logger.warn('Session invalide détectée, redirection vers la page de connexion...');
         // Rediriger vers la page de connexion
         window.location.href = '/login';
         return;
@@ -61,13 +62,13 @@ class ErrorBoundary extends Component<Props, State> {
       const { error } = await supabase.auth.refreshSession();
       
       if (error) {
-        console.error('Échec du rafraîchissement de la session:', error);
+        logger.error('Échec du rafraîchissement de la session:', error);
         // Se déconnecter et rediriger vers la page de connexion
         await supabase.auth.signOut();
         window.location.href = '/login';
       }
     } catch (error) {
-      console.error('Erreur lors de la gestion d\'erreur d\'authentification:', error);
+      logger.error('Erreur lors de la gestion d\'erreur d\'authentification:', error);
       // En cas d'erreur, déconnecter l'utilisateur et rediriger
       await supabase.auth.signOut();
       window.location.href = '/login';

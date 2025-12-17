@@ -30,6 +30,7 @@ import {
   updateMyPractitionerRequest,
   PractitionerRequest
 } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface BecomePractitionerCardProps {
   onRequestStatusChange?: () => void;
@@ -81,7 +82,7 @@ const BecomePractitionerCard: React.FC<BecomePractitionerCardProps> = ({ onReque
         }
       }
     } catch (err: any) {
-      console.error('Erreur lors du chargement de la demande:', err);
+      logger.error('Erreur lors du chargement de la demande:', err);
     } finally {
       setLoadingRequest(false);
     }

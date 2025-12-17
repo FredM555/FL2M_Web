@@ -35,6 +35,7 @@ import {
 } from '@mui/icons-material';
 import { Practitioner } from '../../services/supabase';
 import { UserAvatar } from '../profile/UserAvatar';
+import { logger } from '../../utils/logger';
 
 interface PractitionerProfilePreviewProps {
   practitioner: Practitioner;
@@ -68,7 +69,7 @@ const PractitionerProfilePreview: React.FC<PractitionerProfilePreviewProps> = ({
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error: any) {
-      console.error('Erreur lors de la mise à jour de la visibilité:', error);
+      logger.error('Erreur lors de la mise à jour de la visibilité:', error);
       setErrorMessage(error.message || 'Une erreur est survenue lors de la mise à jour');
       setShowError(true);
     } finally {

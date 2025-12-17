@@ -13,6 +13,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import { useNavigate } from 'react-router-dom';
 import { checkConnectStatus, StripeConnectStatus } from '../../services/stripeConnect';
+import { logger } from '../../utils/logger';
 
 interface StripeConnectBannerProps {
   compact?: boolean;
@@ -33,7 +34,7 @@ export const StripeConnectBanner: React.FC<StripeConnectBannerProps> = ({ compac
       const connectStatus = await checkConnectStatus();
       setStatus(connectStatus);
     } catch (error) {
-      console.error('Erreur chargement statut Connect:', error);
+      logger.error('Erreur chargement statut Connect:', error);
     } finally {
       setLoading(false);
     }

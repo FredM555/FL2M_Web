@@ -1,5 +1,6 @@
 // src/services/beneficiaryDocuments.ts
 import { supabase } from './supabase';
+import { logger } from '../utils/logger';
 
 /**
  * Types de documents disponibles
@@ -213,7 +214,7 @@ export const deleteBeneficiaryDocument = async (
       .remove([document.file_path]);
 
     if (storageError) {
-      console.error('Erreur lors de la suppression du fichier:', storageError);
+      logger.error('Erreur lors de la suppression du fichier:', storageError);
       // On continue quand même pour supprimer l'entrée de la BDD
     }
 
@@ -264,7 +265,7 @@ export const getSignedBeneficiaryDocumentUrl = async (
     .createSignedUrl(filePath, 3600); // 1 heure
 
   if (error) {
-    console.error('Erreur lors de la création de l\'URL signée:', error);
+    logger.error('Erreur lors de la création de l\'URL signée:', error);
     // Fallback sur l'URL publique
     return getBeneficiaryDocumentUrl(filePath);
   }
@@ -284,7 +285,7 @@ export const getBeneficiaryDocumentBlob = async (
       .download(filePath);
 
     if (error) {
-      console.error('Erreur lors du téléchargement du blob:', error);
+      logger.error('Erreur lors du téléchargement du blob:', error);
       return null;
     }
 
@@ -296,7 +297,7 @@ export const getBeneficiaryDocumentBlob = async (
 
     return null;
   } catch (error) {
-    console.error('Exception lors du téléchargement du blob:', error);
+    logger.error('Exception lors du téléchargement du blob:', error);
     return null;
   }
 };

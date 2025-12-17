@@ -34,6 +34,7 @@ import {
 } from '../services/beneficiaries';
 import { BeneficiaryWithAccess, CreateBeneficiaryData, UpdateBeneficiaryData } from '../types/beneficiary';
 import { useAuth } from '../context/AuthContext';
+import { logger } from '../utils/logger';
 
 type DialogMode = 'create' | 'edit' | 'view' | null;
 
@@ -120,7 +121,7 @@ export const BeneficiariesPage: React.FC = () => {
 
       setBeneficiaries(sortedData);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des bénéficiaires:', err);
+      logger.error('Erreur lors du chargement des bénéficiaires:', err);
       setError(err.message || 'Erreur lors du chargement des bénéficiaires');
     } finally {
       setLoading(false);
@@ -174,7 +175,7 @@ export const BeneficiariesPage: React.FC = () => {
         severity: 'success',
       });
     } catch (err: any) {
-      console.error('Erreur lors de la suppression:', err);
+      logger.error('Erreur lors de la suppression:', err);
       setSnackbar({
         open: true,
         message: err?.message || 'Erreur lors de la suppression du bénéficiaire',
@@ -226,7 +227,7 @@ export const BeneficiariesPage: React.FC = () => {
       setSelectedBeneficiary(null);
       await loadBeneficiaries();
     } catch (err: any) {
-      console.error('Erreur lors de la sauvegarde:', err);
+      logger.error('Erreur lors de la sauvegarde:', err);
       setError(err.message || 'Erreur lors de la sauvegarde');
       throw err; // Relancer pour que le formulaire gère l'erreur
     } finally {
@@ -361,7 +362,7 @@ export const BeneficiariesPage: React.FC = () => {
                       beneficiaryId={selectedBeneficiary.id}
                       onViewAppointment={(id) => {
                         // TODO: Navigation vers les détails du RDV
-                        console.log('View appointment:', id);
+                        logger.debug('View appointment:', id);
                       }}
                     />
                   )}

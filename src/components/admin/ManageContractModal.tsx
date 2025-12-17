@@ -30,6 +30,7 @@ import { PractitionerContract, ContractType, getContractTypeLabel, formatAmount 
 import ContractTypeSelector from './ContractTypeSelector';
 import ContractUploader from './ContractUploader';
 import { useAuth } from '../../context/AuthContext';
+import { logger } from '../../utils/logger';
 
 interface ManageContractModalProps {
   open: boolean;
@@ -128,7 +129,7 @@ const ManageContractModal: React.FC<ManageContractModalProps> = ({
         handleClose();
       }, 1500);
     } catch (err: any) {
-      console.error('Erreur lors de la gestion du contrat:', err);
+      logger.error('Erreur lors de la gestion du contrat:', err);
       setError(err.message || 'Impossible de créer le contrat');
     } finally {
       setLoading(false);

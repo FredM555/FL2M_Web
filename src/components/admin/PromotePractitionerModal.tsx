@@ -22,6 +22,7 @@ import ContractUploader from './ContractUploader';
 import { ContractType } from '../../types/payments';
 import { ContractsService } from '../../services/contracts';
 import { useAuth } from '../../context/AuthContext';
+import { logger } from '../../utils/logger';
 
 interface PromotePractitionerModalProps {
   open: boolean;
@@ -91,7 +92,7 @@ const PromotePractitionerModal: React.FC<PromotePractitionerModalProps> = ({
       handleClose();
 
     } catch (err: any) {
-      console.error('Erreur lors de la création du contrat:', err);
+      logger.error('Erreur lors de la création du contrat:', err);
       setError(err.message || 'Erreur lors de la création du contrat');
     } finally {
       setLoading(false);

@@ -47,6 +47,7 @@ import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import PromotePractitionerModal from '../../components/admin/PromotePractitionerModal';
+import { logger } from '../../utils/logger';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -102,12 +103,13 @@ const AdminPractitionerRequestsPage: React.FC = () => {
       if (error) throw error;
       setRequests(data || []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des demandes:', err);
+      logger.error('Erreur lors du chargement des demandes:', err);
       showSnackbar('Erreur lors du chargement des demandes', 'error');
     } finally {
       setLoading(false);
     }
   };
+
 
   const showSnackbar = (message: string, severity: 'success' | 'error') => {
     setSnackbar({ open: true, message, severity });
@@ -145,7 +147,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
       setPromotionModalOpen(false);
       await fetchRequests();
     } catch (err: any) {
-      console.error('Erreur lors de l\'approbation:', err);
+      logger.error('Erreur lors de l\'approbation:', err);
       showSnackbar(err.message || 'Erreur lors de l\'approbation de la demande', 'error');
     } finally {
       setActionLoading(false);
@@ -170,7 +172,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
       setActionDialogOpen(false);
       await fetchRequests();
     } catch (err: any) {
-      console.error('Erreur lors de l\'action:', err);
+      logger.error('Erreur lors de l\'action:', err);
       showSnackbar(err.message || 'Erreur lors du traitement de la demande', 'error');
     } finally {
       setActionLoading(false);
@@ -190,7 +192,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
       showSnackbar('Parcours intervenant activé avec succès !', 'success');
       await fetchRequests();
     } catch (err: any) {
-      console.error('Erreur lors de la pré-approbation:', err);
+      logger.error('Erreur lors de la pré-approbation:', err);
       showSnackbar(err.message || 'Erreur lors de l\'activation du parcours', 'error');
     }
   };
@@ -205,7 +207,7 @@ const AdminPractitionerRequestsPage: React.FC = () => {
       showSnackbar('Demande supprimée avec succès', 'success');
       await fetchRequests();
     } catch (err: any) {
-      console.error('Erreur lors de la suppression:', err);
+      logger.error('Erreur lors de la suppression:', err);
       showSnackbar('Erreur lors de la suppression de la demande', 'error');
     }
   };

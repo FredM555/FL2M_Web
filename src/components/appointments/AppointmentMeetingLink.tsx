@@ -22,6 +22,7 @@ import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import { Appointment, supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { logger } from '../../utils/logger';
 
 interface AppointmentMeetingLinkProps {
   appointment: Appointment;
@@ -91,7 +92,7 @@ export const AppointmentMeetingLink: React.FC<AppointmentMeetingLinkProps> = ({
         throw new Error('Le lien doit être une URL valide (commençant par http:// ou https://)');
       }
 
-      console.log('🔵 Mise à jour du lien de visio:', {
+      logger.debug('🔵 Mise à jour du lien de visio:', {
         ancien: appointment.meeting_link,
         nouveau: trimmedLink || null
       });
@@ -103,7 +104,7 @@ export const AppointmentMeetingLink: React.FC<AppointmentMeetingLinkProps> = ({
         .eq('id', appointment.id);
 
       if (updateError) {
-        console.error('❌ Erreur lors de la mise à jour:', updateError);
+        logger.error('❌ Erreur lors de la mise à jour:', updateError);
         throw updateError;
       }
 
@@ -126,12 +127,12 @@ export const AppointmentMeetingLink: React.FC<AppointmentMeetingLinkProps> = ({
         .single();
 
       if (fetchError) {
-        console.error('❌ Erreur lors de la récupération:', fetchError);
+        logger.error('❌ Erreur lors de la récupération:', fetchError);
         throw fetchError;
       }
 
       if (data) {
-        console.log('✅ Lien de visio mis à jour avec succès:', {
+        logger.debug('✅ Lien de visio mis à jour avec succès:', {
           nouveau: data.meeting_link
         });
       }
@@ -144,7 +145,7 @@ export const AppointmentMeetingLink: React.FC<AppointmentMeetingLinkProps> = ({
         onUpdate(data);
       }
     } catch (err: any) {
-      console.error('❌ Erreur lors de la mise à jour:', err);
+      logger.error('❌ Erreur lors de la mise à jour:', err);
       setError(err.message || 'Erreur lors de la mise à jour du lien de visio');
     } finally {
       setLoading(false);
@@ -164,7 +165,7 @@ export const AppointmentMeetingLink: React.FC<AppointmentMeetingLinkProps> = ({
         await navigator.clipboard.writeText(appointment.meeting_link);
         setCopySuccess(true);
       } catch (err) {
-        console.error('Erreur lors de la copie:', err);
+        logger.error('Erreur lors de la copie:', err);
       }
     }
   };

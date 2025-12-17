@@ -2,6 +2,8 @@
 // Services pour gérer les bénéficiaires avec la nouvelle architecture
 
 import { supabase } from './supabase';
+import { logger } from '../utils/logger';
+
 import type {
   Beneficiary,
   BeneficiaryAccess,
@@ -46,7 +48,7 @@ export const getUserBeneficiaries = async (
 
     return { data: mappedData, error: null };
   } catch (error) {
-    console.error('Erreur lors de la récupération des bénéficiaires:', error);
+    logger.error('Erreur lors de la récupération des bénéficiaires:', error);
     return { data: null, error };
   }
 };
@@ -115,7 +117,7 @@ export const searchBeneficiaries = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la recherche de bénéficiaires:', error);
+    logger.error('Erreur lors de la recherche de bénéficiaires:', error);
     return { data: null, error };
   }
 };
@@ -140,7 +142,7 @@ export const getBeneficiaryById = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la récupération du bénéficiaire:', error);
+    logger.error('Erreur lors de la récupération du bénéficiaire:', error);
     return { data: null, error };
   }
 };
@@ -174,7 +176,7 @@ export const checkDuplicateBeneficiary = async (
       error: null
     };
   } catch (error) {
-    console.error('Erreur lors de la vérification des doublons:', error);
+    logger.error('Erreur lors de la vérification des doublons:', error);
     return { exists: false, beneficiaries: [], error };
   }
 };
@@ -204,7 +206,7 @@ export const createBeneficiary = async (
       updated_by: currentUserId
     };
 
-    console.log('[CREATE_BENEFICIARY] Données à insérer:', dataToInsert);
+    logger.debug('[CREATE_BENEFICIARY] Données à insérer:', dataToInsert);
 
     const { data, error } = await supabase
       .from('beneficiaries')
@@ -213,11 +215,11 @@ export const createBeneficiary = async (
       .single();
 
     if (error) {
-      console.error('[CREATE_BENEFICIARY] Erreur Supabase:', error);
+      logger.error('[CREATE_BENEFICIARY] Erreur Supabase:', error);
       throw error;
     }
 
-    console.log('[CREATE_BENEFICIARY] Succès:', data);
+    logger.debug('[CREATE_BENEFICIARY] Succès:', data);
 
     // Créer automatiquement l'accès pour le propriétaire
     // Utiliser le relationship fourni dans les données, sinon détecter automatiquement
@@ -229,7 +231,7 @@ export const createBeneficiary = async (
       relationshipToUse = hasSelf ? 'other' : 'self';
     }
 
-    console.log('[CREATE_BENEFICIARY] Création de l\'accès avec relationship:', relationshipToUse);
+    logger.debug('[CREATE_BENEFICIARY] Création de l\'accès avec relationship:', relationshipToUse);
 
     const { error: accessError } = await supabase
       .from('beneficiary_access')
@@ -246,13 +248,13 @@ export const createBeneficiary = async (
       }]);
 
     if (accessError) {
-      console.error('[CREATE_BENEFICIARY] Erreur lors de la création de l\'accès:', accessError);
+      logger.error('[CREATE_BENEFICIARY] Erreur lors de la création de l\'accès:', accessError);
       // Ne pas échouer complètement, le bénéficiaire est créé
     }
 
     return { data, error: null };
   } catch (error) {
-    console.error('[CREATE_BENEFICIARY] Erreur globale:', error);
+    logger.error('[CREATE_BENEFICIARY] Erreur globale:', error);
     return { data: null, error };
   }
 };
@@ -283,7 +285,7 @@ export const updateBeneficiary = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la mise à jour du bénéficiaire:', error);
+    logger.error('Erreur lors de la mise à jour du bénéficiaire:', error);
     return { data: null, error };
   }
 };
@@ -310,7 +312,7 @@ export const checkBeneficiaryHasActiveAppointments = async (
       error: null
     };
   } catch (error) {
-    console.error('Erreur lors de la vérification des rendez-vous actifs:', error);
+    logger.error('Erreur lors de la vérification des rendez-vous actifs:', error);
     return { hasActiveAppointments: false, count: 0, error };
   }
 };
@@ -346,7 +348,7 @@ export const deleteBeneficiary = async (
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Erreur lors de la suppression du bénéficiaire:', error);
+    logger.error('Erreur lors de la suppression du bénéficiaire:', error);
     return { success: false, error };
   }
 };
@@ -375,7 +377,7 @@ export const getBeneficiaryAccess = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la récupération des accès:', error);
+    logger.error('Erreur lors de la récupération des accès:', error);
     return { data: null, error };
   }
 };
@@ -423,7 +425,7 @@ export const shareBeneficiaryAccess = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors du partage de l\'accès:', error);
+    logger.error('Erreur lors du partage de l\'accès:', error);
     return { data: null, error };
   }
 };
@@ -444,7 +446,7 @@ export const revokeBeneficiaryAccess = async (
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Erreur lors de la révocation de l\'accès:', error);
+    logger.error('Erreur lors de la révocation de l\'accès:', error);
     return { success: false, error };
   }
 };
@@ -468,7 +470,7 @@ export const updateBeneficiaryAccess = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la mise à jour de l\'accès:', error);
+    logger.error('Erreur lors de la mise à jour de l\'accès:', error);
     return { data: null, error };
   }
 };
@@ -494,7 +496,7 @@ export const checkBeneficiaryPermission = async (
 
     return { hasPermission: data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la vérification des permissions:', error);
+    logger.error('Erreur lors de la vérification des permissions:', error);
     return { hasPermission: false, error };
   }
 };
@@ -523,7 +525,7 @@ export const getAppointmentBeneficiaries = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la récupération des bénéficiaires du RDV:', error);
+    logger.error('Erreur lors de la récupération des bénéficiaires du RDV:', error);
     return { data: null, error };
   }
 };
@@ -558,7 +560,7 @@ export const addBeneficiaryToAppointment = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de l\'ajout du bénéficiaire au RDV:', error);
+    logger.error('Erreur lors de l\'ajout du bénéficiaire au RDV:', error);
     return { data: null, error };
   }
 };
@@ -581,7 +583,7 @@ export const removeBeneficiaryFromAppointment = async (
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Erreur lors du retrait du bénéficiaire du RDV:', error);
+    logger.error('Erreur lors du retrait du bénéficiaire du RDV:', error);
     return { success: false, error };
   }
 };
@@ -625,7 +627,7 @@ export const updateAppointmentBeneficiaries = async (
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Erreur lors de la mise à jour des bénéficiaires du RDV:', error);
+    logger.error('Erreur lors de la mise à jour des bénéficiaires du RDV:', error);
     return { success: false, error };
   }
 };
@@ -705,7 +707,7 @@ export const getBeneficiaryStats = async (
 
     return { data: stats, error: null };
   } catch (error) {
-    console.error('Erreur lors du calcul des statistiques:', error);
+    logger.error('Erreur lors du calcul des statistiques:', error);
     return { data: null, error };
   }
 };
@@ -756,7 +758,7 @@ export const getBeneficiaryAppointmentHistory = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la récupération de l\'historique:', error);
+    logger.error('Erreur lors de la récupération de l\'historique:', error);
     return { data: null, error };
   }
 };
@@ -780,7 +782,7 @@ export const canModifyBeneficiaryIdentity = async (
 
     return { canModify: data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la vérification de modification:', error);
+    logger.error('Erreur lors de la vérification de modification:', error);
     return { canModify: false, error };
   }
 };
@@ -804,7 +806,7 @@ export const confirmBeneficiaryData = async (
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la confirmation des données:', error);
+    logger.error('Erreur lors de la confirmation des données:', error);
     return { data: null, error };
   }
 };
@@ -821,7 +823,7 @@ export const autoConfirmBeneficiaryData = async (): Promise<{ data: any[] | null
 
     return { data, error: null };
   } catch (error) {
-    console.error('Erreur lors de la confirmation automatique:', error);
+    logger.error('Erreur lors de la confirmation automatique:', error);
     return { data: null, error };
   }
 };
@@ -850,7 +852,7 @@ export const hasSelfBeneficiary = async (
 
     return { hasSelf: (data && data.length > 0), error: null };
   } catch (error) {
-    console.error('Erreur lors de la vérification du bénéficiaire self:', error);
+    logger.error('Erreur lors de la vérification du bénéficiaire self:', error);
     return { hasSelf: false, error };
   }
 };
@@ -880,7 +882,7 @@ export const updateBeneficiaryRelationship = async (
 
     return { error: null };
   } catch (error) {
-    console.error('Erreur lors de la mise à jour de la relation:', error);
+    logger.error('Erreur lors de la mise à jour de la relation:', error);
     return { error };
   }
 };
@@ -912,7 +914,7 @@ export const updateBeneficiariesDisplayOrder = async (
 
     return { success: true, error: null };
   } catch (error) {
-    console.error('Erreur lors de la mise à jour de l\'ordre d\'affichage:', error);
+    logger.error('Erreur lors de la mise à jour de l\'ordre d\'affichage:', error);
     return { success: false, error };
   }
 };

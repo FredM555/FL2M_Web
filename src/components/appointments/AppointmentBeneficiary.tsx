@@ -27,6 +27,7 @@ import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
 import { Appointment, updateAppointmentBeneficiary } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { BeneficiaryRelationship, getRelationshipLabel } from '../../types/beneficiary';
+import { logger } from '../../utils/logger';
 
 interface AppointmentBeneficiaryProps {
   appointment: Appointment;
@@ -124,8 +125,8 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
         beneficiary_relationship: relationship
       };
 
-      console.log('🔵 Données à enregistrer:', beneficiaryData);
-      console.log('🔵 Appointment ID:', appointment.id);
+      logger.debug('🔵 Données à enregistrer:', beneficiaryData);
+      logger.debug('🔵 Appointment ID:', appointment.id);
 
       // Mise à jour
       const { data, error: updateError } = await updateAppointmentBeneficiary(
@@ -133,15 +134,15 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
         beneficiaryData
       );
 
-      console.log('🔵 Réponse de la mise à jour:', { data, error: updateError });
+      logger.debug('🔵 Réponse de la mise à jour:', { data, error: updateError });
 
       if (updateError) {
-        console.error('❌ Erreur lors de la mise à jour:', updateError);
+        logger.error('❌ Erreur lors de la mise à jour:', updateError);
         throw updateError;
       }
 
       if (data) {
-        console.log('✅ Données mises à jour avec succès:', {
+        logger.debug('✅ Données mises à jour avec succès:', {
           beneficiary_first_name: data.beneficiary_first_name,
           beneficiary_last_name: data.beneficiary_last_name,
           beneficiary_birth_date: data.beneficiary_birth_date
@@ -156,7 +157,7 @@ export const AppointmentBeneficiary: React.FC<AppointmentBeneficiaryProps> = ({
         onUpdate(data);
       }
     } catch (err) {
-      console.error('❌ Erreur lors de la mise à jour:', err);
+      logger.error('❌ Erreur lors de la mise à jour:', err);
       setError(err instanceof Error ? err.message : 'Erreur lors de la mise à jour des informations');
     } finally {
       setLoading(false);

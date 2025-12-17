@@ -29,6 +29,7 @@ import { fr } from 'date-fns/locale';
 import ContractTypeSelector from '../admin/ContractTypeSelector';
 import { ContractType, CONTRACT_CONFIGS, formatAmount, PractitionerContract } from '../../types/payments';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface SubscriptionManagementProps {
   practitionerId: string;
@@ -106,7 +107,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
 
       setPastContracts(pastData || []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement du contrat:', err);
+      logger.error('Erreur lors du chargement du contrat:', err);
       setError(err.message || 'Erreur lors du chargement de votre abonnement');
     } finally {
       setLoading(false);
@@ -143,7 +144,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
 
       alert(`Abonnement ${selectedNewType.toUpperCase()} activé avec succès !${selectedNewType !== 'decouverte' ? '\n\nVeuillez procéder au paiement pour activer votre abonnement.' : ''}`);
     } catch (err: any) {
-      console.error('Erreur lors de la création de l\'abonnement:', err);
+      logger.error('Erreur lors de la création de l\'abonnement:', err);
       setError(err.message || 'Erreur lors de la création de l\'abonnement');
     } finally {
       setSubmitting(false);
@@ -183,7 +184,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
 
       alert('Le changement d\'abonnement a été annulé avec succès.');
     } catch (err: any) {
-      console.error('Erreur lors de l\'annulation:', err);
+      logger.error('Erreur lors de l\'annulation:', err);
       setError(err.message || 'Erreur lors de l\'annulation du changement');
     } finally {
       setCancelling(false);
@@ -256,7 +257,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
       // Afficher un message de succès
       alert(`Changement d'abonnement planifié avec succès !\nVotre nouveau contrat ${selectedNewType.toUpperCase()} débutera le ${format(startDate, 'dd MMMM yyyy', { locale: fr })}.`);
     } catch (err: any) {
-      console.error('Erreur lors du changement d\'abonnement:', err);
+      logger.error('Erreur lors du changement d\'abonnement:', err);
       setError(err.message || 'Erreur lors du changement d\'abonnement');
     } finally {
       setSubmitting(false);

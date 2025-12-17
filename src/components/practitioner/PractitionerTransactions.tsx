@@ -27,6 +27,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '../../services/supabase';
 import { formatAmount, TransactionStatus, CONTRACT_CONFIGS, ContractType } from '../../types/payments';
+import { logger } from '../../utils/logger';
 
 interface SubscriptionPayment {
   id: string;
@@ -148,7 +149,7 @@ const PractitionerTransactions: React.FC<PractitionerTransactionsProps> = ({ pra
       setAppointmentTransactions(transactions || []);
 
     } catch (err: any) {
-      console.error('Erreur lors du chargement des transactions:', err);
+      logger.error('Erreur lors du chargement des transactions:', err);
       setError(err.message || 'Erreur lors du chargement des transactions');
     } finally {
       setLoading(false);

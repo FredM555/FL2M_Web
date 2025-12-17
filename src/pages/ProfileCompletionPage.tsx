@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import { useAuth } from '../context/AuthContext';
+import { logger } from '../utils/logger';
 
 /**
  * Page de complétion de profil OAuth
@@ -41,7 +42,7 @@ const ProfileCompletionPage = () => {
   useEffect(() => {
     // Rediriger si l'utilisateur n'est pas connecté
     if (!user) {
-      console.log('[PROFILE_COMPLETION] Utilisateur non connecté, redirection vers login');
+      logger.debug('[PROFILE_COMPLETION] Utilisateur non connecté, redirection vers login');
       navigate('/login', { replace: true });
       return;
     }
@@ -95,7 +96,7 @@ const ProfileCompletionPage = () => {
         throw new Error('Utilisateur non authentifié');
       }
 
-      console.log('[PROFILE_COMPLETION] Mise à jour du profil pour:', user.id);
+      logger.debug('[PROFILE_COMPLETION] Mise à jour du profil pour:', user.id);
 
       // Mettre à jour le profil via le contexte AuthContext
       // Cela met à jour la BDD ET synchronise le contexte React
@@ -114,11 +115,11 @@ const ProfileCompletionPage = () => {
       const { error: updateError } = await updateProfile(profileData);
 
       if (updateError) {
-        console.error('[PROFILE_COMPLETION] Erreur mise à jour profil:', updateError);
+        logger.error('[PROFILE_COMPLETION] Erreur mise à jour profil:', updateError);
         throw updateError;
       }
 
-      console.log('[PROFILE_COMPLETION] Profil mis à jour avec succès');
+      logger.debug('[PROFILE_COMPLETION] Profil mis à jour avec succès');
 
       // Vérifier s'il y a une redirection sauvegardée
       const savedRedirect = sessionStorage.getItem('oauth_redirect');
@@ -131,7 +132,7 @@ const ProfileCompletionPage = () => {
       }
 
     } catch (err: any) {
-      console.error('[PROFILE_COMPLETION] Erreur lors de la complétion du profil:', err);
+      logger.error('[PROFILE_COMPLETION] Erreur lors de la complétion du profil:', err);
       setError(err.message || 'Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setLoading(false);

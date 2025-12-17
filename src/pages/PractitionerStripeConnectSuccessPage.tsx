@@ -12,6 +12,7 @@ import {
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate } from 'react-router-dom';
 import { checkConnectStatus } from '../services/stripeConnect';
+import { logger } from '../utils/logger';
 
 const PractitionerStripeConnectSuccessPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,7 +26,7 @@ const PractitionerStripeConnectSuccessPage: React.FC = () => {
         const status = await checkConnectStatus();
         setVerified(status.canReceivePayments);
       } catch (error) {
-        console.error('Erreur vérification:', error);
+        logger.error('Erreur vérification:', error);
       } finally {
         setLoading(false);
       }

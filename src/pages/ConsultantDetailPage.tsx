@@ -33,6 +33,7 @@ import ArrowBackIosIcon from '@mui/icons-material/ArrowBackIos';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import { UserAvatar } from '../components/profile/UserAvatar';
+import { logger } from '../utils/logger';
 
 // Interface pour les intervenants
 interface Consultant {
@@ -116,7 +117,7 @@ const ConsultantDetailPage: React.FC = () => {
 
       setAllConsultants(transformedData);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des intervenants:', err);
+      logger.error('Erreur lors du chargement des intervenants:', err);
     }
   };
 
@@ -157,7 +158,7 @@ const ConsultantDetailPage: React.FC = () => {
             p_user_id: data.user_id
           });
 
-          console.log('[ConsultantDetail] Données numérologie récupérées:', numerologyData);
+          logger.debug('[ConsultantDetail] Données numérologie récupérées:', numerologyData);
 
           // Ajouter les données de numérologie au profil si disponibles
           if (!numerologyError && numerologyData && numerologyData.length > 0 && data.profile) {
@@ -166,17 +167,17 @@ const ConsultantDetailPage: React.FC = () => {
             data.profile.racine1 = numData.racine_1;
             data.profile.racine2 = numData.racine_2;
             data.profile.dynamique_de_vie = numData.dynamique_de_vie;
-            console.log('[ConsultantDetail] Données numérologie ajoutées au profil:', {
+            logger.debug('[ConsultantDetail] Données numérologie ajoutées au profil:', {
               tronc: data.profile.tronc,
               racine1: data.profile.racine1,
               racine2: data.profile.racine2,
               dynamique_de_vie: data.profile.dynamique_de_vie
             });
           } else if (numerologyError) {
-            console.warn('[ConsultantDetail] Erreur récupération numérologie:', numerologyError);
+            logger.warn('[ConsultantDetail] Erreur récupération numérologie:', numerologyError);
           }
         } catch (err) {
-          console.error('[ConsultantDetail] Exception lors de la récupération des données numérologie:', err);
+          logger.error('[ConsultantDetail] Exception lors de la récupération des données numérologie:', err);
         }
       }
 
@@ -188,7 +189,7 @@ const ConsultantDetailPage: React.FC = () => {
         setCurrentIndex(index);
       }
     } catch (err: any) {
-      console.error('Erreur lors du chargement de l\'intervenant:', err);
+      logger.error('Erreur lors du chargement de l\'intervenant:', err);
       setError('Intervenant non trouvé ou non disponible.');
     } finally {
       setLoading(false);

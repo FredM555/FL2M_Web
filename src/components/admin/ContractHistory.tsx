@@ -38,6 +38,7 @@ import {
   getContractStatusLabel,
   formatAmount
 } from '../../types/payments';
+import { logger } from '../../utils/logger';
 
 interface ContractHistoryProps {
   practitionerId: string;
@@ -59,7 +60,7 @@ const ContractHistory: React.FC<ContractHistoryProps> = ({ practitionerId }) => 
       const data = await ContractsService.getPractitionerContracts(practitionerId);
       setContracts(data);
     } catch (err: any) {
-      console.error('Erreur lors du chargement de l\'historique:', err);
+      logger.error('Erreur lors du chargement de l\'historique:', err);
       setError('Impossible de charger l\'historique des contrats');
     } finally {
       setLoading(false);

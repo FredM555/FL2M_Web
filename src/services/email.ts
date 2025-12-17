@@ -5,6 +5,7 @@
 
 import { supabase } from './supabase';
 import type { Appointment } from './supabase';
+import { logger } from '../utils/logger';
 
 export type EmailType = 'confirmation' | 'reminder' | 'document' | 'cancellation';
 
@@ -27,10 +28,10 @@ export const sendEmail = async (params: SendEmailParams) => {
 
     if (error) throw error;
 
-    console.log('Email envoyé avec succès:', data);
+    logger.debug('Email envoyé avec succès:', data);
     return { success: true, data };
   } catch (error: any) {
-    console.error('Erreur lors de l\'envoi de l\'email:', error);
+    logger.error('Erreur lors de l\'envoi de l\'email:', error);
     return { success: false, error: error.message };
   }
 };

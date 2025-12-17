@@ -33,6 +33,7 @@ import EventIcon from '@mui/icons-material/Event';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { supabase } from '../../services/supabase';
 import { checkAppointmentConflict } from '../../services/supabase-appointments';
+import { logger } from '../../utils/logger';
 
 interface Service {
   id: string;
@@ -101,7 +102,7 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
       if (error) throw error;
       setServices(data || []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des services:', err);
+      logger.error('Erreur lors du chargement des services:', err);
       setError('Impossible de charger les services');
     }
   };
@@ -199,7 +200,7 @@ const CreateAppointmentModal: React.FC<CreateAppointmentModalProps> = ({
         handleClose();
       }, 1500);
     } catch (err: any) {
-      console.error('Erreur lors de la création du rendez-vous:', err);
+      logger.error('Erreur lors de la création du rendez-vous:', err);
       setError(err.message || 'Impossible de créer le rendez-vous');
     } finally {
       setLoading(false);

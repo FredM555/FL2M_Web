@@ -1,5 +1,6 @@
 // src/services/messaging.ts
 import { supabase } from './supabase';
+import { logger } from '../utils/logger';
 import {
   Message,
   MessageThread,
@@ -36,7 +37,7 @@ export async function createMessageThread(data: CreateThreadData) {
     .single();
 
   if (error) {
-    console.error('Erreur création thread:', error);
+    logger.error('Erreur création thread:', error);
     return { data: null, error };
   }
 
@@ -70,7 +71,7 @@ export async function replyToMessage(data: CreateMessageData) {
     .single();
 
   if (error) {
-    console.error('Erreur création réponse:', error);
+    logger.error('Erreur création réponse:', error);
     return { data: null, error };
   }
 
@@ -88,7 +89,7 @@ export async function getUserMessageThreads(userId: string) {
     .order('last_message_at', { ascending: false });
 
   if (error) {
-    console.error('Erreur récupération threads:', error);
+    logger.error('Erreur récupération threads:', error);
     return { data: null, error };
   }
 
@@ -109,7 +110,7 @@ export async function getThreadMessages(threadId: string) {
     .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Erreur récupération messages:', error);
+    logger.error('Erreur récupération messages:', error);
     return { data: null, error };
   }
 
@@ -127,7 +128,7 @@ export async function getMessageThread(threadId: string) {
     .single();
 
   if (error) {
-    console.error('Erreur récupération thread:', error);
+    logger.error('Erreur récupération thread:', error);
     return { data: null, error };
   }
 
@@ -158,7 +159,7 @@ export async function markThreadAsRead(threadId: string, isAdmin: boolean = fals
     .eq(updateField, false);
 
   if (error) {
-    console.error('Erreur marquage messages lus:', error);
+    logger.error('Erreur marquage messages lus:', error);
     return { error };
   }
 
@@ -178,7 +179,7 @@ export async function closeMessageThread(threadId: string) {
     .single();
 
   if (error) {
-    console.error('Erreur fermeture thread:', error);
+    logger.error('Erreur fermeture thread:', error);
     return { data: null, error };
   }
 
@@ -198,7 +199,7 @@ export async function reopenMessageThread(threadId: string) {
     .single();
 
   if (error) {
-    console.error('Erreur réouverture thread:', error);
+    logger.error('Erreur réouverture thread:', error);
     return { data: null, error };
   }
 
@@ -213,7 +214,7 @@ export async function getUnreadMessageCount(userId: string) {
     .rpc('count_unread_messages', { p_user_id: userId });
 
   if (error) {
-    console.error('Erreur comptage messages non lus:', error);
+    logger.error('Erreur comptage messages non lus:', error);
     return { count: 0, error };
   }
 
@@ -228,7 +229,7 @@ export async function getUnreadThreadCount(userId: string) {
     .rpc('count_unread_threads', { p_user_id: userId });
 
   if (error) {
-    console.error('Erreur comptage threads non lus:', error);
+    logger.error('Erreur comptage threads non lus:', error);
     return { count: 0, error };
   }
 
@@ -279,7 +280,7 @@ export async function sendSystemMessage(
     .single();
 
   if (error) {
-    console.error('Erreur envoi message système:', error);
+    logger.error('Erreur envoi message système:', error);
     return { data: null, error };
   }
 

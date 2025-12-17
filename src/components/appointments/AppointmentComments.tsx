@@ -42,6 +42,7 @@ import { validateAppointment, sendContestationEmail } from '../../services/strip
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logger } from '../../utils/logger';
 
 interface AppointmentCommentsProps {
   appointmentId: string;
@@ -96,7 +97,7 @@ export const AppointmentComments: React.FC<AppointmentCommentsProps> = ({
       if (error) throw error;
       setComments(data || []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des commentaires:', err);
+      logger.error('Erreur lors du chargement des commentaires:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -128,7 +129,7 @@ export const AppointmentComments: React.FC<AppointmentCommentsProps> = ({
       setNewComment('');
       setIsPrivate(false);
     } catch (err: any) {
-      console.error('Erreur lors de l\'ajout du commentaire:', err);
+      logger.error('Erreur lors de l\'ajout du commentaire:', err);
       setError(err.message);
     } finally {
       setSubmitting(false);
@@ -166,7 +167,7 @@ export const AppointmentComments: React.FC<AppointmentCommentsProps> = ({
       setEditDialogOpen(false);
       setEditingComment(null);
     } catch (err: any) {
-      console.error('Erreur lors de la mise à jour:', err);
+      logger.error('Erreur lors de la mise à jour:', err);
       setError(err.message);
     } finally {
       setSubmitting(false);
@@ -183,7 +184,7 @@ export const AppointmentComments: React.FC<AppointmentCommentsProps> = ({
       if (error) throw error;
       await loadComments();
     } catch (err: any) {
-      console.error('Erreur lors de la suppression:', err);
+      logger.error('Erreur lors de la suppression:', err);
       setError(err.message);
     }
   };
@@ -225,7 +226,7 @@ export const AppointmentComments: React.FC<AppointmentCommentsProps> = ({
       setError(null);
       alert('Problème signalé avec succès. Notre équipe va examiner votre demande et a été notifiée par email.');
     } catch (err: any) {
-      console.error('Erreur lors du signalement:', err);
+      logger.error('Erreur lors du signalement:', err);
       setError(err.message || 'Erreur lors du signalement du problème');
     } finally {
       setReportingProblem(false);

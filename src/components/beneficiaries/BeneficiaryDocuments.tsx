@@ -51,6 +51,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import { PDFThumbnail } from '../appointments/PDFThumbnail';
 import { PDFViewer } from '../appointments/PDFViewer';
+import { logger } from '../../utils/logger';
 
 interface BeneficiaryDocumentsProps {
   beneficiaryId: string;
@@ -81,6 +82,7 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
     // Pour les clients : afficher prénom nom
     return `${uploaderProfile.first_name} ${uploaderProfile.last_name}`;
   };
+
   const [documents, setDocuments] = useState<BeneficiaryDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
@@ -131,34 +133,34 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
         const urls: Record<string, string> = {};
         for (const doc of data) {
           try {
-            console.log('[BeneficiaryDocuments] Chargement blob pour:', doc.file_name, 'path:', doc.file_path);
+            logger.debug('[BeneficiaryDocuments] Chargement blob pour:', doc.file_name, 'path:', doc.file_path);
 
             // Méthode 1 : Télécharger le fichier en tant que blob
             const blobUrl = await getBeneficiaryDocumentBlob(doc.file_path);
 
             if (blobUrl) {
-              console.log('[BeneficiaryDocuments] Blob URL créée:', blobUrl);
+              logger.debug('[BeneficiaryDocuments] Blob URL créée:', blobUrl);
               urls[doc.id] = blobUrl;
             } else {
               // Méthode 2 : URL signée comme fallback
-              console.log('[BeneficiaryDocuments] Tentative avec URL signée...');
+              logger.debug('[BeneficiaryDocuments] Tentative avec URL signée...');
               const signedUrl = await getSignedBeneficiaryDocumentUrl(doc.file_path);
-              console.log('[BeneficiaryDocuments] URL signée générée:', signedUrl);
+              logger.debug('[BeneficiaryDocuments] URL signée générée:', signedUrl);
               urls[doc.id] = signedUrl;
             }
           } catch (err) {
-            console.error('[BeneficiaryDocuments] Erreur lors du chargement de l\'URL pour', doc.file_name, err);
+            logger.error('[BeneficiaryDocuments] Erreur lors du chargement de l\'URL pour', doc.file_name, err);
             // Méthode 3 : URL publique en dernier recours
             const publicUrl = getBeneficiaryDocumentUrl(doc.file_path);
-            console.log('[BeneficiaryDocuments] Fallback URL publique:', publicUrl);
+            logger.debug('[BeneficiaryDocuments] Fallback URL publique:', publicUrl);
             urls[doc.id] = publicUrl;
           }
         }
-        console.log('[BeneficiaryDocuments] Toutes les URLs chargées:', urls);
+        logger.debug('[BeneficiaryDocuments] Toutes les URLs chargées:', urls);
         setDocumentUrls(urls);
       }
     } catch (err: any) {
-      console.error('Erreur lors du chargement des documents:', err);
+      logger.error('Erreur lors du chargement des documents:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -222,7 +224,7 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
       setVisibility('private');
       setUploadDialogOpen(false);
     } catch (err: any) {
-      console.error('Erreur lors de l\'upload:', err);
+      logger.error('Erreur lors de l\'upload:', err);
       setError(err.message);
     } finally {
       setUploading(false);
@@ -255,7 +257,7 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
       await loadDocuments();
       setEditDialogOpen(false);
     } catch (err: any) {
-      console.error('Erreur lors de la mise à jour:', err);
+      logger.error('Erreur lors de la mise à jour:', err);
       setError(err.message);
     } finally {
       setUploading(false);
@@ -276,7 +278,7 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
         window.URL.revokeObjectURL(url);
       }
     } catch (err: any) {
-      console.error('Erreur lors du téléchargement:', err);
+      logger.error('Erreur lors du téléchargement:', err);
       setError(err.message);
     }
   };
@@ -291,7 +293,7 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
       if (error) throw error;
       await loadDocuments();
     } catch (err: any) {
-      console.error('Erreur lors de la suppression:', err);
+      logger.error('Erreur lors de la suppression:', err);
       setError(err.message);
     }
   };

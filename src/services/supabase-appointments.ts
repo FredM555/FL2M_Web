@@ -1,6 +1,7 @@
 // src/services/supabase-appointments.ts
 import { supabase, Appointment, logActivity } from './supabase';
 import { startOfWeek, endOfWeek, format, parseISO } from 'date-fns';
+import { logger } from '../utils/logger';
 
 /**
  * Vérifie s'il existe un conflit de créneau pour un intervenant et un service donnés
@@ -38,7 +39,7 @@ export const checkAppointmentConflict = async (
     const { data, error } = await query;
 
     if (error) {
-      console.error('Erreur lors de la vérification des conflits:', error);
+      logger.error('Erreur lors de la vérification des conflits:', error);
       throw error;
     }
 
@@ -51,7 +52,7 @@ export const checkAppointmentConflict = async (
 
     return { hasConflict: false };
   } catch (error) {
-    console.error('Exception dans checkAppointmentConflict:', error);
+    logger.error('Exception dans checkAppointmentConflict:', error);
     throw error;
   }
 };
@@ -80,7 +81,7 @@ export const suspendConflictingAppointments = async (
       .single();
 
     if (fetchError) {
-      console.error('Erreur lors de la récupération du rendez-vous confirmé:', fetchError);
+      logger.error('Erreur lors de la récupération du rendez-vous confirmé:', fetchError);
       throw fetchError;
     }
 
@@ -97,7 +98,7 @@ export const suspendConflictingAppointments = async (
       .gt('end_time', startTime); // existing_end > new_start
 
     if (error) {
-      console.error('Erreur lors de la recherche des rendez-vous conflictuels:', error);
+      logger.error('Erreur lors de la recherche des rendez-vous conflictuels:', error);
       throw error;
     }
 
@@ -120,7 +121,7 @@ export const suspendConflictingAppointments = async (
       .select();
 
     if (updateError) {
-      console.error('Erreur lors de la suspension des rendez-vous:', updateError);
+      logger.error('Erreur lors de la suspension des rendez-vous:', updateError);
       throw updateError;
     }
 
@@ -137,18 +138,18 @@ export const suspendConflictingAppointments = async (
             auto_suspended: true,
             confirmed_appointment_id: confirmedAppointmentId
           }
-        }).catch(err => console.warn('Erreur log suspension auto RDV:', err));
+        }).catch(err => logger.warn('Erreur log suspension auto RDV:', err));
       }
     }
 
-    console.log(`${data.length} rendez-vous suspendu(s) automatiquement`);
+    logger.debug(`${data.length} rendez-vous suspendu(s) automatiquement`);
 
     return {
       suspendedCount: data.length,
       suspendedAppointments: updatedAppointments || []
     };
   } catch (error) {
-    console.error('Exception dans suspendConflictingAppointments:', error);
+    logger.error('Exception dans suspendConflictingAppointments:', error);
     throw error;
   }
 };
@@ -179,13 +180,13 @@ export const checkServiceAvailability = async (
       .limit(1);
 
     if (error) {
-      console.error('Erreur lors de la vérification de disponibilité:', error);
+      logger.error('Erreur lors de la vérification de disponibilité:', error);
       return false;
     }
 
     return data && data.length > 0;
   } catch (error) {
-    console.error('Exception dans checkServiceAvailability:', error);
+    logger.error('Exception dans checkServiceAvailability:', error);
     return false;
   }
 };
@@ -278,7 +279,7 @@ export const bookAppointment = async (
         data.end_time,
         data.id
       ).catch(err =>
-        console.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
+        logger.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
       );
     }
 
@@ -286,13 +287,13 @@ export const bookAppointment = async (
     // Si paiement requis, l'email sera envoyé après confirmation du paiement via webhook
     if (data && !data.payment_required) {
       sendAppointmentConfirmationEmails(data).catch(err =>
-        console.error('Erreur lors de l\'envoi des emails de confirmation:', err)
+        logger.error('Erreur lors de l\'envoi des emails de confirmation:', err)
       );
     }
 
     return { success: true, data, error: null };
   } catch (error) {
-    console.error('Erreur dans bookAppointment:', error);
+    logger.error('Erreur dans bookAppointment:', error);
     return { success: false, data: null, error };
   }
 };
@@ -465,9 +466,9 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
       });
     }
 
-    console.log('Emails de confirmation envoyés avec succès');
+    logger.debug('Emails de confirmation envoyés avec succès');
   } catch (error) {
-    console.error('Erreur lors de l\'envoi des emails de confirmation:', error);
+    logger.error('Erreur lors de l\'envoi des emails de confirmation:', error);
     throw error;
   }
 };
@@ -589,9 +590,9 @@ const sendAppointmentCancellationEmails = async (appointment: any) => {
       });
     }
 
-    console.log('Emails d\'annulation envoyés avec succès');
+    logger.debug('Emails d\'annulation envoyés avec succès');
   } catch (error) {
-    console.error('Erreur lors de l\'envoi des emails d\'annulation:', error);
+    logger.error('Erreur lors de l\'envoi des emails d\'annulation:', error);
     throw error;
   }
 };
@@ -793,7 +794,7 @@ export const getAvailableWeeks = async (
     
     return { data: availableWeeks };
   } catch (error) {
-    console.error('Erreur dans getAvailableWeeks:', error);
+    logger.error('Erreur dans getAvailableWeeks:', error);
     throw error;
   }
 };
@@ -877,7 +878,7 @@ export const cancelAppointment = async (
 
       // Envoyer les emails d'annulation
       sendAppointmentCancellationEmails(appointment).catch(err =>
-        console.error('Erreur lors de l\'envoi des emails d\'annulation:', err)
+        logger.error('Erreur lors de l\'envoi des emails d\'annulation:', err)
       );
 
       // Logger l'annulation
@@ -889,7 +890,7 @@ export const cancelAppointment = async (
           entityType: 'appointment',
           entityId: appointmentId,
           metadata: { keepRecord: true, isPaid }
-        }).catch(err => console.warn('Erreur log annulation RDV:', err));
+        }).catch(err => logger.warn('Erreur log annulation RDV:', err));
       }
 
       return {
@@ -905,7 +906,7 @@ export const cancelAppointment = async (
 
       // Envoyer les emails d'annulation AVANT de supprimer les données du client
       sendAppointmentCancellationEmails(appointment).catch(err =>
-        console.error('Erreur lors de l\'envoi des emails d\'annulation:', err)
+        logger.error('Erreur lors de l\'envoi des emails d\'annulation:', err)
       );
 
       const { data, error } = await supabase
@@ -939,7 +940,7 @@ export const cancelAppointment = async (
           entityType: 'appointment',
           entityId: appointmentId,
           metadata: { keepRecord: false, isPaid: false }
-        }).catch(err => console.warn('Erreur log annulation RDV:', err));
+        }).catch(err => logger.warn('Erreur log annulation RDV:', err));
       }
 
       return {
@@ -950,7 +951,7 @@ export const cancelAppointment = async (
       };
     }
   } catch (error) {
-    console.error('Erreur dans cancelAppointment:', error);
+    logger.error('Erreur dans cancelAppointment:', error);
     return { 
       success: false, 
       error,
@@ -1082,7 +1083,7 @@ export const markAppointmentAsCompleted = async (
           completed_by: userId,
           completed_at: new Date().toISOString()
         }
-      }).catch(err => console.warn('Erreur log completion RDV:', err));
+      }).catch(err => logger.warn('Erreur log completion RDV:', err));
     }
 
     return {
@@ -1091,7 +1092,7 @@ export const markAppointmentAsCompleted = async (
       message: 'Le rendez-vous a été marqué comme terminé.'
     };
   } catch (error) {
-    console.error('Erreur dans markAppointmentAsCompleted:', error);
+    logger.error('Erreur dans markAppointmentAsCompleted:', error);
     return {
       success: false,
       error,

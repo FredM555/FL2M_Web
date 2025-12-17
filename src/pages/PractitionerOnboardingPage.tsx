@@ -26,6 +26,7 @@ import {
   completePractitionerOnboarding,
   PractitionerRequest
 } from '../services/supabase';
+import { logger } from '../utils/logger';
 
 const steps = ['Bienvenue', 'Choix du contrat', 'Confirmation'];
 
@@ -69,7 +70,7 @@ const PractitionerOnboardingPage: React.FC = () => {
 
       setRequest(userRequest);
     } catch (err: any) {
-      console.error('Erreur lors du chargement de la demande:', err);
+      logger.error('Erreur lors du chargement de la demande:', err);
       setError(err.message || 'Erreur lors du chargement de la demande');
     } finally {
       setLoading(false);
@@ -117,7 +118,7 @@ const PractitionerOnboardingPage: React.FC = () => {
         navigate('/practitioner/profile');
       }, 3000);
     } catch (err: any) {
-      console.error('Erreur lors de la finalisation:', err);
+      logger.error('Erreur lors de la finalisation:', err);
       setError(err.message || 'Erreur lors de la finalisation de l\'inscription');
     } finally {
       setSubmitting(false);

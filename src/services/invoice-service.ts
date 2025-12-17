@@ -1,5 +1,6 @@
 // src/services/invoice-service.ts
 import { supabase } from './supabase';
+import { logger } from '../utils/logger';
 
 export interface Invoice {
   id: string;
@@ -82,7 +83,7 @@ export class InvoiceService {
       });
 
       if (error) {
-        console.error('Erreur lors de la génération de la facture:', error);
+        logger.error('Erreur lors de la génération de la facture:', error);
         throw new Error(`Impossible de générer la facture: ${error.message}`);
       }
 
@@ -92,7 +93,7 @@ export class InvoiceService {
 
       return data as string; // UUID de la facture créée
     } catch (err: any) {
-      console.error('Erreur dans generatePractitionerInvoice:', err);
+      logger.error('Erreur dans generatePractitionerInvoice:', err);
       throw err;
     }
   }
@@ -111,13 +112,13 @@ export class InvoiceService {
       });
 
       if (error) {
-        console.error('Erreur lors de la génération des factures mensuelles:', error);
+        logger.error('Erreur lors de la génération des factures mensuelles:', error);
         throw new Error(`Impossible de générer les factures mensuelles: ${error.message}`);
       }
 
       return (data || []) as MonthlyInvoiceResult[];
     } catch (err: any) {
-      console.error('Erreur dans generateMonthlyInvoicesForAllPractitioners:', err);
+      logger.error('Erreur dans generateMonthlyInvoicesForAllPractitioners:', err);
       throw err;
     }
   }
@@ -142,7 +143,7 @@ export class InvoiceService {
 
       return data as Invoice;
     } catch (err: any) {
-      console.error('Erreur dans getInvoice:', err);
+      logger.error('Erreur dans getInvoice:', err);
       throw err;
     }
   }
@@ -186,7 +187,7 @@ export class InvoiceService {
 
       return (data || []) as Invoice[];
     } catch (err: any) {
-      console.error('Erreur dans getPractitionerInvoices:', err);
+      logger.error('Erreur dans getPractitionerInvoices:', err);
       throw err;
     }
   }
@@ -208,7 +209,7 @@ export class InvoiceService {
 
       return (data || 0) as number;
     } catch (err: any) {
-      console.error('Erreur dans countPractitionerInvoicesThisMonth:', err);
+      logger.error('Erreur dans countPractitionerInvoicesThisMonth:', err);
       throw err;
     }
   }
@@ -232,7 +233,7 @@ export class InvoiceService {
 
       return (data || 0) as number;
     } catch (err: any) {
-      console.error('Erreur dans calculateInvoiceFee:', err);
+      logger.error('Erreur dans calculateInvoiceFee:', err);
       throw err;
     }
   }
@@ -263,7 +264,7 @@ export class InvoiceService {
 
       return data as Invoice;
     } catch (err: any) {
-      console.error('Erreur dans markInvoiceAsPaid:', err);
+      logger.error('Erreur dans markInvoiceAsPaid:', err);
       throw err;
     }
   }
@@ -292,7 +293,7 @@ export class InvoiceService {
 
       return data as Invoice;
     } catch (err: any) {
-      console.error('Erreur dans cancelInvoice:', err);
+      logger.error('Erreur dans cancelInvoice:', err);
       throw err;
     }
   }
@@ -349,7 +350,7 @@ export class InvoiceService {
 
       return stats;
     } catch (err: any) {
-      console.error('Erreur dans getPractitionerInvoiceStats:', err);
+      logger.error('Erreur dans getPractitionerInvoiceStats:', err);
       throw err;
     }
   }
@@ -373,7 +374,7 @@ export class InvoiceService {
       // Pour l'instant, retourner une URL vide
       throw new Error('La génération de PDF n\'est pas encore implémentée');
     } catch (err: any) {
-      console.error('Erreur dans downloadInvoicePDF:', err);
+      logger.error('Erreur dans downloadInvoicePDF:', err);
       throw err;
     }
   }

@@ -29,6 +29,7 @@ import { Formik, Form, FormikHelpers } from 'formik';
 import * as Yup from 'yup';
 import { Beneficiary, BeneficiaryWithAccess, CreateBeneficiaryData, UpdateBeneficiaryData, BeneficiaryRelationship } from '../../types/beneficiary';
 import { canModifyBeneficiaryIdentity } from '../../services/beneficiaries';
+import { logger } from '../../utils/logger';
 
 interface BeneficiaryFormProps {
   beneficiary?: Beneficiary | BeneficiaryWithAccess; // undefined = création, défini = édition
@@ -128,7 +129,7 @@ export const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({
         const { canModify } = await canModifyBeneficiaryIdentity(beneficiary.id);
         setCanModifyIdentity(canModify);
       } catch (error) {
-        console.error('Erreur lors de la vérification des permissions:', error);
+        logger.error('Erreur lors de la vérification des permissions:', error);
         // En cas d'erreur, autoriser la modification par défaut
         setCanModifyIdentity(true);
       }
@@ -164,8 +165,8 @@ export const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({
     values: typeof initialValues,
     { setSubmitting }: FormikHelpers<typeof initialValues>
   ) => {
-    console.log('🔵 BeneficiaryForm - handleSubmit appelé');
-    console.log('🔵 Valeurs du formulaire:', values);
+    logger.debug('🔵 BeneficiaryForm - handleSubmit appelé');
+    logger.debug('🔵 Valeurs du formulaire:', values);
 
     try {
       // Nettoyer les valeurs vides
@@ -176,18 +177,18 @@ export const BeneficiaryForm: React.FC<BeneficiaryFormProps> = ({
         ])
       );
 
-      console.log('🔵 Valeurs nettoyées:', cleanedValues);
-      console.log('🔵 Appel de onSave...');
+      logger.debug('🔵 Valeurs nettoyées:', cleanedValues);
+      logger.debug('🔵 Appel de onSave...');
 
       await onSave(cleanedValues as unknown as CreateBeneficiaryData);
 
-      console.log('✅ onSave terminé avec succès');
+      logger.debug('✅ onSave terminé avec succès');
     } catch (error) {
-      console.error('❌ Erreur lors de la sauvegarde:', error);
+      logger.error('❌ Erreur lors de la sauvegarde:', error);
       // Relancer l'erreur pour que Formik puisse la gérer
       throw error;
     } finally {
-      console.log('🔵 setSubmitting(false)');
+      logger.debug('🔵 setSubmitting(false)');
       setSubmitting(false);
     }
   };

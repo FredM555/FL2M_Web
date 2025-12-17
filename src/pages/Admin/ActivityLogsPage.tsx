@@ -38,6 +38,7 @@ import {
   getProfiles,
   Profile
 } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 const AdminActivityLogsPage: React.FC = () => {
   // États
@@ -78,7 +79,7 @@ const AdminActivityLogsPage: React.FC = () => {
       if (error) throw error;
       setUsers(data || []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des utilisateurs:', err);
+      logger.error('Erreur lors du chargement des utilisateurs:', err);
     }
   };
 
@@ -88,7 +89,7 @@ const AdminActivityLogsPage: React.FC = () => {
       if (error) throw error;
       setActionTypes(data || []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des types d\'action:', err);
+      logger.error('Erreur lors du chargement des types d\'action:', err);
     }
   };
 

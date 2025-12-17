@@ -17,6 +17,7 @@ import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
+import { logger } from '../utils/logger';
 
 // Interface pour les professionnels
 interface Professionnel {
@@ -61,7 +62,7 @@ const RendezVousPage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // Logique de réservation de rendez-vous (à implémenter)
-    console.log('Rendez-vous réservé', { 
+    logger.debug('Rendez-vous réservé', { 
       nom, 
       prenom, 
       email, 

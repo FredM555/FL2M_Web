@@ -16,6 +16,7 @@ import {
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import { NumerologyTriangleAvatar } from './NumerologyTriangleAvatar';
+import { logger } from '../../utils/logger';
 
 interface AvatarUploadProps {
   currentAvatarUrl?: string;
@@ -100,7 +101,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
       onUploadSuccess(publicUrl);
     } catch (err: any) {
-      console.error('Erreur lors de l\'upload:', err);
+      logger.error('Erreur lors de l\'upload:', err);
 
       // Message d'erreur spécifique pour le bucket manquant
       if (err.message && err.message.includes('Bucket not found')) {
@@ -142,7 +143,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
       onDelete();
     } catch (err: any) {
-      console.error('Erreur lors de la suppression:', err);
+      logger.error('Erreur lors de la suppression:', err);
       setError(err.message || 'Erreur lors de la suppression de la photo');
     } finally {
       setUploading(false);

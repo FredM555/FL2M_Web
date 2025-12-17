@@ -18,6 +18,7 @@ import {
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { logger } from '../../utils/logger';
 
 // Configuration du worker PDF.js - utilise le worker local
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf-worker/pdf.worker.min.mjs';
@@ -49,7 +50,7 @@ export const PDFViewer: React.FC<PDFViewerProps> = ({
   };
 
   const onDocumentLoadError = (error: Error) => {
-    console.error('Erreur lors du chargement du PDF:', error);
+    logger.error('Erreur lors du chargement du PDF:', error);
     setLoading(false);
     setError(true);
   };

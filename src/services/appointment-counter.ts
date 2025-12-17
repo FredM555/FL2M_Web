@@ -2,6 +2,7 @@
 // Service de comptage des rendez-vous intervenants
 
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '../utils/logger';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -30,7 +31,7 @@ export class AppointmentCounter {
     const { count, error } = await query;
 
     if (error) {
-      console.error('Erreur lors du comptage des RDV:', error);
+      logger.error('Erreur lors du comptage des RDV:', error);
       throw new Error(`Impossible de compter les RDV: ${error.message}`);
     }
 
@@ -60,7 +61,7 @@ export class AppointmentCounter {
     const { count, error } = await query;
 
     if (error) {
-      console.error('Erreur lors du comptage des RDV par période:', error);
+      logger.error('Erreur lors du comptage des RDV par période:', error);
       throw new Error(`Impossible de compter les RDV par période: ${error.message}`);
     }
 
@@ -95,7 +96,7 @@ export class AppointmentCounter {
     });
 
     if (error) {
-      console.error('Erreur lors de la vérification des RDV gratuits:', error);
+      logger.error('Erreur lors de la vérification des RDV gratuits:', error);
       // Par sécurité, on compte manuellement
       const count = await this.countPractitionerAppointments(practitionerId);
       return count < 3;
@@ -136,7 +137,7 @@ export class AppointmentCounter {
       .eq('practitioner_id', practitionerId);
 
     if (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
+      logger.error('Erreur lors de la récupération des statistiques:', error);
       throw new Error(`Impossible de récupérer les statistiques: ${error.message}`);
     }
 
@@ -192,7 +193,7 @@ export class AppointmentCounter {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Erreur lors de la récupération des RDV:', error);
+      logger.error('Erreur lors de la récupération des RDV:', error);
       throw new Error(`Impossible de récupérer les RDV: ${error.message}`);
     }
 
@@ -223,7 +224,7 @@ export class AppointmentCounter {
       .select('id');
 
     if (practitionersError) {
-      console.error('Erreur lors de la récupération des intervenants:', practitionersError);
+      logger.error('Erreur lors de la récupération des intervenants:', practitionersError);
       return [];
     }
 

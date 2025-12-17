@@ -39,6 +39,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import GroupIcon from '@mui/icons-material/Group';
 import SacredGeometryBackground from '../SacredGeometryBackground';
 import MobileBottomNav from './MobileBottomNav';
+import { logger } from '../../utils/logger';
 
 const MainLayout: React.FC = () => {
   const { user, profile, signOut } = useAuth();
@@ -109,7 +110,7 @@ const MainLayout: React.FC = () => {
           navigate('/practitioner-onboarding');
         }
       } catch (error) {
-        console.error('Erreur lors de la vérification de l\'onboarding:', error);
+        logger.error('Erreur lors de la vérification de l\'onboarding:', error);
       }
     };
 
@@ -129,7 +130,7 @@ const MainLayout: React.FC = () => {
         const { count } = await getUnreadThreadCount(user.id);
         setUnreadMessagesCount(count);
       } catch (error) {
-        console.error('Erreur lors du chargement des messages non lus:', error);
+        logger.error('Erreur lors du chargement des messages non lus:', error);
       }
     };
 
@@ -161,7 +162,7 @@ const MainLayout: React.FC = () => {
       await signOut();
       navigate('/');
     } catch (error) {
-      console.error("Erreur lors de la déconnexion:", error);
+      logger.error("Erreur lors de la déconnexion:", error);
     }
   };
 

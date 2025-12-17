@@ -32,6 +32,7 @@ import {
   getMessageStatusColor
 } from '../types/messaging';
 import {
+import { logger } from '../utils/logger';
   getUserMessageThreads,
   getThreadMessages,
   replyToMessage,
@@ -83,7 +84,7 @@ const MessagesPage: React.FC = () => {
 
     if (err) {
       setError('Erreur lors du chargement des messages');
-      console.error(err);
+      logger.error(err);
     } else if (data) {
       setThreads(data);
       // Sélectionner le premier thread par défaut
@@ -103,7 +104,7 @@ const MessagesPage: React.FC = () => {
 
     if (err) {
       setError('Erreur lors du chargement des messages');
-      console.error(err);
+      logger.error(err);
     } else if (data) {
       setMessages(data);
       // Marquer comme lu
@@ -131,7 +132,7 @@ const MessagesPage: React.FC = () => {
 
     if (err) {
       setError('Erreur lors de l\'envoi du message');
-      console.error(err);
+      logger.error(err);
     } else if (data) {
       // Ajouter le message à la liste
       const newMsg: MessageWithSender = {

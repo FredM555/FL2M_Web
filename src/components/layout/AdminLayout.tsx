@@ -41,6 +41,7 @@ import HistoryIcon from '@mui/icons-material/History';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 // Interface pour les éléments du menu
 interface MenuItem {
@@ -73,10 +74,10 @@ const AdminLayout: React.FC = () => {
         
         setNewMessagesCount(count || 0);
       } catch (err) {
-        console.error('Erreur lors de la récupération des nouveaux messages:', err);
+        logger.error('Erreur lors de la récupération des nouveaux messages:', err);
       }
     };
-    
+
     // Charger les données initiales
     fetchNewMessagesCount();
     

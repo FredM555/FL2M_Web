@@ -21,6 +21,7 @@ import { validateAppointment } from '../../services/stripe';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Appointment } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface AppointmentValidationCardProps {
   appointment: Appointment;
@@ -46,7 +47,7 @@ export const AppointmentValidationCard: React.FC<AppointmentValidationCardProps>
       await validateAppointment(appointment.id, true, commentText);
       onValidated();
     } catch (err: any) {
-      console.error('Erreur validation:', err);
+      logger.error('Erreur validation:', err);
       setError(err.message || 'Erreur lors de la validation');
     } finally {
       setLoading(false);

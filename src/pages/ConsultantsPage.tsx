@@ -22,6 +22,7 @@ import EmailIcon from '@mui/icons-material/Email';
 import PersonIcon from '@mui/icons-material/Person';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import { UserAvatar } from '../components/profile/UserAvatar';
+import { logger } from '../utils/logger';
 
 // Interface pour les intervenants
 interface Consultant {
@@ -83,7 +84,7 @@ const ConsultantsPage: React.FC = () => {
               p_user_id: consultant.user_id
             });
 
-            console.log('[ConsultantsPage] Numérologie pour', consultant.display_name || consultant.profile?.first_name, ':', numerologyData, 'Erreur:', numerologyError);
+            logger.debug('[ConsultantsPage] Numérologie pour', consultant.display_name || consultant.profile?.first_name, ':', numerologyData, 'Erreur:', numerologyError);
 
             // Ajouter les données de numérologie au profil si disponibles
             if (numerologyData && numerologyData.length > 0 && consultant.profile) {
@@ -92,27 +93,27 @@ const ConsultantsPage: React.FC = () => {
               consultant.profile.racine1 = numData.racine_1;
               consultant.profile.racine2 = numData.racine_2;
               consultant.profile.dynamique_de_vie = numData.dynamique_de_vie;
-              console.log('[ConsultantsPage] Données ajoutées au profil:', {
+              logger.debug('[ConsultantsPage] Données ajoutées au profil:', {
                 tronc: consultant.profile.tronc,
                 racine1: consultant.profile.racine1,
                 racine2: consultant.profile.racine2,
                 dynamique_de_vie: consultant.profile.dynamique_de_vie
               });
             } else {
-              console.warn('[ConsultantsPage] Pas de données numérologie pour', consultant.display_name || consultant.profile?.first_name);
+              logger.warn('[ConsultantsPage] Pas de données numérologie pour', consultant.display_name || consultant.profile?.first_name);
             }
           } catch (err) {
-            console.error('[ConsultantsPage] Exception lors de la récupération de la numérologie pour', consultant.user_id, err);
+            logger.error('[ConsultantsPage] Exception lors de la récupération de la numérologie pour', consultant.user_id, err);
           }
           return consultant;
         })
       );
 
-      console.log('[ConsultantsPage] Consultants avec numérologie:', consultantsWithNumerology);
+      logger.debug('[ConsultantsPage] Consultants avec numérologie:', consultantsWithNumerology);
 
       setConsultants(consultantsWithNumerology);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des intervenants:', err);
+      logger.error('Erreur lors du chargement des intervenants:', err);
       setError('Impossible de charger la liste des intervenants. Veuillez réessayer plus tard.');
     } finally {
       setLoading(false);

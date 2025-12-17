@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import { Save as SaveIcon, Add as AddIcon, Delete as DeleteIcon, Edit as EditIcon } from '@mui/icons-material';
 import { Practitioner } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface PractitionerProfileFormProps {
   practitioner: Practitioner;
@@ -71,7 +72,7 @@ export const PractitionerProfileForm: React.FC<PractitionerProfileFormProps> = (
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err: any) {
-      console.error('Erreur lors de la sauvegarde:', err);
+      logger.error('Erreur lors de la sauvegarde:', err);
       setError(err.message || 'Une erreur est survenue lors de la sauvegarde');
     } finally {
       setSaving(false);

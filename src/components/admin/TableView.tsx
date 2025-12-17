@@ -26,6 +26,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import SearchIcon from '@mui/icons-material/Search';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface Column {
   id: string;
@@ -98,7 +99,7 @@ const TableView: React.FC<TableViewProps> = ({
 
       setRows(data.map(formatRow));
     } catch (err: any) {
-      console.error(`Erreur lors du chargement des données de ${tableName}:`, err);
+      logger.error(`Erreur lors du chargement des données de ${tableName}:`, err);
     } finally {
       setIsLoading(false);
     }
@@ -141,7 +142,7 @@ const TableView: React.FC<TableViewProps> = ({
       // Rafraîchir les données
       handleRefresh();
     } catch (err: any) {
-      console.error(`Erreur lors de la suppression de l'élément de ${tableName}:`, err);
+      logger.error(`Erreur lors de la suppression de l'élément de ${tableName}:`, err);
       alert(`Erreur lors de la suppression: ${err.message}`);
     }
   };

@@ -22,6 +22,7 @@ import { supabase } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { createMessageThread } from '../services/messaging';
+import { logger } from '../utils/logger';
 
 // Interface pour le formulaire de contact
 interface ContactFormData {
@@ -160,13 +161,13 @@ const ContactPage = () => {
         });
 
         if (emailError) {
-          console.error('Erreur lors de l\'envoi de l\'email:', emailError);
+          logger.error('Erreur lors de l\'envoi de l\'email:', emailError);
           // Ne pas bloquer l'envoi si l'email échoue
         } else {
-          console.log('Email envoyé avec succès via Resend:', emailData);
+          logger.debug('Email envoyé avec succès via Resend:', emailData);
         }
       } catch (emailErr) {
-        console.error('Erreur lors de l\'envoi de l\'email:', emailErr);
+        logger.error('Erreur lors de l\'envoi de l\'email:', emailErr);
         // Ne pas bloquer l'envoi si l'email échoue
       }
 
@@ -176,7 +177,7 @@ const ContactPage = () => {
       // Réinitialiser le formulaire
       setFormData(initialFormState);
     } catch (err: any) {
-      console.error('Erreur lors de l\'envoi du message:', err);
+      logger.error('Erreur lors de l\'envoi du message:', err);
       setError(err.message || 'Une erreur est survenue lors de l\'envoi du message');
     } finally {
       setLoading(false);

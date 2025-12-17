@@ -41,6 +41,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import ReportProblemIcon from '@mui/icons-material/ReportProblem';
+import { logger } from '../../utils/logger';
 
 // Interface pour les messages
 interface ContactMessage {
@@ -117,13 +118,13 @@ const AdminContactMessagesPage: React.FC = () => {
 
         setContestationsCount(contestCount || 0);
       } catch (err: any) {
-        console.error('Erreur lors du chargement des messages:', err);
+        logger.error('Erreur lors du chargement des messages:', err);
         setError(err.message || 'Une erreur est survenue lors du chargement des messages');
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchMessages();
   }, [tabValue, refreshTrigger]);
   
@@ -179,7 +180,7 @@ const AdminContactMessagesPage: React.FC = () => {
       // Rafraîchir la liste
       setRefreshTrigger(prev => prev + 1);
     } catch (err: any) {
-      console.error('Erreur lors de la mise à jour du statut:', err);
+      logger.error('Erreur lors de la mise à jour du statut:', err);
       setError(err.message || 'Une erreur est survenue lors de la mise à jour du statut');
     }
   };
@@ -244,17 +245,17 @@ const AdminContactMessagesPage: React.FC = () => {
 
       if (!emailResponse.ok) {
         const errorData = await emailResponse.json();
-        console.warn('Erreur lors de l\'envoi de l\'email:', errorData.error || 'Erreur inconnue');
+        logger.warn('Erreur lors de l\'envoi de l\'email:', errorData.error || 'Erreur inconnue');
         // Ne pas bloquer si l'email échoue
       } else {
-        console.log('Email de réponse envoyé avec succès à:', selectedMessage.email);
+        logger.debug('Email de réponse envoyé avec succès à:', selectedMessage.email);
       }
 
       // Fermer le dialogue et rafraîchir la liste
       setResponseDialogOpen(false);
       setRefreshTrigger(prev => prev + 1);
     } catch (err: any) {
-      console.error('Erreur lors de l\'envoi de la réponse:', err);
+      logger.error('Erreur lors de l\'envoi de la réponse:', err);
       setError(err.message || 'Une erreur est survenue lors de l\'envoi de la réponse');
     }
   };
@@ -274,7 +275,7 @@ const AdminContactMessagesPage: React.FC = () => {
       // Rafraîchir la liste
       setRefreshTrigger(prev => prev + 1);
     } catch (err: any) {
-      console.error('Erreur lors de la suppression du message:', err);
+      logger.error('Erreur lors de la suppression du message:', err);
       setError(err.message || 'Une erreur est survenue lors de la suppression du message');
     }
   };

@@ -22,6 +22,7 @@ import {
 import { format, subDays, subMonths, eachDayOfInterval, eachWeekOfInterval, eachMonthOfInterval, startOfMonth, endOfMonth } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface ChartData {
   name: string;
@@ -177,7 +178,7 @@ const ActivityChart: React.FC<ActivityChartProps> = ({
 
         setChartData(filledData);
       } catch (error: any) {
-        console.error('Erreur lors de la récupération des données du graphique:', error);
+        logger.error('Erreur lors de la récupération des données du graphique:', error);
         setError(`Impossible de charger les données: ${error.message}`);
       } finally {
         setLoading(false);

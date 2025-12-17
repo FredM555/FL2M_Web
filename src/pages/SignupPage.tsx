@@ -1,5 +1,6 @@
 // src/pages/SignupPage.tsx
 import React, { useState } from 'react';
+
 import {
   Container,
   Typography,
@@ -25,6 +26,7 @@ import AppleIcon from '@mui/icons-material/Apple';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { logger } from '../utils/logger';
 
 interface LocationState {
   from?: string;
@@ -119,7 +121,7 @@ const SignupPage: React.FC = () => {
       }
       
     } catch (err) {
-      console.error('Erreur d\'inscription:', err);
+      logger.error('Erreur d\'inscription:', err);
       setError('Erreur lors de l\'inscription. Veuillez réessayer.');
     } finally {
       setLoading(false);
@@ -132,7 +134,7 @@ const SignupPage: React.FC = () => {
       await signInWithGoogle();
       // La redirection se fera automatiquement via OAuth
     } catch (err) {
-      console.error('Erreur d\'inscription avec Google:', err);
+      logger.error('Erreur d\'inscription avec Google:', err);
       setError('Erreur lors de l\'inscription avec Google. Veuillez réessayer.');
     }
   };
@@ -143,7 +145,7 @@ const SignupPage: React.FC = () => {
       await signInWithApple();
       // La redirection se fera automatiquement via OAuth
     } catch (err) {
-      console.error('Erreur d\'inscription avec Apple:', err);
+      logger.error('Erreur d\'inscription avec Apple:', err);
       setError('Erreur lors de l\'inscription avec Apple. Veuillez réessayer.');
     }
   };

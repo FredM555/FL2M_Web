@@ -23,6 +23,7 @@ import TableView from '../../components/admin/TableView';
 import { supabase, Service, getServices } from '../../services/supabase';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logger } from '../../utils/logger';
 
 const AdminServicesPage: React.FC = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -41,7 +42,7 @@ const AdminServicesPage: React.FC = () => {
       if (error) throw error;
       setServices(data || []);
     } catch (error) {
-      console.error('Erreur lors du chargement des services:', error);
+      logger.error('Erreur lors du chargement des services:', error);
     } finally {
       setLoading(false);
     }
@@ -293,7 +294,7 @@ const AdminServicesPage: React.FC = () => {
       // Afficher le message de succès
       setShowSuccess(true);
     } catch (error) {
-      console.error('Erreur lors de l\'enregistrement du service:', error);
+      logger.error('Erreur lors de l\'enregistrement du service:', error);
     } finally {
       setLoading(false);
     }

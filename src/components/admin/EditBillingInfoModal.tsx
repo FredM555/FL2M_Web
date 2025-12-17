@@ -17,6 +17,7 @@ import {
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { logger } from '../../utils/logger';
 
 interface EditBillingInfoModalProps {
   open: boolean;
@@ -129,7 +130,7 @@ const EditBillingInfoModal: React.FC<EditBillingInfoModalProps> = ({
         handleClose();
       }, 1500);
     } catch (err: any) {
-      console.error('Erreur lors de la mise à jour des informations de facturation:', err);
+      logger.error('Erreur lors de la mise à jour des informations de facturation:', err);
       setError(err.message || 'Impossible de mettre à jour les informations');
     } finally {
       setLoading(false);

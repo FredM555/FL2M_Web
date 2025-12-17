@@ -19,6 +19,7 @@ import MedicalServicesIcon from '@mui/icons-material/MedicalServices';
 import CategoryIcon from '@mui/icons-material/Category';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface MenuItem {
   path: string;
@@ -45,10 +46,10 @@ const AdminSidebarMenu: React.FC = () => {
         
         setNewMessagesCount(count || 0);
       } catch (err) {
-        console.error('Erreur lors de la récupération des nouveaux messages:', err);
+        logger.error('Erreur lors de la récupération des nouveaux messages:', err);
       }
     };
-    
+
     // Charger les données initiales
     fetchNewMessagesCount();
     

@@ -16,6 +16,7 @@ import { supabase } from '../services/supabase';
 import EmailIcon from '@mui/icons-material/Email';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { logger } from '../utils/logger';
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -43,7 +44,7 @@ const ForgotPasswordPage: React.FC = () => {
 
       setSuccess(true);
     } catch (err: any) {
-      console.error('Erreur lors de la demande de réinitialisation:', err);
+      logger.error('Erreur lors de la demande de réinitialisation:', err);
       setError(err.message || 'Une erreur est survenue. Veuillez réessayer.');
     } finally {
       setLoading(false);

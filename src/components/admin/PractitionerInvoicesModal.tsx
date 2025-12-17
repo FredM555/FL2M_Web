@@ -34,6 +34,7 @@ import { InvoiceService, Invoice } from '../../services/invoice-service';
 import { useAuth } from '../../context/AuthContext';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logger } from '../../utils/logger';
 
 interface PractitionerInvoicesModalProps {
   open: boolean;
@@ -78,7 +79,7 @@ const PractitionerInvoicesModal: React.FC<PractitionerInvoicesModalProps> = ({
       });
       setInvoices(data);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des factures:', err);
+      logger.error('Erreur lors du chargement des factures:', err);
       setError('Impossible de charger les factures');
     } finally {
       setLoading(false);
@@ -90,7 +91,7 @@ const PractitionerInvoicesModal: React.FC<PractitionerInvoicesModalProps> = ({
       const stats = await InvoiceService.getPractitionerInvoiceStats(practitionerId);
       setInvoiceStats(stats);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des statistiques:', err);
+      logger.error('Erreur lors du chargement des statistiques:', err);
     }
   };
 
@@ -99,7 +100,7 @@ const PractitionerInvoicesModal: React.FC<PractitionerInvoicesModalProps> = ({
       const fee = await InvoiceService.calculateInvoiceFee(practitionerId, 'manual');
       setEstimatedFee(fee);
     } catch (err: any) {
-      console.error('Erreur lors du calcul des frais:', err);
+      logger.error('Erreur lors du calcul des frais:', err);
     }
   };
 
@@ -137,7 +138,7 @@ const PractitionerInvoicesModal: React.FC<PractitionerInvoicesModalProps> = ({
 
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      console.error('Erreur lors de la génération de la facture:', err);
+      logger.error('Erreur lors de la génération de la facture:', err);
       setError(err.message || 'Impossible de générer la facture');
     } finally {
       setGeneratingInvoice(false);
@@ -156,7 +157,7 @@ const PractitionerInvoicesModal: React.FC<PractitionerInvoicesModalProps> = ({
       loadStats();
       setTimeout(() => setSuccess(null), 3000);
     } catch (err: any) {
-      console.error('Erreur lors du marquage comme payée:', err);
+      logger.error('Erreur lors du marquage comme payée:', err);
       setError('Impossible de marquer la facture comme payée');
     }
   };

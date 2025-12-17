@@ -2,6 +2,7 @@
 import React from 'react';
 import { Avatar } from '@mui/material';
 import { NumerologyTriangleAvatar } from './NumerologyTriangleAvatar';
+import { logger } from '../../utils/logger';
 
 interface UserAvatarProps {
   avatarUrl?: string | null;
@@ -40,7 +41,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
   const hasNumerologyData = racine1 || racine2 || tronc;
 
   // Debug: afficher les valeurs
-  console.log('[UserAvatar] Debug:', {
+  logger.debug('[UserAvatar] Debug:', {
     avatarUrl,
     firstName,
     racine1,
@@ -53,7 +54,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 
   // Si on a une photo, l'afficher
   if (avatarUrl) {
-    console.log('[UserAvatar] Affichage photo');
+    logger.debug('[UserAvatar] Affichage photo');
     return (
       <Avatar
         src={avatarUrl}
@@ -69,7 +70,7 @@ export const UserAvatar: React.FC<UserAvatarProps> = ({
 
   // Si on a des données de numérologie, afficher le triangle
   if (hasNumerologyData) {
-    console.log('[UserAvatar] Affichage triangle numérologie');
+    logger.debug('[UserAvatar] Affichage triangle numérologie');
     return (
       <NumerologyTriangleAvatar
         racine1={racine1}

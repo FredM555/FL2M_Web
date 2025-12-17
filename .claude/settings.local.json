@@ -74,7 +74,8 @@
       "Bash(scoop --version:*)",
       "Bash(ls:*)",
       "Bash(git clean:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(timeout 5 tail:*)"
     ],
     "deny": [],
     "ask": []

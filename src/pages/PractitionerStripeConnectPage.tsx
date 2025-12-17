@@ -23,6 +23,7 @@ import InfoIcon from '@mui/icons-material/Info';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { createConnectAccount, checkConnectStatus, StripeConnectStatus } from '../services/stripeConnect';
+import { logger } from '../utils/logger';
 
 const PractitionerStripeConnectPage: React.FC = () => {
   const { user, profile } = useAuth();
@@ -49,7 +50,7 @@ const PractitionerStripeConnectPage: React.FC = () => {
       const status = await checkConnectStatus();
       setConnectStatus(status);
     } catch (err: any) {
-      console.error('Erreur vérification statut:', err);
+      logger.error('Erreur vérification statut:', err);
       setError(err.message || 'Erreur lors de la vérification du statut');
     } finally {
       setLoading(false);
@@ -71,7 +72,7 @@ const PractitionerStripeConnectPage: React.FC = () => {
         window.location.href = result.dashboardUrl;
       }
     } catch (err: any) {
-      console.error('Erreur onboarding:', err);
+      logger.error('Erreur onboarding:', err);
       setError(err.message || 'Erreur lors du démarrage de l\'onboarding');
       setProcessing(false);
     }

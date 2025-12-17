@@ -17,6 +17,7 @@ import {
   VolumeUp as VolumeIcon,
   VolumeOff as VolumeOffIcon
 } from '@mui/icons-material';
+import { logger } from '../../utils/logger';
 
 interface AudioPlayerProps {
   open: boolean;
@@ -52,7 +53,7 @@ export const AudioPlayer: React.FC<AudioPlayerProps> = ({
             setIsPlaying(true);
           })
           .catch((error) => {
-            console.error('Erreur lors de la lecture automatique:', error);
+            logger.error('Erreur lors de la lecture automatique:', error);
             // Si l'auto-play échoue (politique du navigateur), on ne fait rien
             // L'utilisateur devra cliquer sur le bouton play
           });

@@ -77,11 +77,12 @@ import AdminTransactionsPage from './pages/Admin/AdminTransactionsPage';
 import AdminContactMessagesPage from './pages/Admin/ContactMessagesPage_NEW';
 import AdminPractitionerRequestsPage from './pages/Admin/PractitionerRequestsPage';
 import AdminActivityLogsPage from './pages/Admin/ActivityLogsPage';
+import { logger } from './utils/logger';
 
 // Composant pour les routes protégées
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, profile, loading } = useAuth();
-  console.log("État Auth dans ProtectedRoute:", { user, profile, loading });
+  logger.debug("État Auth dans ProtectedRoute:", { user, profile, loading });
   const location = useLocation();
 
   // Afficher le spinner pendant le chargement
@@ -110,7 +111,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 // Composant pour les routes admin
 const AdminRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, profile, loading } = useAuth();
-  console.log("État Auth dans AdminRoute:", { user, profile, loading });
+  logger.debug("État Auth dans AdminRoute:", { user, profile, loading });
   const location = useLocation();
 
   // Afficher le spinner pendant le chargement
@@ -139,7 +140,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
-  console.log("État Auth dans App:", { user, profile, loading, path: location.pathname });
+  logger.debug("État Auth dans App:", { user, profile, loading, path: location.pathname });
   const [appReady, setAppReady] = useState(false);
 
   useEffect(() => {
@@ -152,7 +153,7 @@ function App() {
   
   // Afficher un loader pendant le chargement de l'authentification
   if (loading) {
-    console.log("Affichage du chargement...");
+    logger.debug("Affichage du chargement...");
     return (
       <Box sx={{ 
         display: 'flex', 
@@ -166,7 +167,7 @@ function App() {
     );
   }
   
-  console.log("Prêt à afficher l'application principale");
+  logger.debug("Prêt à afficher l'application principale");
 
   // Vérifier si l'utilisateur tente d'accéder à une route protégée sans être connecté
   if (!user) {
@@ -175,19 +176,19 @@ function App() {
       path => location.pathname.startsWith(path)
     );
     
-    console.log("Vérification redirection:", { 
+    logger.debug("Vérification redirection:", { 
       requiresAuth,
       path: location.pathname
     });
     
     // Ne rediriger vers la page de connexion que si la route nécessite une authentification
     if (requiresAuth) {
-      console.log("Redirection vers login (route protégée)");
+      logger.debug("Redirection vers login (route protégée)");
       return <Navigate to="/login" state={{ from: location.pathname }} replace />;
     }
     
     // Pour les routes publiques, pas de redirection
-    console.log("Route publique, pas de redirection");
+    logger.debug("Route publique, pas de redirection");
   }
 
   // Affiche un spinner pendant le chargement initial

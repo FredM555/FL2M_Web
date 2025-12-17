@@ -30,6 +30,7 @@ import PersonIcon from '@mui/icons-material/Person';
 import { supabase } from '../../services/supabase';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logger } from '../../utils/logger';
 
 interface ContactMessage {
   id: string;
@@ -151,7 +152,7 @@ const AdminContactMessagesPageNew: React.FC = () => {
         setSelectedThread(threadsWithInfo[0]);
       }
     } catch (err: any) {
-      console.error('Erreur chargement threads:', err);
+      logger.error('Erreur chargement threads:', err);
       setError(err.message || 'Erreur lors du chargement des conversations');
     } finally {
       setLoading(false);
@@ -184,7 +185,7 @@ const AdminContactMessagesPageNew: React.FC = () => {
       // Recharger les threads pour mettre à jour les compteurs
       loadThreads();
     } catch (err: any) {
-      console.error('Erreur chargement messages:', err);
+      logger.error('Erreur chargement messages:', err);
       setError(err.message || 'Erreur lors du chargement des messages');
     } finally {
       setLoadingMessages(false);
@@ -230,7 +231,7 @@ const AdminContactMessagesPageNew: React.FC = () => {
         .eq('thread_id', selectedThread.thread_id)
         .is('parent_id', null);
 
-      if (updateError) console.warn('Erreur mise à jour statut:', updateError);
+      if (updateError) logger.warn('Erreur mise à jour statut:', updateError);
 
       // Envoyer un email à l'utilisateur
       try {
@@ -255,13 +256,13 @@ const AdminContactMessagesPageNew: React.FC = () => {
           );
 
           if (emailResponse.ok) {
-            console.log('Email envoyé avec succès');
+            logger.debug('Email envoyé avec succès');
           } else {
-            console.warn('Erreur envoi email:', await emailResponse.text());
+            logger.warn('Erreur envoi email:', await emailResponse.text());
           }
         }
       } catch (emailError) {
-        console.warn('Exception envoi email:', emailError);
+        logger.warn('Exception envoi email:', emailError);
         // Ne pas bloquer si l'email échoue
       }
 
@@ -276,7 +277,7 @@ const AdminContactMessagesPageNew: React.FC = () => {
         setRefreshTrigger(prev => prev + 1);
       }, 2000);
     } catch (err: any) {
-      console.error('Erreur envoi message:', err);
+      logger.error('Erreur envoi message:', err);
       setError(err.message || 'Erreur lors de l\'envoi du message');
     } finally {
       setSending(false);

@@ -23,6 +23,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { CONTRACT_CONFIGS, formatAmount, ContractType } from '../types/payments';
 import { createSubscriptionCheckout, redirectToCheckout } from '../services/stripe';
+import { logger } from '../utils/logger';
 
 const PractitionerPaymentPage: React.FC = () => {
   const { user } = useAuth();
@@ -59,7 +60,7 @@ const PractitionerPaymentPage: React.FC = () => {
       // Rediriger vers Stripe Checkout
       await redirectToCheckout(session.url);
     } catch (err: any) {
-      console.error('Erreur lors du paiement:', err);
+      logger.error('Erreur lors du paiement:', err);
       setError(err.message || 'Erreur lors du traitement du paiement');
       setLoading(false);
     }

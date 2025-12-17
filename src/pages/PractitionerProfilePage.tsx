@@ -38,6 +38,7 @@ import PractitionerTransactions from '../components/practitioner/PractitionerTra
 import PractitionerProfilePreview from '../components/practitioner/PractitionerProfilePreview';
 import { StripeAccountStatus } from '../components/practitioner/StripeAccountStatus';
 import { checkConnectStatus, StripeConnectStatus } from '../services/stripeConnect';
+import { logger } from '../utils/logger';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -80,7 +81,7 @@ const PractitionerProfilePage: React.FC = () => {
       const status = await checkConnectStatus();
       setStripeStatus(status);
     } catch (err) {
-      console.error('Erreur chargement statut Stripe:', err);
+      logger.error('Erreur chargement statut Stripe:', err);
     }
   };
 
@@ -102,7 +103,7 @@ const PractitionerProfilePage: React.FC = () => {
 
       setPractitioner(data);
     } catch (err: any) {
-      console.error('Erreur lors du chargement du profil:', err);
+      logger.error('Erreur lors du chargement du profil:', err);
       setError(err.message || 'Erreur lors du chargement du profil intervenant');
     } finally {
       setLoading(false);
@@ -153,7 +154,7 @@ const PractitionerProfilePage: React.FC = () => {
       await navigator.clipboard.writeText(link);
       setCopySnackbarOpen(true);
     } catch (err) {
-      console.error('Erreur lors de la copie du lien:', err);
+      logger.error('Erreur lors de la copie du lien:', err);
     }
   };
 

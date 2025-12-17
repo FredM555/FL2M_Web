@@ -35,6 +35,7 @@ import {
 import { updateBeneficiaryRelationship } from '../../services/beneficiaries';
 import { PDFViewer } from '../appointments/PDFViewer';
 import { NumerologyTriangleAvatar } from '../profile/NumerologyTriangleAvatar';
+import { logger } from '../../utils/logger';
 
 interface BeneficiaryDetailsProps {
   beneficiary: BeneficiaryWithAccess;
@@ -83,6 +84,7 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
         }
       });
     };
+
   }, [beneficiary.id]);
 
   const loadQuickAccessDocuments = async () => {
@@ -119,7 +121,7 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
         setDocumentUrls(urls);
       }
     } catch (err: any) {
-      console.error('Erreur lors du chargement des documents raccourcis:', err);
+      logger.error('Erreur lors du chargement des documents raccourcis:', err);
     } finally {
       setLoadingDocuments(false);
     }
@@ -149,7 +151,7 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
         window.URL.revokeObjectURL(url);
       }
     } catch (err: any) {
-      console.error('Erreur lors du téléchargement:', err);
+      logger.error('Erreur lors du téléchargement:', err);
     }
   };
 
@@ -186,7 +188,7 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
         onRelationshipUpdate();
       }
     } catch (err: any) {
-      console.error('Erreur lors de la mise à jour de la relation:', err);
+      logger.error('Erreur lors de la mise à jour de la relation:', err);
       setSnackbarMessage('Erreur lors de la mise à jour: ' + (err.message || 'Erreur inconnue'));
       setSnackbarSeverity('error');
       setSnackbarOpen(true);

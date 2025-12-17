@@ -1,5 +1,6 @@
 // src/services/appointment-reminders.ts
 import { supabase } from './supabase';
+import { logger } from '../utils/logger';
 
 /**
  * Envoie un email de rappel de rendez-vous au client et au bénéficiaire
@@ -185,9 +186,9 @@ const sendReminderEmail = async (appointment: any) => {
       });
     }
 
-    console.log('Emails de rappel envoyés avec succès pour RDV:', appointment.id);
+    logger.debug('Emails de rappel envoyés avec succès pour RDV:', appointment.id);
   } catch (error) {
-    console.error('Erreur lors de l\'envoi des emails de rappel:', error);
+    logger.error('Erreur lors de l\'envoi des emails de rappel:', error);
     throw error;
   }
 };
@@ -198,22 +199,22 @@ const sendReminderEmail = async (appointment: any) => {
  */
 export const processAppointmentReminders = async () => {
   try {
-    console.log('Début du traitement des rappels de RDV...');
+    logger.debug('Début du traitement des rappels de RDV...');
 
     // Récupérer les rendez-vous nécessitant un rappel via la fonction RPC
     const { data: appointments, error } = await supabase.rpc('get_appointments_needing_reminder');
 
     if (error) {
-      console.error('Erreur lors de la récupération des RDV à rappeler:', error);
+      logger.error('Erreur lors de la récupération des RDV à rappeler:', error);
       return { success: false, error, processed: 0 };
     }
 
     if (!appointments || appointments.length === 0) {
-      console.log('Aucun rendez-vous à rappeler pour le moment');
+      logger.debug('Aucun rendez-vous à rappeler pour le moment');
       return { success: true, processed: 0 };
     }
 
-    console.log(`${appointments.length} rendez-vous nécessitent un rappel`);
+    logger.debug(`${appointments.length} rendez-vous nécessitent un rappel`);
 
     let processed = 0;
     let failed = 0;
@@ -237,7 +238,7 @@ export const processAppointmentReminders = async () => {
           .single();
 
         if (fetchError || !fullAppointment) {
-          console.error(`Impossible de récupérer le RDV ${appointment.id}:`, fetchError);
+          logger.error(`Impossible de récupérer le RDV ${appointment.id}:`, fetchError);
           failed++;
           continue;
         }
@@ -249,14 +250,14 @@ export const processAppointmentReminders = async () => {
         await supabase.rpc('mark_reminder_sent', { p_appointment_id: appointment.id });
 
         processed++;
-        console.log(`✓ Rappel envoyé pour RDV ${appointment.id}`);
+        logger.debug(`✓ Rappel envoyé pour RDV ${appointment.id}`);
       } catch (err) {
-        console.error(`Erreur lors du traitement du RDV ${appointment.id}:`, err);
+        logger.error(`Erreur lors du traitement du RDV ${appointment.id}:`, err);
         failed++;
       }
     }
 
-    console.log(`Traitement terminé. Succès: ${processed}, Échecs: ${failed}`);
+    logger.debug(`Traitement terminé. Succès: ${processed}, Échecs: ${failed}`);
 
     return {
       success: true,
@@ -265,7 +266,7 @@ export const processAppointmentReminders = async () => {
       total: appointments.length
     };
   } catch (error) {
-    console.error('Erreur globale lors du traitement des rappels:', error);
+    logger.error('Erreur globale lors du traitement des rappels:', error);
     return { success: false, error, processed: 0 };
   }
 };

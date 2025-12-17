@@ -13,6 +13,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+import { logger } from '../utils/logger';
 
 const AppointmentPaymentSuccessPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,19 +26,19 @@ const AppointmentPaymentSuccessPage: React.FC = () => {
 
   const appointmentId = searchParams.get('appointmentId');
 
-  console.log('[SUCCESS-PAGE] Page de succès chargée');
-  console.log('[SUCCESS-PAGE] Appointment ID:', appointmentId);
-  console.log('[SUCCESS-PAGE] URL complète:', window.location.href);
+  logger.debug('[SUCCESS-PAGE] Page de succès chargée');
+  logger.debug('[SUCCESS-PAGE] Appointment ID:', appointmentId);
+  logger.debug('[SUCCESS-PAGE] URL complète:', window.location.href);
 
   useEffect(() => {
     if (!appointmentId) {
-      console.error('[SUCCESS-PAGE] ID de rendez-vous manquant dans l\'URL');
+      logger.error('[SUCCESS-PAGE] ID de rendez-vous manquant dans l\'URL');
       setError('ID de rendez-vous manquant');
       setLoading(false);
       return;
     }
 
-    console.log('[SUCCESS-PAGE] Vérification du statut du paiement...');
+    logger.debug('[SUCCESS-PAGE] Vérification du statut du paiement...');
 
     const checkPaymentStatus = async () => {
       try {
@@ -62,7 +63,7 @@ const AppointmentPaymentSuccessPage: React.FC = () => {
           throw txError;
         }
 
-        console.log('[SUCCESS-PAGE] Statuts récupérés:', {
+        logger.debug('[SUCCESS-PAGE] Statuts récupérés:', {
           appointmentStatus: appointment?.status,
           paymentStatus: appointment?.payment_status,
           transactionStatus: transaction?.status,
@@ -73,11 +74,11 @@ const AppointmentPaymentSuccessPage: React.FC = () => {
         // - Le rendez-vous est confirmé OU
         // - La transaction est en succeeded
         if (appointment?.status === 'confirmed' || transaction?.status === 'succeeded') {
-          console.log('[SUCCESS-PAGE] ✅ Paiement vérifié avec succès !');
+          logger.debug('[SUCCESS-PAGE] ✅ Paiement vérifié avec succès !');
           setPaymentVerified(true);
           setLoading(false);
         } else if (retryCount < 10) {
-          console.log('[SUCCESS-PAGE] ⏳ Paiement pas encore confirmé, nouvelle tentative...');
+          logger.debug('[SUCCESS-PAGE] ⏳ Paiement pas encore confirmé, nouvelle tentative...');
           // Réessayer après 1 seconde (max 10 fois = 10 secondes)
           setTimeout(() => {
             setRetryCount(prev => prev + 1);
@@ -88,7 +89,7 @@ const AppointmentPaymentSuccessPage: React.FC = () => {
           setLoading(false);
         }
       } catch (err: any) {
-        console.error('Erreur lors de la vérification du paiement:', err);
+        logger.error('Erreur lors de la vérification du paiement:', err);
         if (retryCount < 10) {
           setTimeout(() => {
             setRetryCount(prev => prev + 1);

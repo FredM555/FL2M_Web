@@ -31,6 +31,7 @@ import {
   Lock as LockIcon
 } from '@mui/icons-material';
 import { NumerologyTriangleAvatar } from '../profile/NumerologyTriangleAvatar';
+import { logger } from '../../utils/logger';
 
 interface BeneficiaryCardProps {
   beneficiary: BeneficiaryWithAccess;
@@ -69,7 +70,7 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
           setAvailableDocuments(data);
         }
       } catch (err) {
-        console.error('Erreur lors du chargement des documents:', err);
+        logger.error('Erreur lors du chargement des documents:', err);
       } finally {
         setLoadingDocs(false);
       }
@@ -94,7 +95,7 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
         }
       }
     } catch (err) {
-      console.error('Erreur lors de l\'ouverture du document:', err);
+      logger.error('Erreur lors de l\'ouverture du document:', err);
     }
   };
 

@@ -2,6 +2,8 @@
 // Service de gestion des contrats intervenants
 
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '../utils/logger';
+
 import {
   PractitionerContract,
   CreateContractData,
@@ -37,7 +39,7 @@ export class ContractsService {
       .maybeSingle();
 
     if (error) {
-      console.error('Erreur lors de la récupération du contrat actif:', error);
+      logger.error('Erreur lors de la récupération du contrat actif:', error);
       return null;
     }
 
@@ -57,7 +59,7 @@ export class ContractsService {
       .order('start_date', { ascending: false });
 
     if (error) {
-      console.error('Erreur lors de la récupération des contrats:', error);
+      logger.error('Erreur lors de la récupération des contrats:', error);
       return [];
     }
 
@@ -95,7 +97,7 @@ export class ContractsService {
       .single();
 
     if (error) {
-      console.error('Erreur lors de la création du contrat:', error);
+      logger.error('Erreur lors de la création du contrat:', error);
       throw new Error(`Impossible de créer le contrat: ${error.message}`);
     }
 
@@ -133,7 +135,7 @@ export class ContractsService {
       .single();
 
     if (error) {
-      console.error('Erreur lors de la mise à jour du contrat:', error);
+      logger.error('Erreur lors de la mise à jour du contrat:', error);
       throw new Error(`Impossible de mettre à jour le contrat: ${error.message}`);
     }
 
@@ -210,7 +212,7 @@ export class ContractsService {
       .eq('id', contract.id);
 
     if (error) {
-      console.error('Erreur lors de l\'incrémentation du compteur:', error);
+      logger.error('Erreur lors de l\'incrémentation du compteur:', error);
       throw new Error(`Impossible d'incrémenter le compteur: ${error.message}`);
     }
   }
@@ -226,7 +228,7 @@ export class ContractsService {
       .eq('status', 'active');
 
     if (error) {
-      console.error('Erreur lors de la réinitialisation des compteurs mensuels:', error);
+      logger.error('Erreur lors de la réinitialisation des compteurs mensuels:', error);
       throw new Error(`Impossible de réinitialiser les compteurs: ${error.message}`);
     }
   }
@@ -246,7 +248,7 @@ export class ContractsService {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Erreur lors de la récupération des contrats actifs:', error);
+      logger.error('Erreur lors de la récupération des contrats actifs:', error);
       return [];
     }
 
@@ -268,7 +270,7 @@ export class ContractsService {
       .select('contract_type, status');
 
     if (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
+      logger.error('Erreur lors de la récupération des statistiques:', error);
       return {
         total: 0,
         by_type: { decouverte: 0, starter: 0, pro: 0, premium: 0 },

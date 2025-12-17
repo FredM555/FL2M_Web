@@ -1,6 +1,7 @@
 // src/services/transactions.ts
 import { supabase } from './supabase';
 import { Transaction } from '../types/payments';
+import { logger } from '../utils/logger';
 
 export interface TransactionWithDetails extends Transaction {
   appointment?: {
@@ -97,7 +98,7 @@ export const getPractitionerTransactions = async (
   const { data, error } = await query;
 
   if (error) {
-    console.error('Erreur récupération transactions:', error);
+    logger.error('Erreur récupération transactions:', error);
     throw error;
   }
 
@@ -113,7 +114,7 @@ export const getPractitionerStats = async (practitionerId: string) => {
   });
 
   if (error) {
-    console.error('Erreur récupération stats:', error);
+    logger.error('Erreur récupération stats:', error);
     throw error;
   }
 
@@ -194,7 +195,7 @@ export const getAllTransactions = async (filters?: {
   const { data, error } = await query;
 
   if (error) {
-    console.error('Erreur récupération transactions:', error);
+    logger.error('Erreur récupération transactions:', error);
     throw error;
   }
 
@@ -208,7 +209,7 @@ export const getGlobalStats = async () => {
   const { data, error } = await supabase.rpc('get_global_transaction_stats');
 
   if (error) {
-    console.error('Erreur récupération stats globales:', error);
+    logger.error('Erreur récupération stats globales:', error);
     throw error;
   }
 
@@ -230,7 +231,7 @@ export const getStatsByPeriod = async (
   });
 
   if (error) {
-    console.error('Erreur récupération stats par période:', error);
+    logger.error('Erreur récupération stats par période:', error);
     throw error;
   }
 
@@ -244,7 +245,7 @@ export const getStatsByPractitioner = async () => {
   const { data, error } = await supabase.rpc('get_stats_by_practitioner');
 
   if (error) {
-    console.error('Erreur récupération stats par intervenant:', error);
+    logger.error('Erreur récupération stats par intervenant:', error);
     throw error;
   }
 

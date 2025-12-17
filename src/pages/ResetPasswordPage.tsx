@@ -15,11 +15,13 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../services/supabase';
+
 import LockResetIcon from '@mui/icons-material/LockReset';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
+import { logger } from '../utils/logger';
 
 const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -55,7 +57,7 @@ const ResetPasswordPage: React.FC = () => {
           setError('Le lien de réinitialisation est invalide ou a expiré.');
         }
       } catch (err) {
-        console.error('Erreur lors de la validation du token:', err);
+        logger.error('Erreur lors de la validation du token:', err);
         setTokenValid(false);
         setError('Une erreur est survenue lors de la validation du lien.');
       } finally {
@@ -111,7 +113,7 @@ const ResetPasswordPage: React.FC = () => {
         navigate('/login');
       }, 3000);
     } catch (err: any) {
-      console.error('Erreur lors de la réinitialisation:', err);
+      logger.error('Erreur lors de la réinitialisation:', err);
       setError(err.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe.');
     } finally {
       setLoading(false);

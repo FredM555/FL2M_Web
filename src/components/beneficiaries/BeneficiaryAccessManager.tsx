@@ -45,6 +45,7 @@ import {
 } from '../../services/beneficiaries';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logger } from '../../utils/logger';
 
 interface BeneficiaryAccessManagerProps {
   beneficiary: Beneficiary;
@@ -106,7 +107,7 @@ export const BeneficiaryAccessManager: React.FC<BeneficiaryAccessManagerProps> =
       const { data } = await getBeneficiaryAccess(beneficiary.id);
       setSharedAccess(data || []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des accès partagés:', err);
+      logger.error('Erreur lors du chargement des accès partagés:', err);
       setError(err.message || 'Erreur lors du chargement des accès partagés');
     } finally {
       setLoading(false);
@@ -151,7 +152,7 @@ export const BeneficiaryAccessManager: React.FC<BeneficiaryAccessManagerProps> =
         onAccessChanged();
       }
     } catch (err: any) {
-      console.error('Erreur lors du partage:', err);
+      logger.error('Erreur lors du partage:', err);
       setError(err.message || 'Erreur lors du partage');
     } finally {
       setSubmitting(false);
@@ -172,7 +173,7 @@ export const BeneficiaryAccessManager: React.FC<BeneficiaryAccessManagerProps> =
         onAccessChanged();
       }
     } catch (err: any) {
-      console.error('Erreur lors de la révocation:', err);
+      logger.error('Erreur lors de la révocation:', err);
       setError(err.message || 'Erreur lors de la révocation');
     }
   };

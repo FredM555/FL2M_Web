@@ -41,6 +41,7 @@ import DescriptionIcon from '@mui/icons-material/Description';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { AppointmentDetailsDialog } from '../components/appointments/AppointmentDetailsDialog';
 import { AppointmentValidationCard } from '../components/appointments/AppointmentValidationCard';
+import { logger } from '../utils/logger';
 
 // Interface pour la valeur de l'onglet
 interface TabPanelProps {
@@ -98,6 +99,7 @@ const MyAppointmentsPage = () => {
       // Charger les bénéficiaires et documents pour chaque rendez-vous
       if (data && data.length > 0) {
         const beneficiariesMap: Record<string, AppointmentBeneficiary[]> = {};
+
         const documentsCountMap: Record<string, number> = {};
 
         await Promise.all(
@@ -113,7 +115,7 @@ const MyAppointmentsPage = () => {
               const { data: documents } = await getAppointmentDocuments(appointment.id);
               documentsCountMap[appointment.id] = documents?.length || 0;
             } catch (err) {
-              console.error(`Erreur lors du chargement des données pour le RDV ${appointment.id}:`, err);
+              logger.error(`Erreur lors du chargement des données pour le RDV ${appointment.id}:`, err);
             }
           })
         );

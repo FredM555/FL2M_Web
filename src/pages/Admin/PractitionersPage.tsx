@@ -50,6 +50,7 @@ import ContractHistory from '../../components/admin/ContractHistory';
 import CreateAppointmentModal from '../../components/admin/CreateAppointmentModal';
 import ManageContractModal from '../../components/admin/ManageContractModal';
 import EditIbanModal from '../../components/admin/EditIbanModal';
+import { logger } from '../../utils/logger';
 
 // Type étendu pour inclure le profil complet
 interface EnhancedPractitioner extends Practitioner {
@@ -112,9 +113,10 @@ const AdminPractitionersPage: React.FC = () => {
               ...practitioner,
               activeContract
             };
+
           } catch (contractError) {
             // Si le chargement du contrat échoue, continuer sans contrat
-            console.warn(`Impossible de charger le contrat pour le intervenant ${practitioner.id}:`, contractError);
+            logger.warn(`Impossible de charger le contrat pour le intervenant ${practitioner.id}:`, contractError);
             return {
               ...practitioner,
               activeContract: null
@@ -138,7 +140,7 @@ const AdminPractitionersPage: React.FC = () => {
       setAvailableUsers(availableProfiles);
     } catch (err: any) {
       setError(`Erreur lors du chargement des données: ${err.message}`);
-      console.error('Erreur lors du chargement:', err);
+      logger.error('Erreur lors du chargement:', err);
     } finally {
       setLoading(false);
     }
@@ -195,7 +197,7 @@ const AdminPractitionersPage: React.FC = () => {
       loadData();
     } catch (err: any) {
       setError(`Erreur lors de la mise à jour du statut: ${err.message}`);
-      console.error('Erreur lors de la mise à jour du statut:', err);
+      logger.error('Erreur lors de la mise à jour du statut:', err);
     } finally {
       setLoading(false);
     }
@@ -261,7 +263,7 @@ const AdminPractitionersPage: React.FC = () => {
       loadData();
     } catch (err: any) {
       setError(`Erreur lors de l'enregistrement: ${err.message}`);
-      console.error('Erreur lors de l\'enregistrement:', err);
+      logger.error('Erreur lors de l\'enregistrement:', err);
     } finally {
       setLoading(false);
     }
@@ -286,7 +288,7 @@ const AdminPractitionersPage: React.FC = () => {
       loadData();
     } catch (err: any) {
       setError(`Erreur lors de la suppression: ${err.message}`);
-      console.error('Erreur lors de la suppression:', err);
+      logger.error('Erreur lors de la suppression:', err);
     } finally {
       setLoading(false);
     }

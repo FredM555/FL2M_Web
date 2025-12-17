@@ -14,6 +14,7 @@ import EventAvailableIcon from '@mui/icons-material/EventAvailable';
 import LocalHospitalIcon from '@mui/icons-material/LocalHospital';
 import DesignServicesIcon from '@mui/icons-material/DesignServices';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface StatCardProps {
   title: string;
@@ -95,7 +96,7 @@ const AdminStats: React.FC = () => {
           totalServices: servicesResponse.count || 0
         });
       } catch (error) {
-        console.error('Erreur lors de la récupération des statistiques:', error);
+        logger.error('Erreur lors de la récupération des statistiques:', error);
       } finally {
         setLoading(false);
       }

@@ -16,6 +16,7 @@ import {
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface EditIbanModalProps {
   open: boolean;
@@ -107,7 +108,7 @@ const EditIbanModal: React.FC<EditIbanModalProps> = ({
           onClose();
         }, 1500);
       } catch (err: any) {
-        console.error('Erreur lors de la suppression de l\'IBAN:', err);
+        logger.error('Erreur lors de la suppression de l\'IBAN:', err);
         setError(err.message || 'Impossible de supprimer l\'IBAN');
       } finally {
         setLoading(false);
@@ -139,7 +140,7 @@ const EditIbanModal: React.FC<EditIbanModalProps> = ({
         onClose();
       }, 1500);
     } catch (err: any) {
-      console.error('Erreur lors de la mise à jour de l\'IBAN:', err);
+      logger.error('Erreur lors de la mise à jour de l\'IBAN:', err);
       setError(err.message || 'Impossible de mettre à jour l\'IBAN');
     } finally {
       setLoading(false);

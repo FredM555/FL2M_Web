@@ -21,6 +21,7 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import PaymentIcon from '@mui/icons-material/Payment';
 import { Appointment, Practitioner, getPractitioners, supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { logger } from '../../utils/logger';
 
 interface AppointmentPractitionerProps {
   appointment: Appointment;
@@ -66,7 +67,7 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
         if (error) throw error;
         setPractitioners(data || []);
       } catch (err: any) {
-        console.error('Erreur lors du chargement des intervenants:', err);
+        logger.error('Erreur lors du chargement des intervenants:', err);
         setError('Impossible de charger la liste des intervenants');
       } finally {
         setLoadingPractitioners(false);
@@ -108,7 +109,7 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
         priceValue = parsedPrice;
       }
 
-      console.log('🔵 Changement intervenant:', {
+      logger.debug('🔵 Changement intervenant:', {
         ancien: appointment.practitioner?.id,
         nouveau: selectedPractitioner.id,
         customPrice: priceValue
@@ -126,7 +127,7 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
         .eq('id', appointment.id);
 
       if (updateError) {
-        console.error('❌ Erreur lors de la mise à jour:', updateError);
+        logger.error('❌ Erreur lors de la mise à jour:', updateError);
         throw updateError;
       }
 
@@ -149,12 +150,12 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
         .single();
 
       if (fetchError) {
-        console.error('❌ Erreur lors de la récupération:', fetchError);
+        logger.error('❌ Erreur lors de la récupération:', fetchError);
         throw fetchError;
       }
 
       if (data) {
-        console.log('✅ Intervenant changé avec succès:', {
+        logger.debug('✅ Intervenant changé avec succès:', {
           ancien: appointment.practitioner?.profile?.pseudo,
           nouveau: data.practitioner?.profile?.pseudo
         });
@@ -168,7 +169,7 @@ export const AppointmentPractitioner: React.FC<AppointmentPractitionerProps> = (
         onUpdate(data);
       }
     } catch (err: any) {
-      console.error('❌ Erreur lors de la mise à jour:', err);
+      logger.error('❌ Erreur lors de la mise à jour:', err);
       setError(err.message || 'Erreur lors du changement d\'intervenant');
     } finally {
       setLoading(false);

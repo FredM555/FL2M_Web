@@ -1,3 +1,4 @@
+
 // Service de numérologie
 // Calcul des nombres numérologiques selon les règles françaises
 
@@ -5,6 +6,7 @@
  * Table de correspondance lettre -> valeur numérique
  * A=1, B=2, C=3... Z=26 (réduit ensuite)
  */
+import { logger } from '../utils/logger';
 const LETTER_VALUES: Record<string, number> = {
   'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8, 'I': 9,
   'J': 1, 'K': 2, 'L': 3, 'M': 4, 'N': 5, 'O': 6, 'P': 7, 'Q': 8, 'R': 9,
@@ -141,7 +143,7 @@ export function calculateRacine1(birthDate: string): number {
     // Additionner et réduire le total
     return reduceWithMasterCheck([reducedDay, reducedMonth, reducedYear]);
   } catch (error) {
-    console.error('Erreur lors du calcul de racine1:', error);
+    logger.error('Erreur lors du calcul de racine1:', error);
     return 0;
   }
 }
@@ -188,7 +190,7 @@ export function calculateTronc(birthDate: string): number {
     // Additionner et réduire le total
     return reduceWithMasterCheck([reducedDay, reducedMonth]);
   } catch (error) {
-    console.error('Erreur lors du calcul du tronc:', error);
+    logger.error('Erreur lors du calcul du tronc:', error);
     return 0;
   }
 }
@@ -223,7 +225,7 @@ export function calculateEcorce(birthDate: string): number {
     const day = date.getDate();
     return reduceNumber(day);
   } catch (error) {
-    console.error('Erreur lors du calcul de l\'écorce:', error);
+    logger.error('Erreur lors du calcul de l\'écorce:', error);
     return 0;
   }
 }

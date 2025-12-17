@@ -23,6 +23,7 @@ import ErrorIcon from '@mui/icons-material/Error';
 import InfoIcon from '@mui/icons-material/Info';
 import { useNavigate } from 'react-router-dom';
 import { checkConnectStatus, StripeConnectStatus } from '../../services/stripeConnect';
+import { logger } from '../../utils/logger';
 
 export const StripeAccountStatus: React.FC = () => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ export const StripeAccountStatus: React.FC = () => {
       const connectStatus = await checkConnectStatus();
       setStatus(connectStatus);
     } catch (err: any) {
-      console.error('Erreur chargement statut Connect:', err);
+      logger.error('Erreur chargement statut Connect:', err);
       setError(err.message || 'Erreur lors de la vérification du statut');
     } finally {
       setLoading(false);

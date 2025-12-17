@@ -47,6 +47,7 @@ import { useAuth } from '../../context/AuthContext';
 import { PDFThumbnail } from './PDFThumbnail';
 import { PDFViewer } from './PDFViewer';
 import { AudioPlayer } from './AudioPlayer';
+import { logger } from '../../utils/logger';
 
 interface AppointmentDocumentsProps {
   appointmentId: string;
@@ -96,6 +97,7 @@ export const AppointmentDocuments: React.FC<AppointmentDocumentsProps> = ({
         }
       });
     };
+
   }, [appointmentId]);
 
   const loadDocuments = async () => {
@@ -111,34 +113,34 @@ export const AppointmentDocuments: React.FC<AppointmentDocumentsProps> = ({
         const urls: Record<string, string> = {};
         for (const doc of data) {
           try {
-            console.log('[AppointmentDocuments] Chargement blob pour:', doc.file_name, 'path:', doc.file_path);
+            logger.debug('[AppointmentDocuments] Chargement blob pour:', doc.file_name, 'path:', doc.file_path);
 
             // Méthode 1 : Télécharger le fichier en tant que blob (évite les problèmes CORS)
             const blobUrl = await getDocumentBlob(doc.file_path);
 
             if (blobUrl) {
-              console.log('[AppointmentDocuments] Blob URL créée:', blobUrl);
+              logger.debug('[AppointmentDocuments] Blob URL créée:', blobUrl);
               urls[doc.id] = blobUrl;
             } else {
               // Méthode 2 : URL signée comme fallback
-              console.log('[AppointmentDocuments] Tentative avec URL signée...');
+              logger.debug('[AppointmentDocuments] Tentative avec URL signée...');
               const signedUrl = await getSignedDocumentUrl(doc.file_path);
-              console.log('[AppointmentDocuments] URL signée générée:', signedUrl);
+              logger.debug('[AppointmentDocuments] URL signée générée:', signedUrl);
               urls[doc.id] = signedUrl;
             }
           } catch (err) {
-            console.error('[AppointmentDocuments] Erreur lors du chargement de l\'URL pour', doc.file_name, err);
+            logger.error('[AppointmentDocuments] Erreur lors du chargement de l\'URL pour', doc.file_name, err);
             // Méthode 3 : URL publique en dernier recours
             const publicUrl = getDocumentUrl(doc.file_path);
-            console.log('[AppointmentDocuments] Fallback URL publique:', publicUrl);
+            logger.debug('[AppointmentDocuments] Fallback URL publique:', publicUrl);
             urls[doc.id] = publicUrl;
           }
         }
-        console.log('[AppointmentDocuments] Toutes les URLs chargées:', urls);
+        logger.debug('[AppointmentDocuments] Toutes les URLs chargées:', urls);
         setDocumentUrls(urls);
       }
     } catch (err: any) {
-      console.error('Erreur lors du chargement des documents:', err);
+      logger.error('Erreur lors du chargement des documents:', err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -188,7 +190,7 @@ export const AppointmentDocuments: React.FC<AppointmentDocumentsProps> = ({
       setVisibleToConsultant(true);
       setUploadDialogOpen(false);
     } catch (err: any) {
-      console.error('Erreur lors de l\'upload:', err);
+      logger.error('Erreur lors de l\'upload:', err);
       setError(err.message);
     } finally {
       setUploading(false);
@@ -221,7 +223,7 @@ export const AppointmentDocuments: React.FC<AppointmentDocumentsProps> = ({
       await loadDocuments();
       setEditDialogOpen(false);
     } catch (err: any) {
-      console.error('Erreur lors de la mise à jour:', err);
+      logger.error('Erreur lors de la mise à jour:', err);
       setError(err.message);
     } finally {
       setUploading(false);
@@ -242,7 +244,7 @@ export const AppointmentDocuments: React.FC<AppointmentDocumentsProps> = ({
         window.URL.revokeObjectURL(url);
       }
     } catch (err: any) {
-      console.error('Erreur lors du téléchargement:', err);
+      logger.error('Erreur lors du téléchargement:', err);
       setError(err.message);
     }
   };
@@ -257,7 +259,7 @@ export const AppointmentDocuments: React.FC<AppointmentDocumentsProps> = ({
       if (error) throw error;
       await loadDocuments();
     } catch (err: any) {
-      console.error('Erreur lors de la suppression:', err);
+      logger.error('Erreur lors de la suppression:', err);
       setError(err.message);
     }
   };

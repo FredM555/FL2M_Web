@@ -30,6 +30,7 @@ import {
 import { getBeneficiaryAppointmentHistory, confirmBeneficiaryData } from '../../services/beneficiaries';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logger } from '../../utils/logger';
 
 interface BeneficiaryHistoryProps {
   beneficiaryId: string;
@@ -68,7 +69,7 @@ export const BeneficiaryHistory: React.FC<BeneficiaryHistoryProps> = ({
       const { data } = await getBeneficiaryAppointmentHistory(beneficiaryId);
       setAppointments(data || []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement de l\'historique:', err);
+      logger.error('Erreur lors du chargement de l\'historique:', err);
       setError(err.message || 'Erreur lors du chargement de l\'historique');
     } finally {
       setLoading(false);

@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+
 import { supabase } from '../services/supabase';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
@@ -43,6 +44,7 @@ import { getUserBeneficiaries, createBeneficiary, updateBeneficiary } from '../s
 import type { BeneficiaryWithAccess } from '../types/beneficiary';
 import { getBeneficiaryDocuments, getSignedBeneficiaryDocumentUrl, DOCUMENT_TYPE_LABELS } from '../services/beneficiaryDocuments';
 import type { BeneficiaryDocument } from '../services/beneficiaryDocuments';
+import { logger } from '../utils/logger';
 
 const ProfilePage = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -98,7 +100,7 @@ const ProfilePage = () => {
       const { data: beneficiaries, error } = await getUserBeneficiaries(user.id);
 
       if (error) {
-        console.error('Erreur lors du chargement des bénéficiaires:', error);
+        logger.error('Erreur lors du chargement des bénéficiaires:', error);
       } else if (beneficiaries && beneficiaries.length > 0) {
         // Trouver le bénéficiaire avec relationship = 'self'
         const selfBeneficiary = beneficiaries.find(b => b.relationship === 'self');
@@ -110,7 +112,7 @@ const ProfilePage = () => {
         }
       }
     } catch (err) {
-      console.error('Erreur:', err);
+      logger.error('Erreur:', err);
     } finally {
       setLoadingBeneficiary(false);
     }
@@ -122,12 +124,12 @@ const ProfilePage = () => {
     try {
       const { data, error } = await getBeneficiaryDocuments(beneficiaryId);
       if (error) {
-        console.error('Erreur lors du chargement des documents:', error);
+        logger.error('Erreur lors du chargement des documents:', error);
       } else if (data) {
         setDocuments(data);
       }
     } catch (err) {
-      console.error('Erreur:', err);
+      logger.error('Erreur:', err);
     } finally {
       setLoadingDocuments(false);
     }
@@ -139,7 +141,7 @@ const ProfilePage = () => {
       const url = await getSignedBeneficiaryDocumentUrl(document.file_path);
       window.open(url, '_blank');
     } catch (err) {
-      console.error('Erreur lors de l\'ouverture du document:', err);
+      logger.error('Erreur lors de l\'ouverture du document:', err);
       setSnackbar({
         open: true,
         message: 'Impossible d\'ouvrir le document. Veuillez réessayer.',
@@ -181,13 +183,13 @@ const ProfilePage = () => {
           // Mettre à jour le bénéficiaire existant
           const { error: beneficiaryError } = await updateBeneficiary(myBeneficiary.id, beneficiaryData, user.id);
           if (beneficiaryError) {
-            console.error('Erreur lors de la mise à jour du bénéficiaire:', beneficiaryError);
+            logger.error('Erreur lors de la mise à jour du bénéficiaire:', beneficiaryError);
           }
         } else {
           // Créer un nouveau bénéficiaire
           const { error: beneficiaryError } = await createBeneficiary(beneficiaryData, user.id);
           if (beneficiaryError) {
-            console.error('Erreur lors de la création du bénéficiaire:', beneficiaryError);
+            logger.error('Erreur lors de la création du bénéficiaire:', beneficiaryError);
           }
         }
 

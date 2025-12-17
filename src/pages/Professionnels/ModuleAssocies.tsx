@@ -22,6 +22,7 @@ import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import SacredGeometryBackground from '../../components/SacredGeometryBackground';
+import { logger } from '../../utils/logger';
 
 interface Service {
   id: string;
@@ -75,7 +76,7 @@ const ModuleAssocies: React.FC = () => {
         if (error) throw error;
         if (data) setService(data as Service);
       } catch (err) {
-        console.error('Erreur lors du chargement du service:', err);
+        logger.error('Erreur lors du chargement du service:', err);
         setError('Impossible de charger les informations du service.');
       } finally {
         setLoading(false);

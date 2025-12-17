@@ -24,6 +24,7 @@ import { supabase } from '../../services/supabase';
 import { useAuth } from '../../context/AuthContext';
 import AdminWeeklyCalendar from '../../components/admin/AdminWeeklyCalendar';
 import AdminAppointmentsTable from '../../components/admin/AdminAppointmentsTable';
+import { logger } from '../../utils/logger';
 
 // Interface pour les types de vues
 interface TabPanelProps {
@@ -102,7 +103,7 @@ const PractitionerSchedulePage: React.FC = () => {
       setPractitioner(data);
       setPractitioners(data ? [data] : []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement de l\'intervenant:', err);
+      logger.error('Erreur lors du chargement de l\'intervenant:', err);
       setError(`Erreur lors du chargement des données : ${err.message}`);
     }
   };
@@ -156,7 +157,7 @@ const PractitionerSchedulePage: React.FC = () => {
 
       setAppointments(data || []);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des rendez-vous:', err);
+      logger.error('Erreur lors du chargement des rendez-vous:', err);
       setError(`Erreur lors du chargement des rendez-vous : ${err.message}`);
     } finally {
       setLoading(false);

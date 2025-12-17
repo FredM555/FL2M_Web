@@ -3,6 +3,7 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { logger } from '../../utils/logger';
 
 // Configuration du worker PDF.js - utilise le worker local
 pdfjs.GlobalWorkerOptions.workerSrc = '/pdf-worker/pdf.worker.min.mjs';
@@ -39,7 +40,7 @@ export const PDFThumbnail: React.FC<PDFThumbnailProps> = ({
           setResolvedUrl(resolved);
         }
       } catch (err) {
-        console.error('Erreur lors de la résolution de l\'URL:', err);
+        logger.error('Erreur lors de la résolution de l\'URL:', err);
         setError(true);
         setLoading(false);
       }
@@ -49,15 +50,15 @@ export const PDFThumbnail: React.FC<PDFThumbnailProps> = ({
   }, [url]);
 
   const onDocumentLoadSuccess = ({ numPages }: { numPages: number }) => {
-    console.log('[PDFThumbnail] PDF chargé avec succès, nombre de pages:', numPages);
+    logger.debug('[PDFThumbnail] PDF chargé avec succès, nombre de pages:', numPages);
     setNumPages(numPages);
     setLoading(false);
     setError(false);
   };
 
   const onDocumentLoadError = (error: Error) => {
-    console.error('[PDFThumbnail] Erreur lors du chargement du PDF:', error);
-    console.error('[PDFThumbnail] URL utilisée:', resolvedUrl);
+    logger.error('[PDFThumbnail] Erreur lors du chargement du PDF:', error);
+    logger.error('[PDFThumbnail] URL utilisée:', resolvedUrl);
     setLoading(false);
     setError(true);
   };

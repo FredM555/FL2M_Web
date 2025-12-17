@@ -21,6 +21,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import AppleIcon from '@mui/icons-material/Apple';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import { logger } from '../utils/logger';
 
 interface LocationState {
   from?: string;
@@ -32,7 +33,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const state = location.state as LocationState || {};
-  
+
   const { signInWithEmail, signInWithGoogle, signInWithApple } = useAuth();
   
   const [email, setEmail] = useState('');
@@ -76,7 +77,7 @@ const LoginPage: React.FC = () => {
         navigate('/');
       }
     } catch (err) {
-      console.error('Erreur de connexion:', err);
+      logger.error('Erreur de connexion:', err);
       setError('Identifiants incorrects. Veuillez réessayer.');
     } finally {
       setLoading(false);
@@ -89,7 +90,7 @@ const LoginPage: React.FC = () => {
       await signInWithGoogle();
       // La redirection se fera automatiquement via OAuth
     } catch (err) {
-      console.error('Erreur de connexion Google:', err);
+      logger.error('Erreur de connexion Google:', err);
       setError('Erreur lors de la connexion avec Google. Veuillez réessayer.');
     }
   };
@@ -100,7 +101,7 @@ const LoginPage: React.FC = () => {
       await signInWithApple();
       // La redirection se fera automatiquement via OAuth
     } catch (err) {
-      console.error('Erreur de connexion Apple:', err);
+      logger.error('Erreur de connexion Apple:', err);
       setError('Erreur lors de la connexion avec Apple. Veuillez réessayer.');
     }
   };

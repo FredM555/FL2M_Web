@@ -18,6 +18,7 @@ import { format, formatDistance } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Link as RouterLink } from 'react-router-dom';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface Entry {
   id: string;
@@ -78,6 +79,7 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({
                 status: apt.status,
                 date: apt.start_time
               };
+
             });
             break;
             
@@ -121,7 +123,7 @@ const RecentEntries: React.FC<RecentEntriesProps> = ({
         
         setEntries(data);
       } catch (error: any) {
-        console.error(`Erreur lors de la récupération des ${type}:`, error);
+        logger.error(`Erreur lors de la récupération des ${type}:`, error);
         setError(`Impossible de charger les données: ${error.message}`);
       } finally {
         setLoading(false);

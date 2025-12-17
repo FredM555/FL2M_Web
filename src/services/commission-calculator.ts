@@ -2,12 +2,14 @@
 // Service de calcul de commission selon le Modèle D
 
 import { createClient } from '@supabase/supabase-js';
+
 import {
   CommissionCalculationResult,
   ContractType,
   CONTRACT_CONFIGS,
 } from '../types/payments';
 import { ContractsService } from './contracts';
+import { logger } from '../utils/logger';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -56,7 +58,7 @@ export class CommissionCalculator {
     });
 
     if (error) {
-      console.error('Erreur lors du calcul de la commission:', error);
+      logger.error('Erreur lors du calcul de la commission:', error);
       throw new Error(`Impossible de calculer la commission: ${error.message}`);
     }
 
@@ -240,7 +242,7 @@ export class CommissionCalculator {
     const { data, error } = await query;
 
     if (error) {
-      console.error('Erreur lors de la récupération des statistiques:', error);
+      logger.error('Erreur lors de la récupération des statistiques:', error);
       throw new Error(`Impossible de récupérer les statistiques: ${error.message}`);
     }
 

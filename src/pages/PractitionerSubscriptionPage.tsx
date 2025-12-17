@@ -32,6 +32,7 @@ import {
 } from '../types/payments';
 import { supabase } from '../services/supabase';
 import { createSubscriptionCheckout, redirectToCheckout } from '../services/stripe';
+import { logger } from '../utils/logger';
 
 const PractitionerSubscriptionPage: React.FC = () => {
   const { user } = useAuth();
@@ -88,7 +89,7 @@ const PractitionerSubscriptionPage: React.FC = () => {
         setSelectedContractType(contractData.contract_type as ContractType);
       }
     } catch (err: any) {
-      console.error('Erreur lors du chargement du contrat:', err);
+      logger.error('Erreur lors du chargement du contrat:', err);
       setError(err.message || 'Erreur lors du chargement du contrat');
     } finally {
       setLoading(false);
@@ -173,7 +174,7 @@ const PractitionerSubscriptionPage: React.FC = () => {
       // Rediriger vers Stripe Checkout
       await redirectToCheckout(session.url);
     } catch (err: any) {
-      console.error('Erreur lors du changement d\'abonnement:', err);
+      logger.error('Erreur lors du changement d\'abonnement:', err);
       setError(err.message || 'Erreur lors du changement d\'abonnement');
       setSubmitting(false);
     }

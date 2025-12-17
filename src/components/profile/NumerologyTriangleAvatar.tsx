@@ -1,6 +1,7 @@
 // src/components/profile/NumerologyTriangleAvatar.tsx
 import React from 'react';
 import { Box } from '@mui/material';
+import { logger } from '../../utils/logger';
 
 interface NumerologyTriangleAvatarProps {
   racine1?: number;
@@ -17,11 +18,11 @@ export const NumerologyTriangleAvatar: React.FC<NumerologyTriangleAvatarProps> =
   dynamique_de_vie,
   size = 120
 }) => {
-  console.log('[NumerologyTriangleAvatar] Props reçues:', { racine1, racine2, tronc, dynamique_de_vie, size });
+  logger.debug('[NumerologyTriangleAvatar] Props reçues:', { racine1, racine2, tronc, dynamique_de_vie, size });
 
   // Si aucune donnée de numérologie n'est disponible, ne rien afficher
   if (!racine1 && !racine2 && !tronc) {
-    console.log('[NumerologyTriangleAvatar] Aucune donnée, retour null');
+    logger.debug('[NumerologyTriangleAvatar] Aucune donnée, retour null');
     return null;
   }
 
@@ -31,7 +32,7 @@ export const NumerologyTriangleAvatar: React.FC<NumerologyTriangleAvatarProps> =
   const troncFontSize = fontSize * 1.05;
   const backgroundFontSize = size * 0.8; // Très grand pour la dynamique de vie en fond
 
-  console.log('[NumerologyTriangleAvatar] Rendu:', { tronc, racine1, racine2, dynamique_de_vie });
+  logger.debug('[NumerologyTriangleAvatar] Rendu:', { tronc, racine1, racine2, dynamique_de_vie });
 
   return (
     <Box

@@ -15,6 +15,7 @@ import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { supabase } from '../../services/supabase';
+import { logger } from '../../utils/logger';
 
 interface ContractUploaderProps {
   practitionerId: string;
@@ -98,7 +99,7 @@ const ContractUploader: React.FC<ContractUploaderProps> = ({
       }, 100);
 
     } catch (err: any) {
-      console.error('Erreur lors de l\'upload:', err);
+      logger.error('Erreur lors de l\'upload:', err);
       const errorMessage = err.message || 'Erreur lors de l\'upload du fichier';
       setError(errorMessage);
       if (onUploadError) {

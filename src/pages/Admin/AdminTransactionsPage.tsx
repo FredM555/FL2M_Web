@@ -41,6 +41,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { logger } from '../../utils/logger';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -120,7 +121,7 @@ const AdminTransactionsPage: React.FC = () => {
       const { data: transactionsData } = await getAllTransactions(filters);
       setTransactions(transactionsData || []);
     } catch (err: any) {
-      console.error('Erreur chargement transactions:', err);
+      logger.error('Erreur chargement transactions:', err);
       setError('Erreur lors du chargement des transactions');
     } finally {
       setLoading(false);
@@ -132,7 +133,7 @@ const AdminTransactionsPage: React.FC = () => {
       const { data } = await getStatsByPeriod(periodFilter);
       setPeriodStats(data || []);
     } catch (err) {
-      console.error('Erreur chargement stats période:', err);
+      logger.error('Erreur chargement stats période:', err);
     }
   };
 
@@ -141,7 +142,7 @@ const AdminTransactionsPage: React.FC = () => {
       const { data } = await getStatsByPractitioner();
       setPractitionerStats(data || []);
     } catch (err) {
-      console.error('Erreur chargement stats intervenant:', err);
+      logger.error('Erreur chargement stats intervenant:', err);
     }
   };
 

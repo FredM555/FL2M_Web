@@ -38,6 +38,7 @@ import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 import PendingIcon from '@mui/icons-material/Pending';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import { logger } from '../utils/logger';
 
 // Helper pour générer le texte du tooltip de commission
 const getCommissionTooltip = (commissionType: ContractType | null, isFreeFree: boolean): string => {
@@ -131,7 +132,7 @@ const PractitionerTransactionsPage: React.FC = () => {
 
       setTransactions(transactionsData || []);
     } catch (err: any) {
-      console.error('Erreur chargement transactions:', err);
+      logger.error('Erreur chargement transactions:', err);
       setError('Erreur lors du chargement des transactions');
     } finally {
       setLoading(false);

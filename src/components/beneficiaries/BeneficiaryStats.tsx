@@ -19,6 +19,7 @@ import {
 import { getBeneficiaryStats } from '../../services/beneficiaries';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { logger } from '../../utils/logger';
 
 interface BeneficiaryStatsProps {
   beneficiaryId: string;
@@ -106,7 +107,7 @@ export const BeneficiaryStats: React.FC<BeneficiaryStatsProps> = ({ beneficiaryI
       const { data } = await getBeneficiaryStats(beneficiaryId);
       setStats(data);
     } catch (err: any) {
-      console.error('Erreur lors du chargement des statistiques:', err);
+      logger.error('Erreur lors du chargement des statistiques:', err);
       setError(err.message || 'Erreur lors du chargement des statistiques');
     } finally {
       setLoading(false);
