@@ -191,18 +191,31 @@ export const BeneficiaryHistory: React.FC<BeneficiaryHistoryProps> = ({
         </Box>
       ) : (
         <Timeline position="right">
-          {filteredAppointments.map((appointment, index) => (
-            <TimelineItem key={appointment.id}>
-              <TimelineOppositeContent
-                sx={{ flex: 0.3, py: 2, color: 'text.secondary' }}
-              >
-                <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                  {format(new Date(appointment.start_time), 'dd MMM yyyy', { locale: fr })}
-                </Typography>
-                <Typography variant="caption">
-                  {format(new Date(appointment.start_time), 'HH:mm', { locale: fr })}
-                </Typography>
-              </TimelineOppositeContent>
+          {filteredAppointments.map((appointment, index) => {
+            // Vérifier si start_time est valide
+            const startTime = appointment.start_time ? new Date(appointment.start_time) : null;
+            const isValidDate = startTime && !isNaN(startTime.getTime());
+
+            return (
+              <TimelineItem key={appointment.id}>
+                <TimelineOppositeContent
+                  sx={{ flex: 0.3, py: 2, color: 'text.secondary' }}
+                >
+                  {isValidDate ? (
+                    <>
+                      <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                        {format(startTime, 'dd MMM yyyy', { locale: fr })}
+                      </Typography>
+                      <Typography variant="caption">
+                        {format(startTime, 'HH:mm', { locale: fr })}
+                      </Typography>
+                    </>
+                  ) : (
+                    <Typography variant="body2" sx={{ fontWeight: 600, color: 'error.main' }}>
+                      Date invalide
+                    </Typography>
+                  )}
+                </TimelineOppositeContent>
 
               <TimelineSeparator>
                 <TimelineDot color={getTimelineDotColor(appointment.status)}>
@@ -260,7 +273,8 @@ export const BeneficiaryHistory: React.FC<BeneficiaryHistoryProps> = ({
                 </Paper>
               </TimelineContent>
             </TimelineItem>
-          ))}
+            );
+          })}
         </Timeline>
       )}
     </Box>
