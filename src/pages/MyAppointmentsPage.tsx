@@ -22,7 +22,7 @@ import {
   Tabs
 } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
-import { getAppointments, Appointment, getAppointmentDocuments } from '../services/supabase';
+import { getAppointments, Appointment, getAppointmentDocuments, supabase } from '../services/supabase';
 import { cancelAppointment } from '../services/supabase-appointments';
 import { getAppointmentBeneficiaries } from '../services/beneficiaries';
 import { AppointmentBeneficiary } from '../types/beneficiary';
@@ -38,6 +38,7 @@ import BadgeIcon from '@mui/icons-material/Badge';
 import InfoIcon from '@mui/icons-material/Info';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import DescriptionIcon from '@mui/icons-material/Description';
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { AppointmentDetailsDialog } from '../components/appointments/AppointmentDetailsDialog';
 import { AppointmentValidationCard } from '../components/appointments/AppointmentValidationCard';
@@ -92,7 +93,47 @@ const MyAppointmentsPage = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await getAppointments(user.id);
+      let data, error;
+
+      // Si l'utilisateur est admin ou intervenant, charger les rendez-vous par practitioner_id
+      if (profile?.user_type === 'admin' || profile?.user_type === 'intervenant') {
+        // Récupérer le practitioner_id depuis le profile
+        const { data: practitionerData } = await supabase
+          .from('practitioners')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+
+        if (practitionerData) {
+          const response = await supabase
+            .from('appointments')
+            .select(`
+              *,
+              client:profiles!client_id(*),
+              practitioner:practitioners!practitioner_id(
+                *,
+                profile:profiles(*)
+              ),
+              service:services(*)
+            `)
+            .eq('practitioner_id', practitionerData.id)
+            .order('start_time', { ascending: true });
+
+          data = response.data;
+          error = response.error;
+        } else {
+          // Si pas de practitioner trouvé, charger les rendez-vous comme client
+          const response = await getAppointments(user.id);
+          data = response.data;
+          error = response.error;
+        }
+      } else {
+        // Pour les clients, charger les rendez-vous par client_id
+        const response = await getAppointments(user.id);
+        data = response.data;
+        error = response.error;
+      }
+
       if (error) throw error;
       setAppointments(data || []);
 
@@ -132,7 +173,7 @@ const MyAppointmentsPage = () => {
 
   useEffect(() => {
     loadAppointments();
-  }, [user]);
+  }, [user, profile]);
 
   // Comptage des rendez-vous en cours (completed + issue_reported)
   const getToValidateCount = () => {
@@ -143,9 +184,39 @@ const MyAppointmentsPage = () => {
     ).length;
   };
 
+  // Comptage des rendez-vous à préparer (pour les intervenants)
+  const getToPrepareCount = () => {
+    return appointments.filter(
+      appointment =>
+        appointment.status === 'confirmed' &&
+        appointment.payment_status === 'paid' &&
+        !isPast(parseISO(appointment.start_time))
+    ).length;
+  };
+
+  // Vérifier si l'utilisateur est un intervenant ou un admin
+  const isIntervenant = profile?.user_type === 'intervenant' || profile?.user_type === 'admin';
+
   // Filtrage des rendez-vous selon l'onglet sélectionné
   const filteredAppointments = () => {
-    switch (tabValue) {
+    // Si c'est un intervenant, les index sont décalés
+    const adjustedTabValue = isIntervenant ? tabValue : tabValue;
+
+    // Pour les intervenants, l'onglet 0 est "À préparer"
+    if (isIntervenant && tabValue === 0) {
+      // À préparer: Rendez-vous confirmés ET payés (futurs uniquement)
+      return appointments.filter(
+        appointment =>
+          appointment.status === 'confirmed' &&
+          appointment.payment_status === 'paid' &&
+          !isPast(parseISO(appointment.start_time))
+      );
+    }
+
+    // Ajuster l'index pour les intervenants (décalé de 1)
+    const effectiveTab = isIntervenant ? tabValue - 1 : tabValue;
+
+    switch (effectiveTab) {
       case 0: // À venir (pending/confirmed dans le futur)
         return appointments.filter(
           appointment =>
@@ -760,6 +831,8 @@ const MyAppointmentsPage = () => {
                 value={tabValue}
                 onChange={handleTabChange}
                 aria-label="appointment tabs"
+                variant="scrollable"
+                scrollButtons="auto"
                 sx={{
                   '& .MuiTab-root': {
                     color: '#1a1a2e',
@@ -774,6 +847,31 @@ const MyAppointmentsPage = () => {
                   },
                 }}
               >
+                {isIntervenant && (
+                  <Tab
+                    label={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        À préparer
+                        {getToPrepareCount() > 0 && (
+                          <Chip
+                            label={getToPrepareCount()}
+                            size="small"
+                            sx={{
+                              backgroundColor: '#4CAF50',
+                              color: 'white',
+                              fontWeight: 700,
+                              height: '20px',
+                              minWidth: '20px',
+                              '& .MuiChip-label': {
+                                px: 0.75,
+                              },
+                            }}
+                          />
+                        )}
+                      </Box>
+                    }
+                  />
+                )}
                 <Tab label="À venir" />
                 <Tab
                   label={
@@ -803,7 +901,38 @@ const MyAppointmentsPage = () => {
               </Tabs>
             </Box>
 
-            <TabPanel value={tabValue} index={0}>
+            {/* Onglet "À préparer" pour les intervenants */}
+            {isIntervenant && (
+              <TabPanel value={tabValue} index={0}>
+                {filteredAppointments().length === 0 ? (
+                  <Box sx={{ textAlign: 'center', py: 4 }}>
+                    <AssignmentIcon sx={{ fontSize: 60, color: 'rgba(0,0,0,0.2)', mb: 2 }} />
+                    <Typography variant="h6" sx={{ color: 'text.secondary' }}>
+                      Vous n'avez pas de rendez-vous à préparer
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                      Les rendez-vous confirmés et payés apparaîtront ici pour vous permettre de les préparer.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <>
+                    <Alert severity="info" sx={{ mb: 3 }}>
+                      <Typography variant="body2">
+                        <strong>Rendez-vous à préparer</strong> - Ces rendez-vous sont confirmés et payés. Vous pouvez consulter les informations des bénéficiaires et préparer vos séances.
+                      </Typography>
+                    </Alert>
+                    <Grid container spacing={3}>
+                      {filteredAppointments().map((appointment) =>
+                        renderAppointmentCard(appointment, false)
+                      )}
+                    </Grid>
+                  </>
+                )}
+              </TabPanel>
+            )}
+
+            {/* Onglet "À venir" */}
+            <TabPanel value={tabValue} index={isIntervenant ? 1 : 0}>
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="h6" sx={{ color: 'text.secondary' }}>
@@ -841,7 +970,8 @@ const MyAppointmentsPage = () => {
               )}
             </TabPanel>
 
-            <TabPanel value={tabValue} index={1}>
+            {/* Onglet "En cours" */}
+            <TabPanel value={tabValue} index={isIntervenant ? 2 : 1}>
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="h6" sx={{ color: 'text.secondary' }}>
@@ -869,7 +999,8 @@ const MyAppointmentsPage = () => {
               )}
             </TabPanel>
 
-            <TabPanel value={tabValue} index={2}>
+            {/* Onglet "Passés" */}
+            <TabPanel value={tabValue} index={isIntervenant ? 3 : 2}>
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="h6" sx={{ color: 'text.secondary' }}>
@@ -885,7 +1016,8 @@ const MyAppointmentsPage = () => {
               )}
             </TabPanel>
 
-            <TabPanel value={tabValue} index={3}>
+            {/* Onglet "Annulés" */}
+            <TabPanel value={tabValue} index={isIntervenant ? 4 : 3}>
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography variant="h6" sx={{ color: 'text.secondary' }}>
