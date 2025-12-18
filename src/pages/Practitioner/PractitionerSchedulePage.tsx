@@ -42,6 +42,7 @@ import { useAuth } from '../../context/AuthContext';
 import AdminWeeklyCalendar from '../../components/admin/AdminWeeklyCalendar';
 import AdminAppointmentsTable from '../../components/admin/AdminAppointmentsTable';
 import AutoScheduleGenerator from '../../components/admin/AutoScheduleGenerator';
+import PractitionerWeeklyCalendar from '../../components/practitioner/PractitionerWeeklyCalendar';
 import { logger } from '../../utils/logger';
 
 // Interface pour les types de vues
@@ -84,18 +85,14 @@ const PractitionerSchedulePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // États pour les filtres - Par défaut, on filtre à partir d'aujourd'hui
+  // États pour les filtres - Par défaut, tous les rendez-vous sont affichés
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState<string>('all');
   const [servicesFilter, setServicesFilter] = useState<string[]>([]);
   const [dateFilter, setDateFilter] = useState<Date | null>(null);
-  const [startDateFilter, setStartDateFilter] = useState<Date | null>(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
-  });
+  const [startDateFilter, setStartDateFilter] = useState<Date | null>(null);
   const [endDateFilter, setEndDateFilter] = useState<Date | null>(null);
-  const [quickFilter, setQuickFilter] = useState<string>('fromToday');
+  const [quickFilter, setQuickFilter] = useState<string>('');
   const [showFilters, setShowFilters] = useState(false);
 
   // Couleurs par module/catégorie
@@ -119,6 +116,9 @@ const PractitionerSchedulePage: React.FC = () => {
 
   // État pour le générateur automatique
   const [autoGeneratorOpen, setAutoGeneratorOpen] = useState(false);
+
+  // État pour le rendez-vous sélectionné (détail)
+  const [selectedAppointmentDetail, setSelectedAppointmentDetail] = useState<Appointment | null>(null);
 
   // État pour l'onglet actif (0 = vue calendrier, 1 = vue tableau)
   const [activeTab, setActiveTab] = useState(0);
@@ -680,18 +680,12 @@ const PractitionerSchedulePage: React.FC = () => {
             </Box>
 
             <TabPanel value={activeTab} index={0}>
-              {practitioners.length > 0 && (
-                <AdminWeeklyCalendar
-                  appointments={appointments}
-                  practitioners={practitioners}
-                  services={services}
-                  onAppointmentCreated={handleAppointmentCreated}
-                  onAppointmentUpdated={handleAppointmentUpdated}
-                  onAppointmentDeleted={handleAppointmentDeleted}
-                  isPractitionerView={true}
-                  practitionerId={practitioner?.id}
-                />
-              )}
+              <PractitionerWeeklyCalendar
+                appointments={appointments}
+                services={services}
+                onAppointmentClick={(appointment) => setSelectedAppointmentDetail(appointment)}
+                onAppointmentChange={fetchAppointments}
+              />
             </TabPanel>
 
             <TabPanel value={activeTab} index={1}>

@@ -114,7 +114,7 @@ export const suspendConflictingAppointments = async (
       .from('appointments')
       .update({
         status: 'cancelled',
-        notes: 'Suspendu automatiquement car un autre rendez-vous a été confirmé sur ce créneau',
+        notes: `[AUTO_SUSPENDED:${confirmedAppointmentId}] Suspendu automatiquement car un autre rendez-vous a été confirmé sur ce créneau`,
         updated_at: new Date().toISOString()
       })
       .in('id', appointmentIds)
@@ -150,6 +150,80 @@ export const suspendConflictingAppointments = async (
     };
   } catch (error) {
     logger.error('Exception dans suspendConflictingAppointments:', error);
+    throw error;
+  }
+};
+
+/**
+ * Réactive les rendez-vous qui ont été automatiquement suspendus par un rendez-vous donné
+ * Cette fonction est appelée quand un rendez-vous confirmé redevient disponible (pending)
+ * @param appointmentId ID du rendez-vous qui avait causé les suspensions
+ * @returns Nombre de rendez-vous réactivés
+ */
+export const reactivateSuspendedAppointments = async (
+  appointmentId: string
+): Promise<{ reactivatedCount: number; reactivatedAppointments: any[] }> => {
+  try {
+    // Trouver tous les rendez-vous annulés qui ont été suspendus automatiquement par ce rendez-vous
+    const { data, error } = await supabase
+      .from('appointments')
+      .select('*')
+      .eq('status', 'cancelled')
+      .like('notes', `%[AUTO_SUSPENDED:${appointmentId}]%`);
+
+    if (error) {
+      logger.error('Erreur lors de la recherche des rendez-vous à réactiver:', error);
+      throw error;
+    }
+
+    // Si aucun rendez-vous à réactiver
+    if (!data || data.length === 0) {
+      return { reactivatedCount: 0, reactivatedAppointments: [] };
+    }
+
+    // Réactiver tous ces rendez-vous
+    const appointmentIds = data.map(a => a.id);
+
+    const { data: updatedAppointments, error: updateError } = await supabase
+      .from('appointments')
+      .update({
+        status: 'pending',
+        notes: null, // Effacer la note d'annulation automatique
+        updated_at: new Date().toISOString()
+      })
+      .in('id', appointmentIds)
+      .select();
+
+    if (updateError) {
+      logger.error('Erreur lors de la réactivation des rendez-vous:', updateError);
+      throw updateError;
+    }
+
+    // Logger l'action pour chaque rendez-vous réactivé
+    for (const appointment of data) {
+      if (appointment.client_id) {
+        logActivity({
+          userId: appointment.client_id,
+          actionType: 'appointment_reactivated',
+          actionDescription: 'Rendez-vous réactivé automatiquement car le rendez-vous conflictuel n\'est plus confirmé',
+          entityType: 'appointment',
+          entityId: appointment.id,
+          metadata: {
+            auto_reactivated: true,
+            causing_appointment_id: appointmentId
+          }
+        }).catch(err => logger.warn('Erreur log réactivation auto RDV:', err));
+      }
+    }
+
+    logger.debug(`${data.length} rendez-vous réactivé(s) automatiquement`);
+
+    return {
+      reactivatedCount: data.length,
+      reactivatedAppointments: updatedAppointments || []
+    };
+  } catch (error) {
+    logger.error('Exception dans reactivateSuspendedAppointments:', error);
     throw error;
   }
 };
