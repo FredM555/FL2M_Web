@@ -51,18 +51,18 @@ const ModuleEnfants: React.FC = () => {
   // Caractéristiques spécifiques au module Enfant
   const caracteristiques = [
     {
-      titre: 'Développement Cognitif',
-      description: 'Stimulez les capacités d\'apprentissage et la curiosité.',
+      titre: 'Découverte de Soi',
+      description: 'Aide à reconnaître ses forces et ses talents, tout en l’encourageant à progresser à son rythme.',
       icone: SchoolIcon
     },
     {
-      titre: 'Intelligence Émotionnelle',
-      description: 'Développez la conscience et la gestion des émotions.',
+      titre: 'Émotions & Équilibre',
+      description: 'Des clés simples pour comprendre ses émotions, les exprimer sereinement et trouver un équilibre intérieur au quotidien.',
       icone: PsychologyIcon
     },
     {
-      titre: 'Confiance en Soi',
-      description: 'Construisez l\'estime et la confiance de votre enfant.',
+      titre: 'Confiance & Épanouissement',
+      description: 'Un accompagnement personnalisé pour renforcer l’estime de soi, encourager l’autonomie et favoriser le bien-être de votre enfant.',
       icone: SportsIcon
     }
   ];
@@ -346,10 +346,9 @@ const ModuleEnfants: React.FC = () => {
               Objectifs du Module
             </Typography>
             <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-              - Stimuler le développement cognitif
-              - Renforcer l'intelligence émotionnelle
-              - Développer la confiance en soi
-              - Encourager la curiosité et l'apprentissage
+- Aider l’enfant à mieux se connaître<br></br> 
+- Favoriser le développement de ses capacités et de réflexion<br></br> 
+- Renforcer la confiance en soi et encourager l’expression de son potentiel<br></br> 
             </Typography>
           </Grid>
           <Grid item xs={12} md={6}>
@@ -357,10 +356,9 @@ const ModuleEnfants: React.FC = () => {
               Approches et outils
             </Typography>
             <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-              - Séances ludiques d'apprentissage
-              - Coaching de développement personnel
-              - Techniques de gestion émotionnelle
-              - Activités de stimulation cognitive
+              - Accompagnement individuel adapté à l’âge et au rythme de l’enfant<br></br>
+              - Outils simples de compréhension des besoins fondamentaux<br></br>
+              - Méthode de Numérologie Stratégique®<br></br>
             </Typography>
           </Grid>
         </Grid>
@@ -373,7 +371,7 @@ const ModuleEnfants: React.FC = () => {
             sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}
           >
             Durée: {service.duration} minutes
-            {service.price !== 9999 && ` | Prix:à partir de  ${service.price} €`}
+            {service.price !== 9999 && ` | Prix: à partir de  ${service.price} €`}
           </Typography>
         )}
 

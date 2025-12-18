@@ -230,7 +230,6 @@ const ModuleAdultes: React.FC = () => {
                   <HomeIcon />
                 </IconButton>
               </Tooltip>
-
               <Typography
                 variant="h2"
                 component="h1"
@@ -245,7 +244,7 @@ const ModuleAdultes: React.FC = () => {
                   filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3))',
                 }}
               >
-                {service ? service.name : 'Module Adulte'} : Se Connaître
+                {service ? service.name : 'Module Adulte'}
               </Typography>
 
               <Tooltip title="Module Couples" placement="left">
@@ -277,8 +276,8 @@ const ModuleAdultes: React.FC = () => {
                 maxWidth: '800px',
                 mx: 'auto',
               }}
-            >
-              {service ? service.description : 'Un parcours de développement personnel conçu pour vous aider à mieux vous comprendre, développer vos potentiels et atteindre vos objectifs de vie.'}
+            > 
+            Un accompagnement personnalisé pour mieux se comprendre, renforcer la confiance en soi, lever ses freins et s’aligner avec ses besoins profonds afin de révéler pleinement son potentiel.
             </Typography>
           </Container>
         </Box>
@@ -356,7 +355,7 @@ const ModuleAdultes: React.FC = () => {
               Approches et outils
             </Typography>
             <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-              - Entretiens individuels<br />
+              - Entretien individuel<br />
               - Méthode de Numérologie Stratégique®<br />
               - Outils de connaissance de soi et de compréhension de ses besoins vitaux
             </Typography>
@@ -371,7 +370,7 @@ const ModuleAdultes: React.FC = () => {
             sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}
           >
             Durée: {service.duration} minutes
-            {service.price !== 9999 && ` | Prix:à partir de ${service.price} €`}
+            {service.price !== 9999 && ` | Prix: à partir de ${service.price} €`}
           </Typography>
         )}
 

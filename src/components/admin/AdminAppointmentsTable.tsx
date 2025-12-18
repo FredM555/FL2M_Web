@@ -57,6 +57,9 @@ interface AdminAppointmentsTableProps {
   onAppointmentChange: () => void;
   isPractitionerView?: boolean;
   practitionerId?: string;
+  selectedAppointments?: string[];
+  onSelectAppointment?: (appointmentId: string) => void;
+  onSelectAll?: () => void;
 }
 
 const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
@@ -68,7 +71,10 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
   setError,
   onAppointmentChange,
   isPractitionerView = false,
-  practitionerId
+  practitionerId,
+  selectedAppointments = [],
+  onSelectAppointment,
+  onSelectAll
 }) => {
   const { profile } = useAuth();
 
@@ -468,6 +474,15 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
         <Table sx={{ minWidth: { xs: 650, sm: 750 } }}>
           <TableHead>
             <TableRow>
+              {onSelectAll && (
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    indeterminate={selectedAppointments.length > 0 && selectedAppointments.length < appointments.length}
+                    checked={appointments.length > 0 && selectedAppointments.length === appointments.length}
+                    onChange={onSelectAll}
+                  />
+                </TableCell>
+              )}
               <TableCell>Date</TableCell>
               <TableCell>Heure</TableCell>
               <TableCell sx={{ display: { xs: 'none', md: 'table-cell' } }}>Durée</TableCell>
@@ -484,13 +499,33 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
           <TableBody>
             {appointments.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={11} align="center">
+                <TableCell colSpan={onSelectAll ? 12 : 11} align="center">
                   Aucun rendez-vous trouvé
                 </TableCell>
               </TableRow>
             ) : (
-              appointments.map((appointment) => (
-                <TableRow key={appointment.id}>
+              appointments.map((appointment) => {
+                // Déterminer si le rendez-vous est passé
+                const isPast = new Date(appointment.start_time) < new Date();
+
+                return (
+                <TableRow
+                  key={appointment.id}
+                  sx={{
+                    backgroundColor: isPast ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
+                    '&:hover': {
+                      backgroundColor: isPast ? 'rgba(0, 0, 0, 0.08)' : 'rgba(0, 0, 0, 0.04)'
+                    }
+                  }}
+                >
+                  {onSelectAppointment && (
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedAppointments.includes(appointment.id)}
+                        onChange={() => onSelectAppointment(appointment.id)}
+                      />
+                    </TableCell>
+                  )}
                   <TableCell>
                     {format(parseISO(appointment.start_time), 'dd/MM/yyyy', { locale: fr })}
                   </TableCell>
@@ -598,7 +633,8 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                     </Box>
                   </TableCell>
                 </TableRow>
-              ))
+                );
+              })
             )}
           </TableBody>
         </Table>

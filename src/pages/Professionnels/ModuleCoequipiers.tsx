@@ -279,8 +279,7 @@ const ModuleCoequipiers: React.FC = () => {
                 mx: 'auto',
               }}
             >
-              Un accompagnement personnalisé pour développer votre potentiel
-              et contribuer efficacement à la dynamique collective.
+              Un accompagnement personnalisé pour développer votre potentiel, à valoriser ses talents et contribuer efficacement à la dynamique collective.
             </Typography>
           </Container>
         </Box>
@@ -375,7 +374,7 @@ const ModuleCoequipiers: React.FC = () => {
               sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}
             >
               Durée: {service.duration} minutes/séance
-              {service.price !== 9999 && ` | Prix:à partir de  ${service.price} €`}
+              {service.price !== 9999 && ` | Prix: à partir de  ${service.price} €`}
             </Typography>
           )}
 

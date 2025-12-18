@@ -243,7 +243,7 @@ const ModuleCouples: React.FC = () => {
                   filter: 'drop-shadow(0 2px 8px rgba(255, 215, 0, 0.3))',
                 }}
               >
-                {service ? service.name : 'Module Couple '} : Se Comprendre
+                {service ? service.name : 'Module Couple '}
               </Typography>
 
               <Tooltip title="Module Enfants" placement="left">
@@ -356,10 +356,9 @@ const ModuleCouples: React.FC = () => {
               Approches et outils
             </Typography>
             <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-              - Séances de communication guidée<br></br>
-              - Exercices de connexion émotionnelle<br></br>
-              - Coaching de relation personnalisé<br></br>
-              - Outils de résolution de conflits
+              - Séances de commune<br></br>
+              - Méthode de Numérologie Stratégique®<br></br>
+              - Outils de connaissance de soi/couple et de compréhension des besoins vitaux
             </Typography>
           </Grid>
         </Grid>
@@ -372,7 +371,7 @@ const ModuleCouples: React.FC = () => {
             sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}
           >
             Durée: {service.duration} minutes
-            {service.price !== 9999 && ` | Prix:à partir de  ${service.price} €`}
+            {service.price !== 9999 && ` | Prix: à partir de  ${service.price} €`}
           </Typography>
         )}
 

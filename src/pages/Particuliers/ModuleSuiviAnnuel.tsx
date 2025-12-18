@@ -52,17 +52,17 @@ const ModuleSuiviAnnuel: React.FC = () => {
   const caracteristiques = [
     {
       titre: 'Bilan Personnalisé',
-      description: 'Analyse complète de votre progression personnelle.',
+      description: 'Une lecture attentive de votre année écoulée , mettre en lumière vos expériences, vos prises de conscience et les enseignements clés de votre parcours.',
       icone: AssessmentIcon
     },
     {
-      titre: 'Objectifs Futurs',
-      description: 'Définition et planification de vos objectifs pour l\'année à venir.',
+      titre: 'Orientation & Objectifs',
+      description: 'Un temps de clarification pour définir des orientations et des objectifs cohérents, réalistes et en accord avec votre évolution personnelle et vos aspirations profondes.',
       icone: TrendingUpIcon
     },
     {
       titre: 'Accompagnement Stratégique',
-      description: 'Conseils personnalisés pour votre développement personnel.',
+      description: 'Un accompagnement sur mesure pour vous aider à donner du sens à votre chemin, affiner vos choix et poser une stratégie de développement alignée.',
       icone: RecordVoiceOverIcon
     }
   ];
@@ -277,7 +277,7 @@ const ModuleSuiviAnnuel: React.FC = () => {
               }}
             >
               Un bilan annuel complet pour faire le point sur votre parcours,
-              mesurer vos progrès et définir une stratégie de développement personnalisée.
+              observer le chemin parcouru, le comprendre et ajuster votre orientation afin de rester aligné avec vos besoins et votre potentiel.
             </Typography>
           </Container>
         </Box>
@@ -345,10 +345,9 @@ const ModuleSuiviAnnuel: React.FC = () => {
               Objectifs du Module
             </Typography>
             <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-              - Réaliser un bilan complet de l'année écoulée
-              - Identifier les points forts et axes d'amélioration
-              - Définir des objectifs clairs et réalisables
-              - Créer un plan d'action personnalisé
+              - Observer et comprendre votre parcours sur l’année écoulée <br></br>
+              - Mettre en lumière vos forces, vos freins et vos axes d’évolution<br></br>
+              - Structurer une trajectoire personnalisée, en accord avec vos besoins<br></br>
             </Typography>
           </Grid>
           <Grid item xs={12} md={6}>
@@ -356,10 +355,10 @@ const ModuleSuiviAnnuel: React.FC = () => {
               Approches et outils
             </Typography>
             <Typography variant="body1" paragraph sx={{ lineHeight: 1.7, color: 'text.secondary' }}>
-              - Entretien approfondi de bilan
-              - Analyse des indicateurs personnels
-              - Coaching de projection
-              - Outils de planification stratégique
+              - Entretien individuel approfondi centré sur la lecture de votre parcours<br></br>
+              - Analyse des indicateurs personnels<br></br>
+              - Méthode de Numérologie Stratégique®<br></br>
+              - Analyse qualitative de votre climat personnel et de vos dynamiques internes<br></br>
             </Typography>
           </Grid>
         </Grid>
@@ -372,7 +371,7 @@ const ModuleSuiviAnnuel: React.FC = () => {
             sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}
           >
             Durée: {service.duration} minutes
-            {service.price !== 9999 && ` | Prix:à partir de  ${service.price} €`}
+            {service.price !== 9999 && ` | Prix: à partir de  ${service.price} €`}
           </Typography>
         )}
 

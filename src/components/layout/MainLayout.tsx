@@ -1814,7 +1814,7 @@ const MainLayout: React.FC = () => {
                 fontSize: '0.875rem',
               }}
             >
-              © 2025 FL²M Services. Tous droits réservés.
+              © 2026 FL²M Services. Tous droits réservés.
             </Typography>
             <Typography
               variant="body2"

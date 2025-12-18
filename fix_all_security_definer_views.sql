@@ -70,9 +70,15 @@ SELECT
     al.entity_type,
     al.entity_id,
     al.metadata,
+    al.ip_address,
+    al.user_agent,
     al.created_at,
-    p.email as user_email,
-    COALESCE(p.first_name || ' ' || p.last_name, p.email) as user_name
+    -- Colonnes du profil utilisateur (noms exacts pour correspondre au type TypeScript)
+    p.email,
+    p.first_name,
+    p.last_name,
+    p.user_type,
+    p.pseudo
 FROM activity_logs al
 LEFT JOIN profiles p ON al.user_id = p.id;
 

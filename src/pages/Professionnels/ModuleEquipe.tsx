@@ -347,7 +347,7 @@ const ModuleEquipe: React.FC = () => {
           {service && (
             <Typography variant="h6" align="center" sx={{ mb: 2, fontWeight: 600, color: '#1a1a2e' }}>
               Durée: {service.duration} minutes/séance
-              {service.price !== 9999 && ` | Prix:à partir de  ${service.price} €`}
+              {service.price !== 9999 && ` | Prix: à partir de  ${service.price} €`}
             </Typography>
           )}
 

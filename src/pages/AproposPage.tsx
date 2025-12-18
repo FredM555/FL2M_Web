@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Card,
   CardContent,
@@ -29,6 +29,27 @@ interface Pilier {
 }
 
 const AProposPage: React.FC = () => {
+  // État pour le défilement des citations
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
+
+  // Liste des citations sur le mouvement
+  const movementQuotes = [
+    "Sans mouvement, il n'y a pas de transformation. Le mouvement est le pont entre qui vous êtes et qui vous devenez.",
+    "FL²M repose sur trois piliers fondamentaux — Force, Légitimité et Métamorphose — reliés par un élément essentiel : le Mouvement. C'est lui qui transforme le potentiel en réalité.",
+    "Le potentiel n'existe pleinement que lorsqu'il est mis en mouvement.",
+    "Chaque pas conscient met en mouvement ce qui sommeille en vous.",
+    "Quand la force et la légitimité passent à l'action, la métamorphose devient inévitable."
+  ];
+
+  // Effet pour faire défiler les citations
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % movementQuotes.length);
+    }, 5000); // Changement toutes les 5 secondes
+
+    return () => clearInterval(interval);
+  }, [movementQuotes.length]);
+
   // Liste des piliers
   const piliers: Pilier[] = [
     {
@@ -172,7 +193,7 @@ const AProposPage: React.FC = () => {
                     mx: 'auto',
                   }}
                 >
-                  Les trois piliers de FL²M
+                  Les trois piliers de FL²M à mettre en mouvement pour activer son potentiel
                 </Typography>
               </Container>
             </Box>
@@ -427,19 +448,49 @@ const AProposPage: React.FC = () => {
                 background: 'rgba(255, 255, 255, 0.7)',
                 borderRadius: 2,
                 border: '1px solid rgba(255, 165, 0, 0.5)',
+                minHeight: '120px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                overflow: 'hidden',
+                position: 'relative',
               }}
             >
-              <Typography
-                align="center"
+              <Box
                 sx={{
-                  fontStyle: 'italic',
-                  fontSize: '1.1rem',
-                  color: '#1a1a2e',
-                  fontWeight: 500,
+                  position: 'relative',
+                  width: '100%',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 }}
               >
-                "Sans mouvement, il n'y a pas de transformation. Le mouvement est le pont entre qui vous êtes et qui vous devenez."
-              </Typography>
+                {movementQuotes.map((quote, index) => (
+                  <Typography
+                    key={index}
+                    align="center"
+                    sx={{
+                      fontStyle: 'italic',
+                      fontSize: '1.1rem',
+                      color: '#1a1a2e',
+                      fontWeight: 500,
+                      position: 'absolute',
+                      width: '100%',
+                      px: 2,
+                      transition: 'all 0.8s ease-in-out',
+                      transform: index === currentQuoteIndex
+                        ? 'translateY(0)'
+                        : index === (currentQuoteIndex + 1) % movementQuotes.length
+                        ? 'translateY(100%)'
+                        : 'translateY(-100%)',
+                      opacity: index === currentQuoteIndex ? 1 : 0,
+                    }}
+                  >
+                    "{quote}"
+                  </Typography>
+                ))}
+              </Box>
             </Box>
           </Box>
 
