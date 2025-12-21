@@ -21,11 +21,13 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { AppointmentDocuments } from './AppointmentDocuments';
 import { AppointmentComments } from './AppointmentComments';
-import { AppointmentBeneficiary } from './AppointmentBeneficiary';
+import { AppointmentBeneficiaryList } from './AppointmentBeneficiaryList';
 import { AppointmentPractitioner } from './AppointmentPractitioner';
 import { AppointmentMeetingLink } from './AppointmentMeetingLink';
+import { MessagesPanel } from '../messages/MessagesPanel';
 import { Appointment } from '../../services/supabase';
 import { markAppointmentAsCompleted } from '../../services/supabase-appointments';
+import { getPrimaryBeneficiaryForAppointment } from '../../services/beneficiaries';
 import { useAuth } from '../../context/AuthContext';
 import { format, parseISO, isPast } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -71,6 +73,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
   const [completingAppointment, setCompletingAppointment] = useState(false);
   const [completionError, setCompletionError] = useState<string>('');
   const [completionSuccess, setCompletionSuccess] = useState(false);
+  const [primaryBeneficiary, setPrimaryBeneficiary] = useState<any>(null);
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setCurrentTab(newValue);
@@ -89,6 +92,13 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
     setCurrentAppointment(appointment);
     setCompletionError('');
     setCompletionSuccess(false);
+
+    // Charger le bénéficiaire principal
+    const loadPrimaryBeneficiary = async () => {
+      const { data } = await getPrimaryBeneficiaryForAppointment(appointment.id);
+      setPrimaryBeneficiary(data);
+    };
+    loadPrimaryBeneficiary();
   }, [appointment]);
 
   // Fonction pour marquer le rendez-vous comme terminé
@@ -317,57 +327,61 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
                 Bénéficiaire
               </Typography>
 
-              <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                {currentAppointment.beneficiary_first_name || currentAppointment.client?.first_name}{' '}
-                {currentAppointment.beneficiary_last_name || currentAppointment.client?.last_name}
-              </Typography>
-
-              <Box>
-                {(currentAppointment.beneficiary_birth_date || currentAppointment.client?.birth_date) && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      p: { xs: 1, sm: 1.5 },
-                      bgcolor: 'grey.50',
-                      borderRadius: 1,
-                      border: '1px solid',
-                      borderColor: 'grey.300'
-                    }}
-                  >
-                    <CakeIcon sx={{ color: 'primary.main', fontSize: { xs: 20, sm: 24 } }} />
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
-                        Date de naissance
-                      </Typography>
-                      <Typography variant="body1" fontWeight={600} sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }}>
-                        {format(
-                          parseISO(currentAppointment.beneficiary_birth_date || currentAppointment.client!.birth_date!),
-                          'dd/MM/yyyy'
-                        )}
-                      </Typography>
-                    </Box>
-                  </Box>
-                )}
-
-                {currentAppointment.beneficiary_email && (
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      display: 'block',
-                      mt: 0.5,
-                      pl: { xs: 1, sm: 1.5 },
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                      color: 'text.secondary',
-                      wordBreak: 'break-word',
-                      overflowWrap: 'break-word'
-                    }}
-                  >
-                    {currentAppointment.beneficiary_email}
+              {primaryBeneficiary ? (
+                <>
+                  <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary', mb: 2, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                    {primaryBeneficiary.first_name} {primaryBeneficiary.last_name}
                   </Typography>
-                )}
-              </Box>
+
+                  <Box>
+                    {primaryBeneficiary.birth_date && (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          p: { xs: 1, sm: 1.5 },
+                          bgcolor: 'grey.50',
+                          borderRadius: 1,
+                          border: '1px solid',
+                          borderColor: 'grey.300'
+                        }}
+                      >
+                        <CakeIcon sx={{ color: 'primary.main', fontSize: { xs: 20, sm: 24 } }} />
+                        <Box>
+                          <Typography variant="caption" color="text.secondary" display="block" sx={{ fontSize: { xs: '0.7rem', sm: '0.75rem' } }}>
+                            Date de naissance
+                          </Typography>
+                          <Typography variant="body1" fontWeight={600} sx={{ fontSize: { xs: '0.85rem', sm: '1rem' } }}>
+                            {format(parseISO(primaryBeneficiary.birth_date), 'dd/MM/yyyy')}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    )}
+
+                    {primaryBeneficiary.email && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          mt: 0.5,
+                          pl: { xs: 1, sm: 1.5 },
+                          fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                          color: 'text.secondary',
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word'
+                        }}
+                      >
+                        {primaryBeneficiary.email}
+                      </Typography>
+                    )}
+                  </Box>
+                </>
+              ) : (
+                <Typography variant="body2" color="text.secondary">
+                  Aucun bénéficiaire
+                </Typography>
+              )}
             </Box>
           </Box>
         </Box>
@@ -384,7 +398,7 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
           </Alert>
         )}
 
-        {/* Tabs pour Bénéficiaire, Intervenant, Visio, Documents et Commentaires */}
+        {/* Tabs pour Bénéficiaire, Intervenant, Visio, Documents, Commentaires et Messages */}
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mx: { xs: -1.5, sm: 0 } }}>
           <Tabs
             value={currentTab}
@@ -405,11 +419,12 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
             <Tab label="Visio" />
             <Tab label="Documents" />
             <Tab label="Commentaires" />
+            <Tab label="Messages" />
           </Tabs>
         </Box>
 
         <TabPanel value={currentTab} index={0}>
-          <AppointmentBeneficiary
+          <AppointmentBeneficiaryList
             appointment={currentAppointment}
             onUpdate={handleAppointmentUpdate}
           />
@@ -444,6 +459,17 @@ export const AppointmentDetailsDialog: React.FC<AppointmentDetailsDialogProps> =
             appointmentStatus={currentAppointment.status}
             clientId={currentAppointment.client_id}
             onProblemReported={onClose}
+          />
+        </TabPanel>
+
+        <TabPanel value={currentTab} index={5}>
+          <MessagesPanel
+            appointmentId={currentAppointment.id}
+            userType={
+              profile?.user_type === 'intervenant' || profile?.user_type === 'admin'
+                ? 'practitioner'
+                : 'client'
+            }
           />
         </TabPanel>
       </DialogContent>

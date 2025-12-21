@@ -75,7 +75,9 @@
       "Bash(ls:*)",
       "Bash(git clean:*)",
       "Bash(npm run dev:*)",
-      "Bash(timeout 5 tail:*)"
+      "Bash(timeout 5 tail:*)",
+      "Bash(xargs ls:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

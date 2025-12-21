@@ -1,5 +1,5 @@
 // src/components/admin/AdminAppointmentsTable.tsx
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Table, 
   TableBody, 
@@ -101,6 +101,26 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
   // États pour le dialogue de détails
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+
+  // Référence pour scroller vers le premier rendez-vous à venir
+  const upcomingAppointmentRef = useRef<HTMLTableRowElement | null>(null);
+
+  // Trouver l'index du premier rendez-vous à venir (aujourd'hui ou dans le futur)
+  const firstUpcomingIndex = appointments.findIndex(apt => {
+    const now = new Date();
+    now.setHours(0, 0, 0, 0); // Début de la journée
+    return new Date(apt.start_time) >= now;
+  });
+
+  // Scroller vers le premier rendez-vous à venir au chargement
+  useEffect(() => {
+    if (upcomingAppointmentRef.current && firstUpcomingIndex !== -1) {
+      upcomingAppointmentRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center'
+      });
+    }
+  }, [appointments, firstUpcomingIndex]);
 
   // Ouvrir le dialogue de détails
   const handleOpenDetailsDialog = (appointment: Appointment) => {
@@ -504,15 +524,19 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
                 </TableCell>
               </TableRow>
             ) : (
-              appointments.map((appointment) => {
+              appointments.map((appointment, index) => {
                 // Déterminer si le rendez-vous est passé
                 const isPast = new Date(appointment.start_time) < new Date();
+                // Vérifier si c'est le premier rendez-vous à venir
+                const isFirstUpcoming = index === firstUpcomingIndex;
 
                 return (
                 <TableRow
                   key={appointment.id}
+                  ref={isFirstUpcoming ? upcomingAppointmentRef : null}
                   sx={{
                     backgroundColor: isPast ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
+                    borderLeft: isFirstUpcoming ? '4px solid #2196F3' : 'none',
                     '&:hover': {
                       backgroundColor: isPast ? 'rgba(0, 0, 0, 0.08)' : 'rgba(0, 0, 0, 0.04)'
                     }

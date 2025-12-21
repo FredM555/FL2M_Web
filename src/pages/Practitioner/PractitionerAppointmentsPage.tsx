@@ -1,4 +1,4 @@
-// src/pages/MyAppointmentsPage.tsx
+// src/pages/Practitioner/PractitionerAppointmentsPage.tsx
 import { useState, useEffect } from 'react';
 import {
   Box,
@@ -21,11 +21,11 @@ import {
   Tab,
   Tabs
 } from '@mui/material';
-import { useAuth } from '../context/AuthContext';
-import { getAppointments, Appointment, getAppointmentDocuments, supabase } from '../services/supabase';
-import { cancelAppointment } from '../services/supabase-appointments';
-import { getAppointmentBeneficiaries } from '../services/beneficiaries';
-import { AppointmentBeneficiary } from '../types/beneficiary';
+import { useAuth } from '../../context/AuthContext';
+import { getAppointments, Appointment, getAppointmentDocuments, supabase } from '../../services/supabase';
+import { cancelAppointment } from '../../services/supabase-appointments';
+import { getAppointmentBeneficiaries } from '../../services/beneficiaries';
+import { AppointmentBeneficiary } from '../../types/beneficiary';
 import { format, isPast, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import EventIcon from '@mui/icons-material/Event';
@@ -39,10 +39,10 @@ import InfoIcon from '@mui/icons-material/Info';
 import VideoCallIcon from '@mui/icons-material/VideoCall';
 import DescriptionIcon from '@mui/icons-material/Description';
 import AssignmentIcon from '@mui/icons-material/Assignment';
-import SacredGeometryBackground from '../components/SacredGeometryBackground';
-import { AppointmentDetailsDialog } from '../components/appointments/AppointmentDetailsDialog';
-import { AppointmentValidationCard } from '../components/appointments/AppointmentValidationCard';
-import { logger } from '../utils/logger';
+import SacredGeometryBackground from '../../components/SacredGeometryBackground';
+import { AppointmentDetailsDialog } from '../../components/appointments/AppointmentDetailsDialog';
+import { AppointmentValidationCard } from '../../components/appointments/AppointmentValidationCard';
+import { logger } from '../../utils/logger';
 
 // Interface pour la valeur de l'onglet
 interface TabPanelProps {
@@ -51,7 +51,6 @@ interface TabPanelProps {
   value: number;
 }
 
-// Composant TabPanel
 function TabPanel(props: TabPanelProps) {
   const { children, value, index, ...other } = props;
 
@@ -59,75 +58,118 @@ function TabPanel(props: TabPanelProps) {
     <div
       role="tabpanel"
       hidden={value !== index}
-      id={`simple-tabpanel-${index}`}
-      aria-labelledby={`simple-tab-${index}`}
+      id={`appointment-tabpanel-${index}`}
+      aria-labelledby={`appointment-tab-${index}`}
       {...other}
     >
-      {value === index && (
-        <Box sx={{ pt: 3 }}>
-          {children}
-        </Box>
-      )}
+      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
     </div>
   );
 }
 
-const MyAppointmentsPage = () => {
+const PractitionerAppointmentsPage = () => {
   const { user, profile } = useAuth();
-
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [tabValue, setTabValue] = useState(0);
+  const [practitionerId, setPractitionerId] = useState<string | null>(null);
+
+  // États pour la gestion des dialogues
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [appointmentToCancel, setAppointmentToCancel] = useState<Appointment | null>(null);
-  const [tabValue, setTabValue] = useState(0);
+  const [cancelReason, setCancelReason] = useState('');
   const [cancelLoading, setCancelLoading] = useState(false);
-  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [appointmentBeneficiaries, setAppointmentBeneficiaries] = useState<Record<string, AppointmentBeneficiary[]>>({});
   const [documentsCounts, setDocumentsCounts] = useState<Record<string, number>>({});
 
-  // Chargement des rendez-vous personnels (où l'utilisateur est client)
+  // Chargement des bénéficiaires pour un rendez-vous
+  useEffect(() => {
+    const loadBeneficiaries = async () => {
+      const beneficiariesData: Record<string, AppointmentBeneficiary[]> = {};
+
+      for (const appointment of appointments) {
+        try {
+          const { data } = await getAppointmentBeneficiaries(appointment.id);
+          if (data && data.length > 0) {
+            beneficiariesData[appointment.id] = data;
+          }
+        } catch (error) {
+          logger.error(`Erreur lors du chargement des bénéficiaires pour le RDV ${appointment.id}:`, error);
+        }
+      }
+
+      setAppointmentBeneficiaries(beneficiariesData);
+    };
+
+    if (appointments.length > 0) {
+      loadBeneficiaries();
+    }
+  }, [appointments]);
+
+  // Chargement du nombre de documents pour chaque rendez-vous
+  useEffect(() => {
+    const loadDocumentsCounts = async () => {
+      const counts: Record<string, number> = {};
+
+      for (const appointment of appointments) {
+        try {
+          const { data } = await getAppointmentDocuments(appointment.id);
+          counts[appointment.id] = data?.length || 0;
+        } catch (error) {
+          logger.error(`Erreur lors du chargement des documents pour le RDV ${appointment.id}:`, error);
+        }
+      }
+
+      setDocumentsCounts(counts);
+    };
+
+    if (appointments.length > 0) {
+      loadDocumentsCounts();
+    }
+  }, [appointments]);
+
+  // Chargement des rendez-vous professionnels
   const loadAppointments = async () => {
     if (!user) return;
 
     setLoading(true);
     try {
-      // Charger uniquement les rendez-vous où l'utilisateur est client
-      const { data, error } = await getAppointments(user.id);
+      // Récupérer le practitioner_id
+      const { data: practitionerData } = await supabase
+        .from('practitioners')
+        .select('id')
+        .eq('user_id', user.id)
+        .single();
 
-      if (error) throw error;
-      setAppointments(data || []);
+      if (practitionerData) {
+        setPractitionerId(practitionerData.id);
 
-      // Charger les bénéficiaires et documents pour chaque rendez-vous
-      if (data && data.length > 0) {
-        const beneficiariesMap: Record<string, AppointmentBeneficiary[]> = {};
+        // Charger uniquement les rendez-vous où l'utilisateur est intervenant avec un client assigné
+        const { data, error } = await supabase
+          .from('appointments')
+          .select(`
+            *,
+            client:profiles!client_id(*),
+            practitioner:practitioners!practitioner_id(
+              *,
+              profile:profiles(*)
+            ),
+            service:services(*)
+          `)
+          .eq('practitioner_id', practitionerData.id)
+          .not('client_id', 'is', null)
+          .order('start_time', { ascending: true });
 
-        const documentsCountMap: Record<string, number> = {};
-
-        await Promise.all(
-          data.map(async (appointment) => {
-            try {
-              // Charger les bénéficiaires
-              const { data: beneficiaries } = await getAppointmentBeneficiaries(appointment.id);
-              if (beneficiaries && beneficiaries.length > 0) {
-                beneficiariesMap[appointment.id] = beneficiaries;
-              }
-
-              // Charger le compteur de documents
-              const { data: documents } = await getAppointmentDocuments(appointment.id);
-              documentsCountMap[appointment.id] = documents?.length || 0;
-            } catch (err) {
-              logger.error(`Erreur lors du chargement des données pour le RDV ${appointment.id}:`, err);
-            }
-          })
-        );
-
-        setAppointmentBeneficiaries(beneficiariesMap);
-        setDocumentsCounts(documentsCountMap);
+        if (error) throw error;
+        setAppointments(data || []);
+      } else {
+        setAppointments([]);
       }
-    } catch (error: any) {
-      setError('Erreur lors du chargement des rendez-vous: ' + error.message);
+    } catch (error) {
+      logger.error('Erreur lors du chargement des rendez-vous:', error);
+      setError('Erreur lors du chargement des rendez-vous');
     } finally {
       setLoading(false);
     }
@@ -140,11 +182,12 @@ const MyAppointmentsPage = () => {
   // Filtrage des rendez-vous selon l'onglet
   const filteredAppointments = () => {
     switch (tabValue) {
-      case 0: // À venir
+      case 0: // À préparer (confirmés + payés, futurs uniquement)
         return appointments.filter(
           appointment =>
-            !isPast(parseISO(appointment.start_time)) &&
-            (appointment.status === 'pending' || appointment.status === 'confirmed')
+            appointment.status === 'confirmed' &&
+            appointment.payment_status === 'paid' &&
+            !isPast(parseISO(appointment.start_time))
         );
       case 1: // En cours (completed + issue_reported)
         return appointments.filter(
@@ -167,13 +210,27 @@ const MyAppointmentsPage = () => {
     }
   };
 
-  // Comptage
+  // Comptages
   const getToValidateCount = () => {
     return appointments.filter(
       appointment =>
         appointment.status === 'completed' ||
         appointment.status === 'issue_reported'
     ).length;
+  };
+
+  const getToPrepareCount = () => {
+    return appointments.filter(
+      appointment =>
+        appointment.status === 'confirmed' &&
+        appointment.payment_status === 'paid' &&
+        !isPast(parseISO(appointment.start_time))
+    ).length;
+  };
+
+  // Changement d'onglet
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
   };
 
   // Ouverture de la boîte de dialogue d'annulation
@@ -186,122 +243,76 @@ const MyAppointmentsPage = () => {
   const handleCloseCancelDialog = () => {
     setCancelDialogOpen(false);
     setAppointmentToCancel(null);
+    setCancelReason('');
   };
 
-  // Annulation du rendez-vous avec la nouvelle logique
-  const handleCancelAppointment = async () => {
+  // Confirmation de l'annulation
+  const handleConfirmCancel = async () => {
     if (!appointmentToCancel || !user) return;
 
     setCancelLoading(true);
     try {
+      // Pour les intervenants, on garde le record (keepRecord = true)
       const isPaid = appointmentToCancel.payment_status === 'paid';
-
-      // Déterminer le rôle de l'utilisateur
       const userRole = profile?.user_type === 'admin'
         ? 'admin'
         : profile?.user_type === 'intervenant'
         ? 'intervenant'
         : 'client';
 
-      const { success, error: cancelError, action, canReschedule } = await cancelAppointment(
-        appointmentToCancel.id,
-        isPaid,
-        user.id,
-        userRole
-      );
-
-      if (!success || cancelError) {
-        // Si c'est un intervenant qui ne peut pas annuler, afficher un message personnalisé
-        if (canReschedule && userRole === 'intervenant') {
-          throw new Error('Vous ne pouvez pas annuler un rendez-vous payé. Vous pouvez cependant le déplacer en contactant l\'administrateur.');
-        }
-        throw cancelError || new Error('Erreur lors de l\'annulation');
-      }
-
-      setAppointments(prevAppointments =>
-        prevAppointments.map(appointment =>
-          appointment.id === appointmentToCancel.id
-            ? { ...appointment, status: 'cancelled' }
-            : appointment
-        )
-      );
-
-      if (action === 'released') {
-        setError('');
-        loadAppointments();
-      }
-
+      await cancelAppointment(appointmentToCancel.id, isPaid, user.id, userRole);
+      await loadAppointments();
       handleCloseCancelDialog();
-    } catch (err: any) {
-      setError('Erreur lors de l\'annulation du rendez-vous: ' + (err.message || err));
+    } catch (error) {
+      logger.error('Erreur lors de l\'annulation du rendez-vous:', error);
+      setError('Erreur lors de l\'annulation du rendez-vous');
     } finally {
       setCancelLoading(false);
     }
   };
 
-  // Changement d'onglet
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
-
   // Ouverture du dialogue de détails
   const handleOpenDetailsDialog = (appointment: Appointment) => {
     setSelectedAppointment(appointment);
-    setDetailsDialogOpen(true);
   };
 
   // Fermeture du dialogue de détails
   const handleCloseDetailsDialog = () => {
-    setDetailsDialogOpen(false);
     setSelectedAppointment(null);
   };
 
-  // Mise à jour du rendez-vous depuis le dialog
-  const handleAppointmentUpdate = (updatedAppointment: Appointment) => {
-    // Mettre à jour le rendez-vous sélectionné
-    setSelectedAppointment(updatedAppointment);
-
-    // Mettre à jour le rendez-vous dans la liste
-    setAppointments(prevAppointments =>
-      prevAppointments.map(appointment =>
-        appointment.id === updatedAppointment.id ? updatedAppointment : appointment
-      )
-    );
-  };
-
-  // Obtention de la couleur de la puce d'état
-  const getStatusColor = (status: string) => {
+  // Fonctions d'aide pour les statuts
+  const getStatusColor = (status: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
     switch (status) {
       case 'pending':
         return 'warning';
       case 'confirmed':
-        return 'success';
+        return 'info';
+      case 'completed':
+        return 'primary';
       case 'cancelled':
         return 'error';
-      case 'completed':
-        return 'info';
       case 'validated':
         return 'success';
       case 'issue_reported':
-        return 'error';
+        return 'warning';
       default:
         return 'default';
     }
   };
 
-  // Obtention du libellé de l'état
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string): string => {
     switch (status) {
       case 'pending':
         return 'En attente';
       case 'confirmed':
         return 'Confirmé';
-      case 'cancelled':
-        return 'Annulé';
       case 'completed':
         return 'Terminé';
+      case 'cancelled':
+        return 'Annulé';
       case 'validated':
-        return 'Validé ✓';
+        return 'Validé';
       case 'issue_reported':
         return 'Problème signalé';
       default:
@@ -309,13 +320,16 @@ const MyAppointmentsPage = () => {
     }
   };
 
-  // Obtention de la couleur de la puce de paiement
-  const getPaymentStatusColor = (status: string) => {
+  const getPaymentStatusColor = (status: string): "default" | "primary" | "secondary" | "error" | "info" | "success" | "warning" => {
     switch (status) {
       case 'paid':
         return 'success';
-      case 'unpaid':
+      case 'pending':
         return 'warning';
+      case 'failed':
+        return 'error';
+      case 'unpaid':
+        return 'default';
       case 'refunded':
         return 'info';
       default:
@@ -323,11 +337,14 @@ const MyAppointmentsPage = () => {
     }
   };
 
-  // Obtention du libellé du paiement
-  const getPaymentStatusLabel = (status: string) => {
+  const getPaymentStatusLabel = (status: string): string => {
     switch (status) {
       case 'paid':
         return 'Payé';
+      case 'pending':
+        return 'En attente';
+      case 'failed':
+        return 'Échec';
       case 'unpaid':
         return 'Non payé';
       case 'refunded':
@@ -337,7 +354,7 @@ const MyAppointmentsPage = () => {
     }
   };
 
-  // Rendu d'une carte de rendez-vous
+  // Rendu d'une carte de rendez-vous (vue professionnelle)
   const renderAppointmentCard = (appointment: Appointment, showCancelButton: boolean = false) => (
     <Grid item xs={12} md={6} key={appointment.id}>
       <Card
@@ -345,7 +362,7 @@ const MyAppointmentsPage = () => {
         sx={{
           height: '100%',
           background: 'white',
-          border: '2px solid rgba(255, 215, 0, 0.3)',
+          border: '2px solid rgba(255, 165, 0, 0.3)',
           borderRadius: 3,
           position: 'relative',
           overflow: 'hidden',
@@ -357,11 +374,11 @@ const MyAppointmentsPage = () => {
             left: 0,
             right: 0,
             height: '4px',
-            background: 'linear-gradient(90deg, #FFD700, #FFA500)',
+            background: 'linear-gradient(90deg, #FFA500, #FF8C00)',
           },
           '&:hover': {
             borderColor: '#FFA500',
-            boxShadow: '0 12px 40px rgba(255, 215, 0, 0.25)',
+            boxShadow: '0 12px 40px rgba(255, 165, 0, 0.25)',
             transform: 'translateY(-4px)',
           },
         }}
@@ -387,8 +404,8 @@ const MyAppointmentsPage = () => {
                   size="small"
                   sx={{
                     mt: 0.5,
-                    backgroundColor: 'rgba(52, 89, 149, 0.1)',
-                    color: '#345995',
+                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                    color: '#FFA500',
                     fontWeight: 600,
                     fontSize: '0.75rem',
                     fontFamily: 'monospace'
@@ -412,7 +429,7 @@ const MyAppointmentsPage = () => {
             </Box>
           </Box>
 
-          <Divider sx={{ mb: 2, borderColor: 'rgba(255, 215, 0, 0.2)' }} />
+          <Divider sx={{ mb: 2, borderColor: 'rgba(255, 165, 0, 0.2)' }} />
 
           <Grid container spacing={{ xs: 1.5, sm: 2 }}>
             <Grid item xs={12} sm={6}>
@@ -432,15 +449,6 @@ const MyAppointmentsPage = () => {
                 </Typography>
               </Box>
 
-              {/* Affichage de l'intervenant */}
-              <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
-                <BadgeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                  Séance avec {appointment.practitioner?.profile?.pseudo || 'Intervenant'}
-                  {appointment.practitioner?.title && ` - ${appointment.practitioner.title}`}
-                </Typography>
-              </Box>
-
               <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
                 <WorkIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
                 <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
@@ -450,13 +458,23 @@ const MyAppointmentsPage = () => {
             </Grid>
 
             <Grid item xs={12} sm={6}>
-              {/* Affichage des bénéficiaires - nouvelle architecture */}
+              {/* Client */}
+              {appointment.client && (
+                <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                  <PersonIcon fontSize="small" sx={{ mr: 1, color: '#2196F3', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                  <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' }, fontWeight: 600 }}>
+                    Client : {appointment.client.first_name} {appointment.client.last_name}
+                  </Typography>
+                </Box>
+              )}
+
+              {/* Bénéficiaires */}
               {appointmentBeneficiaries[appointment.id] && appointmentBeneficiaries[appointment.id].length > 0 ? (
                 <>
                   <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
                     <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
                     <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                      {appointmentBeneficiaries[appointment.id].map(ab => ab.beneficiary ? `${ab.beneficiary.first_name} ${ab.beneficiary.last_name}` : 'Bénéficiaire').join(', ')}
+                      Bénéficiaire(s) : {appointmentBeneficiaries[appointment.id].map(ab => ab.beneficiary ? `${ab.beneficiary.first_name} ${ab.beneficiary.last_name}` : 'Bénéficiaire').join(', ')}
                     </Typography>
                     {appointmentBeneficiaries[appointment.id].length > 1 && (
                       <Chip
@@ -476,25 +494,24 @@ const MyAppointmentsPage = () => {
                   )}
                 </>
               ) : (
-                /* Fallback vers l'ancienne architecture */
-                <>
-                  <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
-                    <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                    <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                      {appointment.beneficiary_first_name || appointment.client?.first_name}{' '}
-                      {appointment.beneficiary_last_name || appointment.client?.last_name}
-                    </Typography>
-                  </Box>
-
-                  {(appointment.beneficiary_birth_date || appointment.client?.birth_date) && (
+                appointment.beneficiary_first_name && (
+                  <>
                     <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
-                      <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                      <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
                       <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                        {format(parseISO(appointment.beneficiary_birth_date || appointment.client!.birth_date!), 'dd/MM/yyyy', { locale: fr })}
+                        Bénéficiaire : {appointment.beneficiary_first_name} {appointment.beneficiary_last_name}
                       </Typography>
                     </Box>
-                  )}
-                </>
+                    {appointment.beneficiary_birth_date && (
+                      <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                        <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                        <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                          {format(parseISO(appointment.beneficiary_birth_date), 'dd/MM/yyyy', { locale: fr })}
+                        </Typography>
+                      </Box>
+                    )}
+                  </>
+                )
               )}
 
               {(() => {
@@ -502,61 +519,75 @@ const MyAppointmentsPage = () => {
                 return price !== 9999 && (
                   <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
                     <PaymentIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                    <Typography variant="body2" sx={{ fontWeight: 600, color: appointment.custom_price ? 'primary.main' : '#FFA500', fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                      {price} €{appointment.custom_price ? ' (personnalisé)' : ''}
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
+                      {price ? `${price} €` : 'Prix non défini'}
                     </Typography>
                   </Box>
                 );
               })()}
-
-              {/* Compteur de documents */}
-              <Box display="flex" alignItems="center">
-                <DescriptionIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                  {documentsCounts[appointment.id] || 0} document{(documentsCounts[appointment.id] || 0) > 1 ? 's' : ''}
-                </Typography>
-              </Box>
             </Grid>
           </Grid>
 
-          <Box
-            mt={2}
-            sx={{
-              display: 'flex',
-              flexDirection: { xs: 'column', sm: 'row' },
-              gap: { xs: 1.5, sm: 2 }
-            }}
-          >
-            {appointment.meeting_link && (
-              <Button
-                variant="contained"
-                startIcon={<VideoCallIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
-                onClick={() => window.open(appointment.meeting_link, '_blank', 'noopener,noreferrer')}
-                fullWidth
-                sx={{
-                  borderRadius: 2,
-                  fontWeight: 600,
-                  py: { xs: 1.5, sm: 1 },
-                  fontSize: { xs: '0.9rem', sm: '0.875rem' },
-                  background: 'linear-gradient(45deg, #4CAF50, #45a049)',
-                  '&:hover': {
-                    background: 'linear-gradient(45deg, #45a049, #4CAF50)',
-                  },
-                }}
-              >
-                Rejoindre
-              </Button>
-            )}
+          {/* Informations supplémentaires */}
+          {(appointment.meeting_link || appointment.notes || documentsCounts[appointment.id] > 0) && (
+            <>
+              <Divider sx={{ my: 2, borderColor: 'rgba(255, 165, 0, 0.2)' }} />
+              <Grid container spacing={1}>
+                {appointment.meeting_link && (
+                  <Grid item xs={12}>
+                    <Box display="flex" alignItems="center">
+                      <VideoCallIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                      <Button
+                        size="small"
+                        href={appointment.meeting_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{
+                          fontSize: { xs: '0.75rem', sm: '0.8rem' },
+                          textTransform: 'none',
+                          color: '#FFA500',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                          },
+                        }}
+                      >
+                        Rejoindre la visio
+                      </Button>
+                    </Box>
+                  </Grid>
+                )}
+                {appointment.notes && (
+                  <Grid item xs={12}>
+                    <Box display="flex" alignItems="flex-start">
+                      <InfoIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', mt: 0.3, fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                      <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' }, color: 'text.secondary' }}>
+                        {appointment.notes}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
+                {documentsCounts[appointment.id] > 0 && (
+                  <Grid item xs={12}>
+                    <Box display="flex" alignItems="center">
+                      <DescriptionIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
+                      <Typography variant="body2" sx={{ fontSize: { xs: '0.75rem', sm: '0.8rem' } }}>
+                        {documentsCounts[appointment.id]} document(s) associé(s)
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
+              </Grid>
+            </>
+          )}
+
+          {/* Actions */}
+          <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
             <Button
               variant="outlined"
-              startIcon={<InfoIcon sx={{ fontSize: { xs: '1rem', sm: '1.25rem' } }} />}
+              size="small"
               onClick={() => handleOpenDetailsDialog(appointment)}
-              fullWidth
               sx={{
-                borderRadius: 2,
-                fontWeight: 600,
-                py: { xs: 1.5, sm: 1 },
-                fontSize: { xs: '0.9rem', sm: '0.875rem' },
+                fontSize: { xs: '0.75rem', sm: '0.8rem' },
                 borderColor: '#FFA500',
                 color: '#FFA500',
                 '&:hover': {
@@ -565,22 +596,16 @@ const MyAppointmentsPage = () => {
                 },
               }}
             >
-              Détails
+              Voir détails
             </Button>
-            {showCancelButton &&
-             appointment.status !== 'cancelled' &&
-             !isPast(parseISO(appointment.start_time)) &&
-             (appointment.payment_status !== 'paid' || profile?.user_type === 'admin') && (
+            {showCancelButton && appointment.status !== 'cancelled' && (
               <Button
                 variant="outlined"
+                size="small"
                 color="error"
                 onClick={() => handleOpenCancelDialog(appointment)}
-                fullWidth
                 sx={{
-                  borderRadius: 2,
-                  fontWeight: 600,
-                  py: { xs: 1.5, sm: 1 },
-                  fontSize: { xs: '0.9rem', sm: '0.875rem' },
+                  fontSize: { xs: '0.75rem', sm: '0.8rem' },
                 }}
               >
                 Annuler
@@ -592,36 +617,11 @@ const MyAppointmentsPage = () => {
     </Grid>
   );
 
-  if (loading && appointments.length === 0) {
+  if (loading) {
     return (
-      <Container maxWidth="lg" sx={{ py: 3 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 4,
-            textAlign: 'center',
-            background: 'white',
-            border: '2px solid rgba(255, 215, 0, 0.3)',
-            borderRadius: 3,
-            position: 'relative',
-            overflow: 'hidden',
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              height: '4px',
-              background: 'linear-gradient(90deg, #FFD700, #FFA500)',
-            },
-          }}
-        >
-          <CircularProgress sx={{ color: '#FFA500' }} />
-          <Typography variant="h6" sx={{ mt: 2, color: '#1a1a2e' }}>
-            Chargement de vos rendez-vous...
-          </Typography>
-        </Paper>
-      </Container>
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="400px">
+        <CircularProgress />
+      </Box>
     );
   }
 
@@ -737,7 +737,7 @@ const MyAppointmentsPage = () => {
             </Alert>
           )}
 
-          {/* ==================== MES RENDEZ-VOUS PERSONNELS ==================== */}
+          {/* ==================== RENDEZ-VOUS PROFESSIONNELS ==================== */}
           <Paper
             elevation={0}
             sx={{
@@ -760,14 +760,14 @@ const MyAppointmentsPage = () => {
             }}
           >
             <Typography variant="h5" sx={{ mb: 2, fontWeight: 700, color: '#345995' }}>
-              📅 Mes rendez-vous (en tant que client)
+              📅 Mes rendez-vous (en tant qu'intervenant)
             </Typography>
 
             <Box sx={{ borderBottom: 2, borderColor: 'rgba(52, 89, 149, 0.2)', mb: 1 }}>
               <Tabs
                 value={tabValue}
                 onChange={handleTabChange}
-                aria-label="client appointment tabs"
+                aria-label="professional appointment tabs"
                 variant="scrollable"
                 scrollButtons="auto"
                 sx={{
@@ -784,7 +784,29 @@ const MyAppointmentsPage = () => {
                   },
                 }}
               >
-                <Tab label="À venir" />
+                <Tab
+                  label={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      À préparer
+                      {getToPrepareCount() > 0 && (
+                        <Chip
+                          label={getToPrepareCount()}
+                          size="small"
+                          sx={{
+                            backgroundColor: '#4CAF50',
+                            color: 'white',
+                            fontWeight: 700,
+                            height: '20px',
+                            minWidth: '20px',
+                            '& .MuiChip-label': {
+                              px: 0.75,
+                            },
+                          }}
+                        />
+                      )}
+                    </Box>
+                  }
+                />
                 <Tab
                   label={
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -813,46 +835,35 @@ const MyAppointmentsPage = () => {
               </Tabs>
             </Box>
 
-            {/* Client - Onglet "À venir" */}
+            {/* Onglet "À préparer" */}
             <TabPanel value={tabValue} index={0}>
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
+                  <AssignmentIcon sx={{ fontSize: 60, color: 'rgba(0,0,0,0.2)', mb: 2 }} />
                   <Typography variant="h6" sx={{ color: 'text.secondary' }}>
-                    Vous n'avez pas de rendez-vous à venir
+                    Vous n'avez pas de rendez-vous à préparer
                   </Typography>
-                  <Button
-                    variant="contained"
-                    href="/prendre-rendez-vous"
-                    sx={{
-                      mt: 2,
-                      px: 4,
-                      py: 1.5,
-                      background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                      color: '#1a1a2e',
-                      fontWeight: 600,
-                      borderRadius: 50,
-                      boxShadow: '0 8px 25px rgba(255, 215, 0, 0.3)',
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        background: 'linear-gradient(45deg, #FFA500, #FFD700)',
-                        transform: 'translateY(-3px)',
-                        boxShadow: '0 12px 35px rgba(255, 215, 0, 0.4)',
-                      },
-                    }}
-                  >
-                    Prendre un rendez-vous
-                  </Button>
+                  <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
+                    Les rendez-vous confirmés et payés apparaîtront ici.
+                  </Typography>
                 </Box>
               ) : (
-                <Grid container spacing={3}>
-                  {filteredAppointments().map((appointment) =>
-                    renderAppointmentCard(appointment, true)
-                  )}
-                </Grid>
+                <>
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    <Typography variant="body2">
+                      <strong>Rendez-vous à préparer</strong> - Ces rendez-vous sont confirmés et payés. Vous pouvez consulter les informations des clients et bénéficiaires.
+                    </Typography>
+                  </Alert>
+                  <Grid container spacing={3}>
+                    {filteredAppointments().map((appointment) =>
+                      renderAppointmentCard(appointment, false)
+                    )}
+                  </Grid>
+                </>
               )}
             </TabPanel>
 
-            {/* Client - Onglet "En cours" */}
+            {/* Onglet "En cours" */}
             <TabPanel value={tabValue} index={1}>
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -880,7 +891,7 @@ const MyAppointmentsPage = () => {
               )}
             </TabPanel>
 
-            {/* Client - Onglet "Passés" */}
+            {/* Onglet "Passés" */}
             <TabPanel value={tabValue} index={2}>
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -897,7 +908,7 @@ const MyAppointmentsPage = () => {
               )}
             </TabPanel>
 
-            {/* Client - Onglet "Annulés" */}
+            {/* Onglet "Annulés" */}
             <TabPanel value={tabValue} index={3}>
               {filteredAppointments().length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
@@ -931,40 +942,35 @@ const MyAppointmentsPage = () => {
         </DialogTitle>
         <DialogContent>
           <DialogContentText id="cancel-dialog-description">
-            {appointmentToCancel?.payment_status === 'paid' ? (
-              "Êtes-vous sûr(e) de vouloir annuler ce rendez-vous ? Comme il a déjà été payé, vous devrez contacter l'administrateur pour un éventuel remboursement."
-            ) : (
-              "Êtes-vous sûr(e) de vouloir annuler ce rendez-vous ? Le créneau sera à nouveau disponible pour d'autres utilisateurs."
-            )}
+            Êtes-vous sûr de vouloir annuler ce rendez-vous ? Cette action est irréversible.
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseCancelDialog} color="primary" disabled={cancelLoading}>
-            Annuler
+          <Button onClick={handleCloseCancelDialog} disabled={cancelLoading}>
+            Non, garder
           </Button>
           <Button
-            onClick={handleCancelAppointment}
+            onClick={handleConfirmCancel}
             color="error"
             variant="contained"
             disabled={cancelLoading}
-            startIcon={cancelLoading ? <CircularProgress size={20} color="inherit" /> : undefined}
+            autoFocus
           >
-            {cancelLoading ? 'Annulation en cours...' : 'Confirmer l\'annulation'}
+            {cancelLoading ? <CircularProgress size={24} /> : 'Oui, annuler'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Boîte de dialogue des détails du rendez-vous */}
+      {/* Dialogue de détails du rendez-vous */}
       {selectedAppointment && (
         <AppointmentDetailsDialog
-          open={detailsDialogOpen}
-          onClose={handleCloseDetailsDialog}
           appointment={selectedAppointment}
-          onAppointmentUpdate={handleAppointmentUpdate}
+          open={!!selectedAppointment}
+          onClose={handleCloseDetailsDialog}
         />
       )}
     </Box>
   );
 };
 
-export default MyAppointmentsPage;
+export default PractitionerAppointmentsPage;

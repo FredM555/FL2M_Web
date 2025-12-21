@@ -1,6 +1,6 @@
 // src/pages/AppointmentBookingPage.tsx
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Container,
@@ -1378,7 +1378,19 @@ const AppointmentBookingPage: React.FC = () => {
             }
             label={
               <Typography variant="body1">
-                J'accepte les conditions générales d'utilisation <Typography component="span" color="error">*</Typography>
+                J'accepte les{' '}
+                <Link
+                  to="/cgu"
+                  target="_blank"
+                  style={{
+                    color: colors.secondary,
+                    textDecoration: 'underline',
+                    fontWeight: 500
+                  }}
+                >
+                  conditions générales d'utilisation
+                </Link>
+                {' '}<Typography component="span" color="error">*</Typography>
               </Typography>
             }
           />

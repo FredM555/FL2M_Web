@@ -2,6 +2,7 @@
 import { supabase, Appointment, logActivity } from './supabase';
 import { startOfWeek, endOfWeek, format, parseISO } from 'date-fns';
 import { logger } from '../utils/logger';
+import { getPrimaryBeneficiaryForAppointment, getAppointmentBeneficiaries } from './beneficiaries';
 
 /**
  * Vérifie s'il existe un conflit de créneau pour un intervenant et un service donnés
@@ -418,7 +419,10 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
     const startDate = new Date(appointment.start_time);
     const endDate = new Date(appointment.end_time);
 
-    const emailHtml = (recipientFirstName: string, recipientLastName: string, isClient: boolean = true) => `
+    // Récupérer le bénéficiaire principal depuis la table de liaison
+    const { data: primaryBeneficiary } = await getPrimaryBeneficiaryForAppointment(appointment.id);
+
+    const emailHtml = (recipientFirstName: string, recipientLastName: string, isClient: boolean = true, beneficiaryName?: string) => `
       <!DOCTYPE html>
       <html>
       <head>
@@ -469,10 +473,10 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
               </div>
               ` : ''}
 
-              ${appointment.beneficiary_first_name ? `
+              ${beneficiaryName ? `
               <div class="info-row">
                 <span class="label">Bénéficiaire :</span>
-                <span>${appointment.beneficiary_first_name} ${appointment.beneficiary_last_name}</span>
+                <span>${beneficiaryName}</span>
               </div>
               ` : ''}
 
@@ -512,13 +516,17 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
       </html>
     `;
 
+    const beneficiaryName = primaryBeneficiary
+      ? `${primaryBeneficiary.first_name} ${primaryBeneficiary.last_name}`
+      : undefined;
+
     // Envoyer l'email au client
     if (appointment.client?.email) {
       await supabase.functions.invoke('send-email', {
         body: {
           to: appointment.client.email,
           subject: `Confirmation de votre rendez-vous - ${appointment.service?.name || 'FL²M Services'}`,
-          html: emailHtml(appointment.client.first_name, appointment.client.last_name),
+          html: emailHtml(appointment.client.first_name, appointment.client.last_name, true, beneficiaryName),
           appointmentId: appointment.id,
           emailType: 'confirmation'
         }
@@ -526,14 +534,14 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
     }
 
     // Envoyer l'email au bénéficiaire si différent du client et si email renseigné
-    if (appointment.beneficiary_email &&
-        appointment.beneficiary_email !== appointment.client?.email &&
-        appointment.beneficiary_notifications_enabled) {
+    if (primaryBeneficiary?.email &&
+        primaryBeneficiary.email !== appointment.client?.email &&
+        primaryBeneficiary.notifications_enabled) {
       await supabase.functions.invoke('send-email', {
         body: {
-          to: appointment.beneficiary_email,
+          to: primaryBeneficiary.email,
           subject: `Confirmation de votre rendez-vous - ${appointment.service?.name || 'FL²M Services'}`,
-          html: emailHtml(appointment.beneficiary_first_name, appointment.beneficiary_last_name),
+          html: emailHtml(primaryBeneficiary.first_name, primaryBeneficiary.last_name, false, beneficiaryName),
           appointmentId: appointment.id,
           emailType: 'confirmation'
         }
@@ -556,7 +564,10 @@ const sendAppointmentCancellationEmails = async (appointment: any) => {
     const startDate = new Date(appointment.start_time);
     const endDate = new Date(appointment.end_time);
 
-    const emailHtml = (recipientFirstName: string, recipientLastName: string, isClient: boolean = true) => `
+    // Récupérer le bénéficiaire principal depuis la table de liaison
+    const { data: primaryBeneficiary } = await getPrimaryBeneficiaryForAppointment(appointment.id);
+
+    const emailHtml = (recipientFirstName: string, recipientLastName: string, isClient: boolean = true, beneficiaryName?: string) => `
       <!DOCTYPE html>
       <html>
       <head>
@@ -607,10 +618,10 @@ const sendAppointmentCancellationEmails = async (appointment: any) => {
               </div>
               ` : ''}
 
-              ${appointment.beneficiary_first_name ? `
+              ${beneficiaryName ? `
               <div class="info-row">
                 <span class="label">Bénéficiaire :</span>
-                <span>${appointment.beneficiary_first_name} ${appointment.beneficiary_last_name}</span>
+                <span>${beneficiaryName}</span>
               </div>
               ` : ''}
             </div>
@@ -636,13 +647,17 @@ const sendAppointmentCancellationEmails = async (appointment: any) => {
       </html>
     `;
 
+    const beneficiaryName = primaryBeneficiary
+      ? `${primaryBeneficiary.first_name} ${primaryBeneficiary.last_name}`
+      : undefined;
+
     // Envoyer l'email au client
     if (appointment.client?.email) {
       await supabase.functions.invoke('send-email', {
         body: {
           to: appointment.client.email,
           subject: `Annulation de votre rendez-vous - ${appointment.service?.name || 'FL²M Services'}`,
-          html: emailHtml(appointment.client.first_name, appointment.client.last_name),
+          html: emailHtml(appointment.client.first_name, appointment.client.last_name, true, beneficiaryName),
           appointmentId: appointment.id,
           emailType: 'cancellation'
         }
@@ -650,14 +665,14 @@ const sendAppointmentCancellationEmails = async (appointment: any) => {
     }
 
     // Envoyer l'email au bénéficiaire si différent du client et si email renseigné
-    if (appointment.beneficiary_email &&
-        appointment.beneficiary_email !== appointment.client?.email &&
-        appointment.beneficiary_notifications_enabled) {
+    if (primaryBeneficiary?.email &&
+        primaryBeneficiary.email !== appointment.client?.email &&
+        primaryBeneficiary.notifications_enabled) {
       await supabase.functions.invoke('send-email', {
         body: {
-          to: appointment.beneficiary_email,
+          to: primaryBeneficiary.email,
           subject: `Annulation de votre rendez-vous - ${appointment.service?.name || 'FL²M Services'}`,
-          html: emailHtml(appointment.beneficiary_first_name, appointment.beneficiary_last_name, false),
+          html: emailHtml(primaryBeneficiary.first_name, primaryBeneficiary.last_name, false, beneficiaryName),
           appointmentId: appointment.id,
           emailType: 'cancellation'
         }
@@ -934,6 +949,7 @@ export const cancelAppointment = async (
     
     // Déterminer l'action à effectuer en fonction du statut de paiement
     const isPaid = appointment.payment_status === 'paid';
+    const wasConfirmed = appointment.status === 'confirmed';
 
     // Si le rendez-vous a été payé ou si keepRecord est true, juste marquer comme annulé
     if (isPaid || keepRecord) {
@@ -949,6 +965,13 @@ export const cancelAppointment = async (
         .single();
 
       if (error) throw error;
+
+      // Réactiver les rendez-vous qui avaient été suspendus par ce rendez-vous
+      if (wasConfirmed) {
+        reactivateSuspendedAppointments(appointmentId).catch(err =>
+          logger.error('Erreur lors de la réactivation des RDV suspendus:', err)
+        );
+      }
 
       // Envoyer les emails d'annulation
       sendAppointmentCancellationEmails(appointment).catch(err =>
@@ -977,6 +1000,13 @@ export const cancelAppointment = async (
     // Sinon, pour un rendez-vous non payé, le rendre à nouveau disponible
     else {
       const clientId = appointment.client_id; // Sauvegarder avant de le mettre à null
+
+      // Réactiver les rendez-vous qui avaient été suspendus par ce rendez-vous (si il était confirmé)
+      if (wasConfirmed) {
+        reactivateSuspendedAppointments(appointmentId).catch(err =>
+          logger.error('Erreur lors de la réactivation des RDV suspendus:', err)
+        );
+      }
 
       // Envoyer les emails d'annulation AVANT de supprimer les données du client
       sendAppointmentCancellationEmails(appointment).catch(err =>
@@ -1080,6 +1110,49 @@ export const getClientAppointments = (clientId: string) => {
     `)
     .eq('client_id', clientId)
     .order('start_time', { ascending: true });
+};
+
+/**
+ * Supprime automatiquement les rendez-vous passés avec le statut "pending" (disponibles)
+ * Ces créneaux non utilisés encombrent inutilement la base de données
+ * @param practitionerId ID de l'intervenant (optionnel, sinon nettoie pour tous les intervenants)
+ * @returns Nombre de rendez-vous supprimés
+ */
+export const cleanupPastPendingAppointments = async (
+  practitionerId?: string
+): Promise<{ deletedCount: number; error?: any }> => {
+  try {
+    if (!practitionerId) {
+      logger.warn('[CLEANUP] practitionerId manquant - impossible de nettoyer');
+      return { deletedCount: 0, error: new Error('practitionerId requis') };
+    }
+
+    logger.info(`[CLEANUP] Nettoyage des rendez-vous passés pour l'intervenant: ${practitionerId}`);
+
+    // Utiliser la fonction RPC sécurisée pour contourner les politiques RLS
+    const { data, error } = await supabase.rpc('cleanup_past_pending_appointments', {
+      practitioner_id: practitionerId
+    });
+
+    if (error) {
+      logger.error('[CLEANUP] Erreur lors du nettoyage via RPC:', error);
+      return { deletedCount: 0, error };
+    }
+
+    // La fonction RPC retourne un tableau avec une seule ligne contenant deleted_count
+    const deletedCount = data && data.length > 0 ? data[0].deleted_count : 0;
+
+    if (deletedCount > 0) {
+      logger.info(`[CLEANUP] ${deletedCount} rendez-vous passé(s) disponible(s) supprimé(s) avec succès`);
+    } else {
+      logger.info('[CLEANUP] Aucun rendez-vous passé disponible à nettoyer');
+    }
+
+    return { deletedCount };
+  } catch (error) {
+    logger.error('[CLEANUP] Exception dans cleanupPastPendingAppointments:', error);
+    return { deletedCount: 0, error };
+  }
 };
 
 /**

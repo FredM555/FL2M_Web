@@ -15,6 +15,7 @@ export type MessageCategory =
   | 'support'              // Support général
   | 'billing'              // Facturation
   | 'technical'            // Problème technique
+  | 'appointment'          // Message lié à un rendez-vous
   | 'other';               // Autre
 
 /**
@@ -87,6 +88,10 @@ export interface MessageThread {
   unread_count_admin: number;
   reference_type: string | null;
   reference_id: string | null;
+  // Informations de l'utilisateur qui a créé le thread
+  user_pseudo?: string | null;
+  user_first_name?: string | null;
+  user_last_name?: string | null;
 }
 
 /**
@@ -140,6 +145,7 @@ export function getMessageCategoryLabel(category: MessageCategory): string {
     support: 'Support',
     billing: 'Facturation',
     technical: 'Problème technique',
+    appointment: 'Rendez-vous',
     other: 'Autre'
   };
   return labels[category];
@@ -168,6 +174,7 @@ export function getMessageCategoryColor(category: MessageCategory): string {
     support: '#66BB6A',               // Vert
     billing: '#FFA726',               // Orange
     technical: '#EF5350',             // Rouge
+    appointment: '#345995',           // Bleu foncé (couleur FL2M)
     other: '#AB47BC'                  // Violet
   };
   return colors[category];
@@ -183,6 +190,7 @@ export function getMessageCategoryIcon(category: MessageCategory): string {
     support: '💬',
     billing: '💰',
     technical: '🔧',
+    appointment: '📅',
     other: '📋'
   };
   return icons[category];

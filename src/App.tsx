@@ -61,6 +61,8 @@ import PractitionerSubscriptionPage from './pages/PractitionerSubscriptionPage';
 import MessagesPage from './pages/MessagesPage_NEW';
 import MyAppointmentsPage from './pages/MyAppointmentsPage';
 import PractitionerSchedulePage from './pages/Practitioner/PractitionerSchedulePage';
+import PractitionerAppointmentsPage from './pages/Practitioner/PractitionerAppointmentsPage';
+import PractitionerMessagesPage from './pages/Practitioner/PractitionerMessagesPage';
 import { BeneficiariesPage } from './pages/BeneficiariesPage';
 import PractitionerStripeConnectPage from './pages/PractitionerStripeConnectPage';
 import PractitionerStripeConnectSuccessPage from './pages/PractitionerStripeConnectSuccessPage';
@@ -172,7 +174,7 @@ function App() {
   // Vérifier si l'utilisateur tente d'accéder à une route protégée sans être connecté
   if (!user) {
     // Liste des chemins qui nécessitent une authentification
-    const requiresAuth = ['/profile', '/practitioner-profile', '/mes-rendez-vous', '/beneficiaries', '/admin'].some(
+    const requiresAuth = ['/profile', '/practitioner-profile', '/mes-rendez-vous', '/intervenant/rendez-vous', '/beneficiaries', '/admin'].some(
       path => location.pathname.startsWith(path)
     );
     
@@ -309,6 +311,16 @@ function App() {
             <Route path="intervenant/planning" element={
               <ProtectedRoute>
                 <PractitionerSchedulePage />
+              </ProtectedRoute>
+            } />
+            <Route path="intervenant/rendez-vous" element={
+              <ProtectedRoute>
+                <PractitionerAppointmentsPage />
+              </ProtectedRoute>
+            } />
+            <Route path="intervenant/messages" element={
+              <ProtectedRoute>
+                <PractitionerMessagesPage />
               </ProtectedRoute>
             } />
             <Route path="intervenant/stripe-connect" element={

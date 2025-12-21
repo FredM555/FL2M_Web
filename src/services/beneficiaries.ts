@@ -14,7 +14,14 @@ import type {
   BeneficiarySearchOptions,
   BeneficiaryStats,
   AppointmentBeneficiary,
-  BeneficiaryRoleInAppointment
+  BeneficiaryRoleInAppointment,
+  BeneficiaryNote,
+  CreateBeneficiaryNoteData,
+  UpdateBeneficiaryNoteData,
+  BeneficiaryNoteType,
+  BeneficiaryDocument,
+  CreateBeneficiaryDocumentData,
+  UpdateBeneficiaryDocumentData
 } from '../types/beneficiary';
 
 // ============================================================================
@@ -314,6 +321,39 @@ export const checkBeneficiaryHasActiveAppointments = async (
   } catch (error) {
     logger.error('Erreur lors de la vérification des rendez-vous actifs:', error);
     return { hasActiveAppointments: false, count: 0, error };
+  }
+};
+
+/**
+ * Récupérer le bénéficiaire principal d'un rendez-vous
+ * Utile pour les emails et affichages simplifiés
+ */
+export const getPrimaryBeneficiaryForAppointment = async (
+  appointmentId: string
+): Promise<{ data: Beneficiary | null; error: any }> => {
+  try {
+    const { data: appointmentBeneficiaries, error } = await supabase
+      .from('appointment_beneficiaries')
+      .select(`
+        beneficiary:beneficiaries(*)
+      `)
+      .eq('appointment_id', appointmentId)
+      .order('role_order', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (error) {
+      // Si pas de bénéficiaire trouvé, ce n'est pas une erreur critique
+      if (error.code === 'PGRST116') {
+        return { data: null, error: null };
+      }
+      throw error;
+    }
+
+    return { data: (appointmentBeneficiaries?.beneficiary as unknown as Beneficiary) || null, error: null };
+  } catch (error) {
+    logger.error('Erreur lors de la récupération du bénéficiaire principal:', error);
+    return { data: null, error };
   }
 };
 
@@ -920,6 +960,284 @@ export const updateBeneficiariesDisplayOrder = async (
 };
 
 // ============================================================================
+// GESTION DES NOTES SUR LES BÉNÉFICIAIRES
+// ============================================================================
+
+/**
+ * Récupérer les notes d'un bénéficiaire
+ * Les intervenants voient leurs notes privées + toutes les notes publiques
+ * Les admins voient toutes les notes
+ */
+export const getBeneficiaryNotes = async (
+  beneficiaryId: string,
+  practitionerId?: string
+): Promise<{ data: BeneficiaryNote[] | null; error: any }> => {
+  try {
+    const { data, error } = await supabase
+      .from('beneficiary_notes')
+      .select(`
+        *,
+        practitioner:practitioners(
+          id,
+          display_name,
+          profile:profiles(first_name, last_name, pseudo)
+        )
+      `)
+      .eq('beneficiary_id', beneficiaryId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return { data, error: null };
+  } catch (error) {
+    logger.error('Erreur lors de la récupération des notes:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Créer une note sur un bénéficiaire
+ */
+export const createBeneficiaryNote = async (
+  noteData: CreateBeneficiaryNoteData
+): Promise<{ data: BeneficiaryNote | null; error: any }> => {
+  try {
+    const currentUserId = (await supabase.auth.getUser()).data.user?.id;
+
+    const insertData: any = {
+      beneficiary_id: noteData.beneficiary_id,
+      note_type: noteData.note_type,
+      content: noteData.content,
+      created_by: currentUserId
+    };
+
+    // Ajouter practitioner_id pour les notes practitioner et shared
+    if (noteData.note_type === 'practitioner' || noteData.note_type === 'shared') {
+      if (!noteData.practitioner_id) {
+        throw new Error('practitioner_id est requis pour les notes de type practitioner ou shared');
+      }
+      insertData.practitioner_id = noteData.practitioner_id;
+    }
+
+    // Ajouter user_id pour les notes user
+    if (noteData.note_type === 'user') {
+      insertData.user_id = noteData.user_id || currentUserId;
+    }
+
+    const { data, error } = await supabase
+      .from('beneficiary_notes')
+      .insert(insertData)
+      .select(`
+        *,
+        practitioner:practitioners(
+          id,
+          display_name,
+          profile:profiles(first_name, last_name, pseudo)
+        ),
+        user:profiles!user_id(id, email, first_name, last_name)
+      `)
+      .single();
+
+    if (error) throw error;
+
+    logger.debug('Note créée avec succès:', data);
+    return { data, error: null };
+  } catch (error) {
+    logger.error('Erreur lors de la création de la note:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Mettre à jour une note
+ */
+export const updateBeneficiaryNote = async (
+  noteId: string,
+  noteData: UpdateBeneficiaryNoteData
+): Promise<{ data: BeneficiaryNote | null; error: any }> => {
+  try {
+    const { data, error } = await supabase
+      .from('beneficiary_notes')
+      .update(noteData)
+      .eq('id', noteId)
+      .select(`
+        *,
+        practitioner:practitioners(
+          id,
+          display_name,
+          profile:profiles(first_name, last_name, pseudo)
+        )
+      `)
+      .single();
+
+    if (error) throw error;
+
+    logger.debug('Note mise à jour avec succès:', data);
+    return { data, error: null };
+  } catch (error) {
+    logger.error('Erreur lors de la mise à jour de la note:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Supprimer une note
+ */
+export const deleteBeneficiaryNote = async (
+  noteId: string
+): Promise<{ success: boolean; error: any }> => {
+  try {
+    const { error } = await supabase
+      .from('beneficiary_notes')
+      .delete()
+      .eq('id', noteId);
+
+    if (error) throw error;
+
+    logger.debug('Note supprimée avec succès');
+    return { success: true, error: null };
+  } catch (error) {
+    logger.error('Erreur lors de la suppression de la note:', error);
+    return { success: false, error };
+  }
+};
+
+// ============================================================================
+// GESTION DES DOCUMENTS DES BÉNÉFICIAIRES
+// ============================================================================
+
+/**
+ * Récupérer les documents d'un bénéficiaire
+ */
+export const getBeneficiaryDocuments = async (
+  beneficiaryId: string
+): Promise<{ data: BeneficiaryDocument[] | null; error: any }> => {
+  try {
+    const { data, error } = await supabase
+      .from('beneficiary_documents')
+      .select(`
+        *,
+        practitioner:practitioners(
+          id,
+          display_name,
+          profile:profiles(first_name, last_name, pseudo)
+        ),
+        appointment:appointments(
+          id,
+          start_time,
+          service:services(name)
+        )
+      `)
+      .eq('beneficiary_id', beneficiaryId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+
+    return { data, error: null };
+  } catch (error) {
+    logger.error('Erreur lors de la récupération des documents:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Créer un document pour un bénéficiaire
+ */
+export const createBeneficiaryDocument = async (
+  documentData: CreateBeneficiaryDocumentData
+): Promise<{ data: BeneficiaryDocument | null; error: any }> => {
+  try {
+    const { data, error } = await supabase
+      .from('beneficiary_documents')
+      .insert({
+        ...documentData,
+        created_by: (await supabase.auth.getUser()).data.user?.id
+      })
+      .select(`
+        *,
+        practitioner:practitioners(
+          id,
+          display_name,
+          profile:profiles(first_name, last_name, pseudo)
+        ),
+        appointment:appointments(
+          id,
+          start_time,
+          service:services(name)
+        )
+      `)
+      .single();
+
+    if (error) throw error;
+
+    logger.debug('Document créé avec succès:', data);
+    return { data, error: null };
+  } catch (error) {
+    logger.error('Erreur lors de la création du document:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Mettre à jour un document
+ */
+export const updateBeneficiaryDocument = async (
+  documentId: string,
+  documentData: UpdateBeneficiaryDocumentData
+): Promise<{ data: BeneficiaryDocument | null; error: any }> => {
+  try {
+    const { data, error } = await supabase
+      .from('beneficiary_documents')
+      .update(documentData)
+      .eq('id', documentId)
+      .select(`
+        *,
+        practitioner:practitioners(
+          id,
+          display_name,
+          profile:profiles(first_name, last_name, pseudo)
+        ),
+        appointment:appointments(
+          id,
+          start_time,
+          service:services(name)
+        )
+      `)
+      .single();
+
+    if (error) throw error;
+
+    logger.debug('Document mis à jour avec succès:', data);
+    return { data, error: null };
+  } catch (error) {
+    logger.error('Erreur lors de la mise à jour du document:', error);
+    return { data: null, error };
+  }
+};
+
+/**
+ * Supprimer un document
+ */
+export const deleteBeneficiaryDocument = async (
+  documentId: string
+): Promise<{ success: boolean; error: any }> => {
+  try {
+    const { error } = await supabase
+      .from('beneficiary_documents')
+      .delete()
+      .eq('id', documentId);
+
+    if (error) throw error;
+
+    logger.debug('Document supprimé avec succès');
+    return { success: true, error: null };
+  } catch (error) {
+    logger.error('Erreur lors de la suppression du document:', error);
+    return { success: false, error };
+  }
+};
+
+// ============================================================================
 // EXPORTS
 // ============================================================================
 
@@ -958,5 +1276,17 @@ export default {
   hasSelfBeneficiary,
 
   // Ordre d'affichage
-  updateBeneficiariesDisplayOrder
+  updateBeneficiariesDisplayOrder,
+
+  // Notes
+  getBeneficiaryNotes,
+  createBeneficiaryNote,
+  updateBeneficiaryNote,
+  deleteBeneficiaryNote,
+
+  // Documents
+  getBeneficiaryDocuments,
+  createBeneficiaryDocument,
+  updateBeneficiaryDocument,
+  deleteBeneficiaryDocument
 };

@@ -1,4 +1,4 @@
-// src/pages/MessagesPage.tsx
+// src/pages/Practitioner/PractitionerMessagesPage.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Box,
@@ -17,13 +17,13 @@ import {
   CircularProgress,
   Alert,
   Badge,
-  Tabs,
-  Tab,
   FormControlLabel,
   Switch
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import { useAuth } from '../context/AuthContext';
+import CloseIcon from '@mui/icons-material/Close';
+import ReopenIcon from '@mui/icons-material/Replay';
+import { useAuth } from '../../context/AuthContext';
 import {
   MessageThread,
   MessageWithSender,
@@ -32,34 +32,35 @@ import {
   getMessageCategoryIcon,
   getMessageStatusLabel,
   getMessageStatusColor
-} from '../types/messaging';
-import { logger } from '../utils/logger';
+} from '../../types/messaging';
+import { logger } from '../../utils/logger';
 import {
   getUserMessageThreads,
   getThreadMessages,
   replyToMessage,
   markThreadAsRead,
-  getAppointmentsWithUnreadMessages
-} from '../services/messaging';
-import { getClientAppointments } from '../services/supabase-appointments';
-import { MessagesPanel } from '../components/messages/MessagesPanel';
-import { Appointment } from '../services/supabase';
-import { format, parseISO } from 'date-fns';
-import { fr } from 'date-fns/locale';
+  closeMessageThread,
+  reopenMessageThread
+} from '../../services/messaging';
 
-const MessagesPage: React.FC = () => {
+const PractitionerMessagesPage: React.FC = () => {
   const { user, profile } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  // Onglet actif (0 = Messages généraux, 1 = Rendez-vous)
-  const [currentTab, setCurrentTab] = useState(0);
 
   // Filtre pour afficher tous les messages ou uniquement les actifs
   const [showAllMessages, setShowAllMessages] = useState(false);
 
-  // États pour les messages généraux
+  // États pour les messages
   const [threads, setThreads] = useState<MessageThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null);
+
+  // Réinitialiser le thread sélectionné si il n'est plus dans la liste filtrée
+  useEffect(() => {
+    if (selectedThread && !showAllMessages && selectedThread.status === 'closed') {
+      // Si le thread sélectionné est fermé et qu'on affiche seulement les actifs, le désélectionner
+      setSelectedThread(null);
+    }
+  }, [showAllMessages, selectedThread]);
   const [messages, setMessages] = useState<MessageWithSender[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -67,15 +68,9 @@ const MessagesPage: React.FC = () => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // États pour les rendez-vous
-  const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [loadingAppointments, setLoadingAppointments] = useState(false);
-
   useEffect(() => {
     if (user) {
       loadThreads();
-      loadAppointments();
     }
   }, [user]);
 
@@ -99,8 +94,8 @@ const MessagesPage: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    // personalOnly = true pour afficher uniquement les messages personnels
-    const { data, error: err } = await getUserMessageThreads(user.id, true);
+    // personalOnly = false pour afficher TOUS les messages (vue professionnelle)
+    const { data, error: err } = await getUserMessageThreads(user.id, false);
 
     if (err) {
       setError('Erreur lors du chargement des messages');
@@ -127,8 +122,8 @@ const MessagesPage: React.FC = () => {
       logger.error(err);
     } else if (data) {
       setMessages(data);
-      // Marquer comme lu
-      await markThreadAsRead(threadId, false);
+      // Marquer comme lu en tant qu'admin
+      await markThreadAsRead(threadId, true);
       // Recharger les threads pour mettre à jour le badge
       if (user) {
         loadThreads();
@@ -136,38 +131,6 @@ const MessagesPage: React.FC = () => {
     }
 
     setLoadingMessages(false);
-  };
-
-  const loadAppointments = async () => {
-    if (!user) return;
-
-    setLoadingAppointments(true);
-    setError(null);
-
-    try {
-      // Récupérer tous les rendez-vous de l'utilisateur (confirmés/payés)
-      const { data: appts, error: err } = await getClientAppointments(user.id);
-
-      if (err) {
-        setError('Erreur lors du chargement des rendez-vous');
-        logger.error(err);
-      } else if (appts) {
-        // Filtrer uniquement les rendez-vous confirmés ou terminés
-        const relevantAppts = appts.filter(
-          (apt: Appointment) => apt.status === 'confirmed' || apt.status === 'completed' || apt.status === 'validated'
-        );
-        setAppointments(relevantAppts);
-
-        // Sélectionner le premier par défaut
-        if (relevantAppts.length > 0 && !selectedAppointment) {
-          setSelectedAppointment(relevantAppts[0]);
-        }
-      }
-    } catch (err) {
-      logger.error('Exception lors du chargement des rendez-vous:', err);
-    } finally {
-      setLoadingAppointments(false);
-    }
   };
 
   const handleSendMessage = async () => {
@@ -179,7 +142,7 @@ const MessagesPage: React.FC = () => {
     const { data, error: err } = await replyToMessage({
       thread_id: selectedThread.thread_id,
       message: newMessage.trim(),
-      sender_type: 'user'
+      sender_type: 'admin'  // En tant qu'intervenant, envoyer en tant qu'admin
     });
 
     if (err) {
@@ -205,6 +168,42 @@ const MessagesPage: React.FC = () => {
     }
 
     setSending(false);
+  };
+
+  const handleCloseThread = async (threadId?: string) => {
+    const targetThreadId = threadId || selectedThread?.thread_id;
+    if (!targetThreadId) return;
+
+    const { error: err } = await closeMessageThread(targetThreadId);
+
+    if (err) {
+      setError('Erreur lors de la fermeture du message');
+      logger.error('Erreur fermeture:', err);
+    } else {
+      // Mettre à jour l'état local si c'est le thread sélectionné
+      if (selectedThread && selectedThread.thread_id === targetThreadId) {
+        setSelectedThread({ ...selectedThread, status: 'closed' });
+      }
+      loadThreads();
+    }
+  };
+
+  const handleReopenThread = async (threadId?: string) => {
+    const targetThreadId = threadId || selectedThread?.thread_id;
+    if (!targetThreadId) return;
+
+    const { error: err } = await reopenMessageThread(targetThreadId);
+
+    if (err) {
+      setError('Erreur lors de la réouverture du message');
+      logger.error('Erreur réouverture:', err);
+    } else {
+      // Mettre à jour l'état local si c'est le thread sélectionné
+      if (selectedThread && selectedThread.thread_id === targetThreadId) {
+        setSelectedThread({ ...selectedThread, status: 'new' });
+      }
+      loadThreads();
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -233,33 +232,29 @@ const MessagesPage: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
-        💬 Mes messages
+    <Container maxWidth="xl" sx={{ py: 4, height: 'calc(100vh - 108px)', display: 'flex', flexDirection: 'column' }}>
+      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3, flexShrink: 0 }}>
+        💼 Messages clients
       </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 3, flexShrink: 0 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
-      {/* Onglets pour basculer entre messages généraux et rendez-vous */}
-      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-        <Tabs value={currentTab} onChange={(e, val) => setCurrentTab(val)}>
-          <Tab label="Messages généraux" />
-          <Tab label="Rendez-vous" />
-        </Tabs>
-      </Box>
-
-      {/* Affichage conditionnel selon l'onglet */}
-      {currentTab === 0 && (
-        <Grid container spacing={0} sx={{ height: 'calc(100vh - 250px)' }}>
+      <Grid container spacing={0} sx={{ flex: 1, minHeight: 0, height: '100%' }}>
           {/* Liste des threads */}
-          <Grid item xs={12} md={4}>
-          <Paper sx={{ height: '100%', overflow: 'auto', borderRight: '1px solid #e0e0e0' }}>
+          <Grid item xs={12} md={4} sx={{ height: '100%' }}>
+          <Paper sx={{
+            height: '100%',
+            borderRight: '1px solid #e0e0e0',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
             {/* Filtre pour afficher tous les messages ou uniquement les actifs */}
-            <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: 'grey.50' }}>
+            <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: 'grey.50', flexShrink: 0 }}>
               <FormControlLabel
                 control={
                   <Switch
@@ -277,13 +272,30 @@ const MessagesPage: React.FC = () => {
             </Box>
 
             {threads.filter(thread => showAllMessages || thread.status !== 'closed').length === 0 ? (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Box sx={{ p: 4, textAlign: 'center', flex: 1 }}>
                 <Typography variant="body1" color="text.secondary">
                   Aucun message
                 </Typography>
               </Box>
             ) : (
-              <List sx={{ p: 0 }}>
+              <List sx={{
+                p: 0,
+                flex: 1,
+                overflow: 'auto',
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  backgroundColor: '#f1f1f1',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: '#888',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  backgroundColor: '#555',
+                }
+              }}>
                 {threads.filter(thread => showAllMessages || thread.status !== 'closed').map((thread) => (
                   <ListItemButton
                     key={thread.thread_id}
@@ -292,13 +304,16 @@ const MessagesPage: React.FC = () => {
                     sx={{
                       borderBottom: '1px solid #f0f0f0',
                       py: 2,
-                      bgcolor: thread.unread_count_user > 0 ? 'action.hover' : 'transparent'
+                      bgcolor: thread.unread_count_user > 0 ? 'action.hover' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center'
                     }}
                   >
                     <Avatar sx={{ mr: 2, bgcolor: getMessageCategoryColor(thread.category) }}>
                       {getMessageCategoryIcon(thread.category)}
                     </Avatar>
                     <ListItemText
+                      sx={{ flex: 1, minWidth: 0 }}
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Typography variant="body1" sx={{ fontWeight: thread.unread_count_user > 0 ? 700 : 400, flex: 1 }}>
@@ -319,9 +334,41 @@ const MessagesPage: React.FC = () => {
                               • {formatDate(thread.last_message_at)}
                             </Typography>
                           )}
+                          {(thread.user_pseudo || thread.user_first_name) && (
+                            <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontWeight: 500 }}>
+                              • 👤 {thread.user_pseudo || `${thread.user_first_name} ${thread.user_last_name || ''}`}
+                            </Typography>
+                          )}
                         </Box>
                       }
                     />
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, ml: 1 }}>
+                      {thread.status !== 'closed' ? (
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCloseThread(thread.thread_id);
+                          }}
+                          title="Fermer la conversation"
+                          sx={{ p: 0.5 }}
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      ) : (
+                        <IconButton
+                          size="small"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReopenThread(thread.thread_id);
+                          }}
+                          title="Rouvrir la conversation"
+                          sx={{ p: 0.5 }}
+                        >
+                          <ReopenIcon fontSize="small" />
+                        </IconButton>
+                      )}
+                    </Box>
                   </ListItemButton>
                 ))}
               </List>
@@ -330,7 +377,7 @@ const MessagesPage: React.FC = () => {
         </Grid>
 
         {/* Zone de messages */}
-        <Grid item xs={12} md={8}>
+        <Grid item xs={12} md={8} sx={{ height: '100%' }}>
           <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {selectedThread ? (
               <>
@@ -350,10 +397,36 @@ const MessagesPage: React.FC = () => {
                       sx={{ mt: 0.5 }}
                     />
                   </Box>
+                  {selectedThread.status !== 'closed' ? (
+                    <IconButton onClick={() => handleCloseThread()} title="Fermer le message">
+                      <CloseIcon />
+                    </IconButton>
+                  ) : (
+                    <IconButton onClick={() => handleReopenThread()} title="Rouvrir le message">
+                      <ReopenIcon />
+                    </IconButton>
+                  )}
                 </Box>
 
                 {/* Messages */}
-                <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+                <Box sx={{
+                  flex: 1,
+                  overflow: 'auto',
+                  p: 2,
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: '#f1f1f1',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: '#888',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb:hover': {
+                    backgroundColor: '#555',
+                  }
+                }}>
                   {loadingMessages ? (
                     <Box sx={{ textAlign: 'center', py: 4 }}>
                       <CircularProgress size={30} />
@@ -465,7 +538,7 @@ const MessagesPage: React.FC = () => {
                 {selectedThread.status === 'closed' && (
                   <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0', bgcolor: 'grey.50' }}>
                     <Alert severity="info">
-                      Cette conversation a été fermée par l'équipe. Vous ne pouvez plus y répondre.
+                      Ce message est fermé. Vous pouvez le rouvrir pour continuer à échanger.
                     </Alert>
                   </Box>
                 )}
@@ -480,92 +553,8 @@ const MessagesPage: React.FC = () => {
           </Paper>
         </Grid>
       </Grid>
-      )}
-
-      {/* Onglet Rendez-vous */}
-      {currentTab === 1 && (
-        <Grid container spacing={0} sx={{ height: 'calc(100vh - 250px)' }}>
-          {/* Liste des rendez-vous */}
-          <Grid item xs={12} md={4}>
-            <Paper sx={{ height: '100%', overflow: 'auto', borderRight: '1px solid #e0e0e0' }}>
-              {loadingAppointments ? (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
-                  <CircularProgress />
-                </Box>
-              ) : appointments.length === 0 ? (
-                <Box sx={{ p: 4, textAlign: 'center' }}>
-                  <Typography variant="body1" color="text.secondary">
-                    Aucun rendez-vous
-                  </Typography>
-                </Box>
-              ) : (
-                <List sx={{ p: 0 }}>
-                  {appointments.map((appointment) => (
-                    <ListItemButton
-                      key={appointment.id}
-                      selected={selectedAppointment?.id === appointment.id}
-                      onClick={() => setSelectedAppointment(appointment)}
-                      sx={{
-                        borderBottom: '1px solid #f0f0f0',
-                        py: 2
-                      }}
-                    >
-                      <Avatar sx={{ mr: 2, bgcolor: '#345995' }}>
-                        📅
-                      </Avatar>
-                      <ListItemText
-                        primary={
-                          <Typography variant="body1" sx={{ fontWeight: 600 }}>
-                            {appointment.service?.name || 'Rendez-vous'}
-                          </Typography>
-                        }
-                        secondary={
-                          <Box>
-                            <Typography variant="caption" color="text.secondary">
-                              {format(parseISO(appointment.start_time), 'EEEE d MMMM yyyy - HH:mm', { locale: fr })}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                              {appointment.practitioner?.profile?.pseudo || 'Intervenant'}
-                            </Typography>
-                          </Box>
-                        }
-                      />
-                    </ListItemButton>
-                  ))}
-                </List>
-              )}
-            </Paper>
-          </Grid>
-
-          {/* Zone de messages du rendez-vous */}
-          <Grid item xs={12} md={8}>
-            <Paper sx={{ height: '100%' }}>
-              {selectedAppointment ? (
-                <MessagesPanel
-                  appointmentId={selectedAppointment.id}
-                  userType={
-                    profile?.user_type === 'intervenant' || profile?.user_type === 'admin'
-                      ? 'practitioner'
-                      : 'client'
-                  }
-                  onMessageSent={() => {
-                    // Optionnel: recharger la liste des RDV pour mettre à jour les badges
-                    loadAppointments();
-                  }}
-                />
-              ) : (
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                  <Typography variant="body1" color="text.secondary">
-                    Sélectionnez un rendez-vous pour voir les messages
-                  </Typography>
-                </Box>
-              )}
-            </Paper>
-          </Grid>
-        </Grid>
-      )}
     </Container>
   );
 };
 
-export default MessagesPage;
+export default PractitionerMessagesPage;

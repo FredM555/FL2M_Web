@@ -20,12 +20,14 @@ import {
   Grid,
   Collapse,
   IconButton,
-  Checkbox
+  Checkbox,
+  Tooltip
 } from "@mui/material";
 import FilterListIcon from '@mui/icons-material/FilterList';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { fr } from 'date-fns/locale';
@@ -44,6 +46,7 @@ import AdminAppointmentsTable from '../../components/admin/AdminAppointmentsTabl
 import AutoScheduleGenerator from '../../components/admin/AutoScheduleGenerator';
 import PractitionerWeeklyCalendar from '../../components/practitioner/PractitionerWeeklyCalendar';
 import { logger } from '../../utils/logger';
+import { cleanupPastPendingAppointments } from '../../services/supabase-appointments';
 
 // Interface pour les types de vues
 interface TabPanelProps {
@@ -123,11 +126,16 @@ const PractitionerSchedulePage: React.FC = () => {
   // État pour l'onglet actif (0 = vue calendrier, 1 = vue tableau)
   const [activeTab, setActiveTab] = useState(0);
 
+  // État pour le nettoyage manuel
+  const [isCleaningUp, setIsCleaningUp] = useState(false);
+
   useEffect(() => {
     if (profile?.user_type === 'intervenant' || profile?.user_type === 'admin') {
       fetchPractitionerData();
       fetchServices();
       fetchAppointments();
+      // Nettoyer automatiquement les rendez-vous passés disponibles
+      performCleanup();
     } else {
       setError("Accès réservé aux intervenants et administrateurs");
       setLoading(false);
@@ -224,6 +232,84 @@ const PractitionerSchedulePage: React.FC = () => {
       setError(`Erreur lors du chargement des rendez-vous : ${err.message}`);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const performCleanup = async () => {
+    try {
+      if (!profile?.id) return;
+
+      // Récupérer l'ID du practitioner de l'utilisateur connecté
+      const { data: practitionerData, error: practitionerError } = await supabase
+        .from('practitioners')
+        .select('id')
+        .eq('user_id', profile.id)
+        .single();
+
+      if (practitionerError) {
+        logger.warn('Impossible de récupérer le practitioner pour le nettoyage:', practitionerError);
+        return;
+      }
+
+      if (!practitionerData) return;
+
+      // Nettoyer les rendez-vous passés disponibles pour cet intervenant
+      const result = await cleanupPastPendingAppointments(practitionerData.id);
+
+      if (result.deletedCount > 0) {
+        logger.info(`${result.deletedCount} rendez-vous passé(s) disponible(s) supprimé(s) automatiquement`);
+        // Rafraîchir la liste des rendez-vous après le nettoyage
+        fetchAppointments();
+      }
+    } catch (err: any) {
+      logger.warn('Erreur lors du nettoyage automatique des rendez-vous:', err);
+      // Ne pas afficher d'erreur à l'utilisateur, c'est une opération silencieuse
+    }
+  };
+
+  const handleManualCleanup = async () => {
+    if (!window.confirm('Voulez-vous supprimer tous les rendez-vous passés disponibles (non réservés) ? Cette action est irréversible.')) {
+      return;
+    }
+
+    setIsCleaningUp(true);
+    try {
+      if (!profile?.id) return;
+
+      // Récupérer l'ID du practitioner de l'utilisateur connecté
+      const { data: practitionerData, error: practitionerError } = await supabase
+        .from('practitioners')
+        .select('id')
+        .eq('user_id', profile.id)
+        .single();
+
+      if (practitionerError) {
+        setError('Impossible de récupérer le profil intervenant');
+        return;
+      }
+
+      if (!practitionerData) {
+        setError('Profil intervenant non trouvé');
+        return;
+      }
+
+      // Nettoyer les rendez-vous passés disponibles pour cet intervenant
+      const result = await cleanupPastPendingAppointments(practitionerData.id);
+
+      if (result.error) {
+        setError(`Erreur lors du nettoyage : ${result.error.message || 'Erreur inconnue'}`);
+      } else if (result.deletedCount > 0) {
+        alert(`${result.deletedCount} rendez-vous passé(s) disponible(s) supprimé(s) avec succès`);
+        // Rafraîchir la liste des rendez-vous après le nettoyage
+        fetchAppointments();
+      } else {
+        alert('Aucun rendez-vous passé disponible à supprimer');
+      }
+    } catch (err: any) {
+      logger.error('Erreur lors du nettoyage manuel des rendez-vous:', err);
+      setError(`Erreur lors du nettoyage : ${err.message}`);
+    } finally {
+      setIsCleaningUp(false);
     }
   };
 
@@ -391,15 +477,27 @@ const PractitionerSchedulePage: React.FC = () => {
               </Box>
             }
             action={
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<CalendarMonthIcon />}
-                onClick={() => setAutoGeneratorOpen(true)}
-                sx={{ mt: 2 }}
-              >
-                Générateur Auto
-              </Button>
+              <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                <Tooltip title="Supprimer tous les rendez-vous passés disponibles (non réservés)">
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteSweepIcon />}
+                    onClick={handleManualCleanup}
+                    disabled={isCleaningUp}
+                  >
+                    {isCleaningUp ? 'Nettoyage...' : 'Nettoyer'}
+                  </Button>
+                </Tooltip>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<CalendarMonthIcon />}
+                  onClick={() => setAutoGeneratorOpen(true)}
+                >
+                  Générateur Auto
+                </Button>
+              </Box>
             }
           />
 
@@ -409,6 +507,13 @@ const PractitionerSchedulePage: React.FC = () => {
                 {error}
               </Alert>
             )}
+
+            <Alert severity="info" sx={{ mb: 3 }} icon={<DeleteSweepIcon />}>
+              <Typography variant="body2">
+                <strong>Nettoyage automatique activé :</strong> Les rendez-vous passés disponibles (non réservés) sont automatiquement supprimés au chargement de cette page.
+                Utilisez le bouton "Nettoyer" pour déclencher un nettoyage manuel à tout moment.
+              </Typography>
+            </Alert>
 
             {/* Section des filtres collapsible */}
             <Card sx={{ mb: 3, boxShadow: 1 }}>

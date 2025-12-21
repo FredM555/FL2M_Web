@@ -1,6 +1,7 @@
 // src/services/appointment-reminders.ts
 import { supabase } from './supabase';
 import { logger } from '../utils/logger';
+import { getPrimaryBeneficiaryForAppointment } from './beneficiaries';
 
 /**
  * Envoie un email de rappel de rendez-vous au client et au bénéficiaire
@@ -10,6 +11,9 @@ const sendReminderEmail = async (appointment: any) => {
   try {
     const startDate = new Date(appointment.start_time);
     const endDate = new Date(appointment.end_time);
+
+    // Récupérer le bénéficiaire principal depuis la table de liaison
+    const { data: primaryBeneficiary } = await getPrimaryBeneficiaryForAppointment(appointment.id);
 
     const formatDate = (date: Date) => {
       return new Intl.DateTimeFormat('fr-FR', {
@@ -49,6 +53,10 @@ const sendReminderEmail = async (appointment: any) => {
 
       return 'Non spécifié';
     };
+
+    const beneficiaryName = primaryBeneficiary
+      ? `${primaryBeneficiary.first_name} ${primaryBeneficiary.last_name}`
+      : undefined;
 
     const emailHtml = (recipientFirstName: string, recipientLastName: string) => `
       <!DOCTYPE html>
@@ -108,10 +116,10 @@ const sendReminderEmail = async (appointment: any) => {
               </div>
               ` : ''}
 
-              ${appointment.beneficiary_first_name ? `
+              ${beneficiaryName ? `
               <div class="info-row">
                 <span class="label">Bénéficiaire :</span>
-                <span>${appointment.beneficiary_first_name} ${appointment.beneficiary_last_name}</span>
+                <span>${beneficiaryName}</span>
               </div>
               ` : ''}
 
@@ -170,16 +178,14 @@ const sendReminderEmail = async (appointment: any) => {
     }
 
     // Envoyer l'email au bénéficiaire si différent du client et si notifications activées
-    if (appointment.beneficiary_email &&
-        appointment.beneficiary_email !== appointment.client?.email &&
-        appointment.beneficiary_notifications_enabled &&
-        appointment.beneficiary_first_name &&
-        appointment.beneficiary_last_name) {
+    if (primaryBeneficiary?.email &&
+        primaryBeneficiary.email !== appointment.client?.email &&
+        primaryBeneficiary.notifications_enabled) {
       await supabase.functions.invoke('send-email', {
         body: {
-          to: appointment.beneficiary_email,
+          to: primaryBeneficiary.email,
           subject: `Rappel : Rendez-vous ${formatDate(startDate)} à ${formatTime(startDate)} - FL²M Services`,
-          html: emailHtml(appointment.beneficiary_first_name, appointment.beneficiary_last_name),
+          html: emailHtml(primaryBeneficiary.first_name, primaryBeneficiary.last_name),
           appointmentId: appointment.id,
           emailType: 'reminder'
         }

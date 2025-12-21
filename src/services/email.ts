@@ -6,6 +6,7 @@
 import { supabase } from './supabase';
 import type { Appointment } from './supabase';
 import { logger } from '../utils/logger';
+import { getPrimaryBeneficiaryForAppointment } from './beneficiaries';
 
 export type EmailType = 'confirmation' | 'reminder' | 'document' | 'cancellation';
 
@@ -156,9 +157,13 @@ export const sendAppointmentConfirmation = async (
   email: string,
   appointment: Appointment
 ) => {
+  // Récupérer le bénéficiaire principal
+  const { data: primaryBeneficiary } = await getPrimaryBeneficiaryForAppointment(appointment.id);
+  const recipientName = primaryBeneficiary?.first_name || appointment.client?.first_name || 'Client';
+
   const content = `
     <h2>Votre rendez-vous est confirmé</h2>
-    <p>Bonjour ${appointment.beneficiary_first_name},</p>
+    <p>Bonjour ${recipientName},</p>
     <p>Nous sommes heureux de confirmer votre rendez-vous :</p>
 
     <div class="info-box">
@@ -196,9 +201,13 @@ export const sendAppointmentReminder = async (
   email: string,
   appointment: Appointment
 ) => {
+  // Récupérer le bénéficiaire principal
+  const { data: primaryBeneficiary } = await getPrimaryBeneficiaryForAppointment(appointment.id);
+  const recipientName = primaryBeneficiary?.first_name || appointment.client?.first_name || 'Client';
+
   const content = `
     <h2>Rappel : Rendez-vous demain</h2>
-    <p>Bonjour ${appointment.beneficiary_first_name},</p>
+    <p>Bonjour ${recipientName},</p>
     <p>Nous vous rappelons que vous avez un rendez-vous demain :</p>
 
     <div class="info-box">
@@ -233,9 +242,13 @@ export const sendDocumentNotification = async (
   appointment: Appointment,
   documentName: string
 ) => {
+  // Récupérer le bénéficiaire principal
+  const { data: primaryBeneficiary } = await getPrimaryBeneficiaryForAppointment(appointment.id);
+  const recipientName = primaryBeneficiary?.first_name || appointment.client?.first_name || 'Client';
+
   const content = `
     <h2>Nouveau document disponible</h2>
-    <p>Bonjour ${appointment.beneficiary_first_name},</p>
+    <p>Bonjour ${recipientName},</p>
     <p>Un nouveau document est disponible pour votre rendez-vous du ${formatDate(appointment.start_time)}.</p>
 
     <div class="info-box">
@@ -267,9 +280,13 @@ export const sendAppointmentCancellation = async (
   email: string,
   appointment: Appointment
 ) => {
+  // Récupérer le bénéficiaire principal
+  const { data: primaryBeneficiary } = await getPrimaryBeneficiaryForAppointment(appointment.id);
+  const recipientName = primaryBeneficiary?.first_name || appointment.client?.first_name || 'Client';
+
   const content = `
     <h2>Annulation de rendez-vous</h2>
-    <p>Bonjour ${appointment.beneficiary_first_name},</p>
+    <p>Bonjour ${recipientName},</p>
     <p>Nous vous informons que votre rendez-vous a été annulé :</p>
 
     <div class="info-box">

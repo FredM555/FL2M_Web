@@ -229,6 +229,125 @@ export interface BeneficiarySearchResult {
 }
 
 /**
+ * Type de note sur un bénéficiaire
+ * - user: visible uniquement par le client propriétaire du bénéficiaire
+ * - practitioner: visible uniquement par l'intervenant créateur
+ * - shared: visible par tous les intervenants (mais pas par le client)
+ */
+export type BeneficiaryNoteType = 'user' | 'practitioner' | 'shared';
+
+/**
+ * Note sur un bénéficiaire
+ */
+export interface BeneficiaryNote {
+  id: string;
+  beneficiary_id: string;
+  practitioner_id?: string | null;
+  user_id?: string | null;
+  note_type: BeneficiaryNoteType;
+  content: string;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  updated_by?: string;
+  // Relations jointes
+  practitioner?: {
+    id: string;
+    display_name?: string;
+    profile?: {
+      first_name?: string;
+      last_name?: string;
+      pseudo?: string;
+    };
+  };
+  user?: {
+    id: string;
+    email?: string;
+    first_name?: string;
+    last_name?: string;
+  };
+}
+
+/**
+ * Données pour créer une note
+ */
+export interface CreateBeneficiaryNoteData {
+  beneficiary_id: string;
+  note_type: BeneficiaryNoteType;
+  content: string;
+  practitioner_id?: string; // Pour notes practitioner et shared
+  user_id?: string; // Pour notes user
+}
+
+/**
+ * Données pour mettre à jour une note
+ */
+export interface UpdateBeneficiaryNoteData {
+  note_type?: BeneficiaryNoteType;
+  content?: string;
+}
+
+/**
+ * Document d'un bénéficiaire
+ */
+export interface BeneficiaryDocument {
+  id: string;
+  beneficiary_id: string;
+  appointment_id?: string | null;
+  practitioner_id?: string | null;
+  file_name: string;
+  file_path: string;
+  file_size?: number | null;
+  file_type?: string | null;
+  description?: string | null;
+  is_visible_to_user: boolean;
+  created_at: string;
+  updated_at: string;
+  created_by?: string;
+  updated_by?: string;
+  // Relations jointes
+  practitioner?: {
+    id: string;
+    display_name?: string;
+    profile?: {
+      first_name?: string;
+      last_name?: string;
+      pseudo?: string;
+    };
+  };
+  appointment?: {
+    id: string;
+    start_time: string;
+    service?: {
+      name: string;
+    };
+  };
+}
+
+/**
+ * Données pour créer un document
+ */
+export interface CreateBeneficiaryDocumentData {
+  beneficiary_id: string;
+  appointment_id?: string;
+  practitioner_id: string;
+  file_name: string;
+  file_path: string;
+  file_size?: number;
+  file_type?: string;
+  description?: string;
+  is_visible_to_user?: boolean;
+}
+
+/**
+ * Données pour mettre à jour un document
+ */
+export interface UpdateBeneficiaryDocumentData {
+  description?: string;
+  is_visible_to_user?: boolean;
+}
+
+/**
  * Statistiques d'un bénéficiaire
  */
 export interface BeneficiaryStats {

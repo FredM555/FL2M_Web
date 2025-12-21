@@ -17,11 +17,11 @@ import {
   CircularProgress,
   Alert,
   Badge,
-  Divider
+  Divider,
+  FormControlLabel,
+  Switch
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
-import CloseIcon from '@mui/icons-material/Close';
-import ReopenIcon from '@mui/icons-material/Replay';
 import { useAuth } from '../context/AuthContext';
 import {
   MessageThread,
@@ -36,9 +36,7 @@ import {
   getUserMessageThreads,
   getThreadMessages,
   replyToMessage,
-  markThreadAsRead,
-  closeMessageThread,
-  reopenMessageThread
+  markThreadAsRead
 } from '../services/messaging';
 import { logger } from '../utils/logger';
 
@@ -46,8 +44,19 @@ const MessagesPageNew: React.FC = () => {
   const { user, profile } = useAuth();
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Filtre pour afficher tous les messages ou uniquement les actifs
+  const [showAllMessages, setShowAllMessages] = useState(false);
+
   const [threads, setThreads] = useState<MessageThread[]>([]);
   const [selectedThread, setSelectedThread] = useState<MessageThread | null>(null);
+
+  // Réinitialiser le thread sélectionné si il n'est plus dans la liste filtrée
+  useEffect(() => {
+    if (selectedThread && !showAllMessages && selectedThread.status === 'closed') {
+      // Si le thread sélectionné est fermé et qu'on affiche seulement les actifs, le désélectionner
+      setSelectedThread(null);
+    }
+  }, [showAllMessages, selectedThread]);
   const [messages, setMessages] = useState<MessageWithSender[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -81,7 +90,8 @@ const MessagesPageNew: React.FC = () => {
     setLoading(true);
     setError(null);
 
-    const { data, error: err } = await getUserMessageThreads(user.id);
+    // personalOnly = true pour afficher uniquement les messages personnels
+    const { data, error: err } = await getUserMessageThreads(user.id, true);
 
     if (err) {
       setError('Erreur lors du chargement des messages');
@@ -163,32 +173,6 @@ const MessagesPageNew: React.FC = () => {
     }
   };
 
-  const handleCloseThread = async () => {
-    if (!selectedThread) return;
-
-    const { error: err } = await closeMessageThread(selectedThread.thread_id);
-
-    if (err) {
-      setError('Erreur lors de la fermeture du message');
-    } else {
-      setSelectedThread({ ...selectedThread, status: 'closed' });
-      loadThreads();
-    }
-  };
-
-  const handleReopenThread = async () => {
-    if (!selectedThread) return;
-
-    const { error: err } = await reopenMessageThread(selectedThread.thread_id);
-
-    if (err) {
-      setError('Erreur lors de la réouverture du message');
-    } else {
-      setSelectedThread({ ...selectedThread, status: 'responded' });
-      loadThreads();
-    }
-  };
-
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -227,37 +211,83 @@ const MessagesPageNew: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{ py: { xs: 2, md: 4 } }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3, fontSize: { xs: '1.5rem', md: '2rem' } }}>
-        💬 Mes messages
+    <Container maxWidth="xl" sx={{
+      py: { xs: 2, md: 4 },
+      height: { xs: 'auto', md: 'calc(100vh - 108px)' },
+      display: { xs: 'block', md: 'flex' },
+      flexDirection: 'column'
+    }}>
+      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3, fontSize: { xs: '1.5rem', md: '2rem' }, flexShrink: 0 }}>
+        📨 Mes messages personnels
       </Typography>
 
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 3, flexShrink: 0 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
       <Grid container spacing={0} sx={{
-        height: { xs: 'auto', md: 'calc(100vh - 220px)' },
-        minHeight: { xs: '400px', md: '600px' },
+        height: { xs: '600px', md: '100%' },
+        flex: { xs: 'none', md: 1 },
+        minHeight: { xs: '400px', md: 0 },
         flexDirection: { xs: 'column', md: 'row' }
       }}>
         {/* Liste des conversations */}
         <Grid item xs={12} md={4} sx={{
-          height: { xs: '300px', md: '100%' },
-          minHeight: { xs: '300px', md: 'auto' }
+          height: { xs: '300px', md: '100%' }
         }}>
-          <Paper sx={{ height: '100%', overflow: 'auto', borderRight: '1px solid #e0e0e0' }}>
-            {threads.length === 0 ? (
-              <Box sx={{ p: 4, textAlign: 'center' }}>
+          <Paper sx={{
+            height: '100%',
+            borderRight: '1px solid #e0e0e0',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden'
+          }}>
+            {/* Filtre pour afficher tous les messages ou uniquement les actifs */}
+            <Box sx={{ p: 2, borderBottom: '1px solid #e0e0e0', bgcolor: 'grey.50', flexShrink: 0 }}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showAllMessages}
+                    onChange={(e) => setShowAllMessages(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label={
+                  <Typography variant="body2">
+                    {showAllMessages ? '📋 Tous les messages' : '✅ Messages actifs uniquement'}
+                  </Typography>
+                }
+              />
+            </Box>
+
+            {threads.filter(thread => showAllMessages || thread.status !== 'closed').length === 0 ? (
+              <Box sx={{ p: 4, textAlign: 'center', flex: 1 }}>
                 <Typography variant="body1" color="text.secondary">
                   Aucune conversation
                 </Typography>
               </Box>
             ) : (
-              <List sx={{ p: 0 }}>
-                {threads.map((thread) => (
+              <List sx={{
+                p: 0,
+                flex: 1,
+                overflow: 'auto',
+                '&::-webkit-scrollbar': {
+                  width: '8px',
+                },
+                '&::-webkit-scrollbar-track': {
+                  backgroundColor: '#f1f1f1',
+                },
+                '&::-webkit-scrollbar-thumb': {
+                  backgroundColor: '#888',
+                  borderRadius: '4px',
+                },
+                '&::-webkit-scrollbar-thumb:hover': {
+                  backgroundColor: '#555',
+                }
+              }}>
+                {threads.filter(thread => showAllMessages || thread.status !== 'closed').map((thread) => (
                   <ListItemButton
                     key={thread.thread_id}
                     selected={selectedThread?.thread_id === thread.thread_id}
@@ -265,20 +295,23 @@ const MessagesPageNew: React.FC = () => {
                     sx={{
                       borderBottom: '1px solid #f0f0f0',
                       py: 2,
-                      bgcolor: thread.unread_count_user > 0 ? 'action.hover' : 'transparent'
+                      bgcolor: thread.unread_count_user > 0 ? 'action.hover' : 'transparent',
+                      display: 'flex',
+                      alignItems: 'center'
                     }}
                   >
                     <Avatar sx={{ mr: 2, bgcolor: getMessageCategoryColor(thread.category) }}>
                       {getMessageCategoryIcon(thread.category)}
                     </Avatar>
                     <ListItemText
+                      sx={{ flex: 1, minWidth: 0 }}
                       primary={
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                           <Typography variant="body1" sx={{ fontWeight: thread.unread_count_user > 0 ? 700 : 400, flex: 1 }}>
                             {thread.subject}
                           </Typography>
                           {thread.unread_count_user > 0 && (
-                            <Badge badgeContent={thread.unread_count_user} color="error" />
+                            <Badge badgeContent={thread.unread_count_user} color="primary" />
                           )}
                         </Box>
                       }
@@ -290,6 +323,11 @@ const MessagesPageNew: React.FC = () => {
                           {thread.last_message_at && (
                             <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
                               • {formatDate(thread.last_message_at)}
+                            </Typography>
+                          )}
+                          {(thread.user_pseudo || thread.user_first_name) && (
+                            <Typography variant="caption" color="text.secondary" sx={{ ml: 1, fontWeight: 500 }}>
+                              • 👤 {thread.user_pseudo || `${thread.user_first_name} ${thread.user_last_name || ''}`}
                             </Typography>
                           )}
                         </Box>
@@ -304,8 +342,7 @@ const MessagesPageNew: React.FC = () => {
 
         {/* Zone de chat */}
         <Grid item xs={12} md={8} sx={{
-          height: { xs: 'calc(100vh - 500px)', md: '100%' },
-          minHeight: { xs: '500px', md: 'auto' }
+          height: { xs: '300px', md: '100%' }
         }}>
           <Paper sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {selectedThread ? (
@@ -334,24 +371,29 @@ const MessagesPageNew: React.FC = () => {
                         />
                       </Box>
                     </Box>
-                    {profile?.user_type !== 'intervenant' && (
-                      <>
-                        {selectedThread.status !== 'closed' ? (
-                          <IconButton onClick={handleCloseThread} title="Fermer la conversation" size="small">
-                            <CloseIcon />
-                          </IconButton>
-                        ) : (
-                          <IconButton onClick={handleReopenThread} title="Rouvrir la conversation" size="small">
-                            <ReopenIcon />
-                          </IconButton>
-                        )}
-                      </>
-                    )}
                   </Box>
                 </Box>
 
                 {/* Messages (style chat) */}
-                <Box sx={{ flex: 1, overflow: 'auto', p: 2, bgcolor: '#f5f5f5' }}>
+                <Box sx={{
+                  flex: 1,
+                  overflow: 'auto',
+                  p: 2,
+                  bgcolor: '#f5f5f5',
+                  '&::-webkit-scrollbar': {
+                    width: '8px',
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    backgroundColor: '#f1f1f1',
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    backgroundColor: '#888',
+                    borderRadius: '4px',
+                  },
+                  '&::-webkit-scrollbar-thumb:hover': {
+                    backgroundColor: '#555',
+                  }
+                }}>
                   {loadingMessages ? (
                     <Box sx={{ textAlign: 'center', py: 4 }}>
                       <CircularProgress size={30} />
@@ -503,10 +545,10 @@ const MessagesPageNew: React.FC = () => {
                     </Typography>
                   </Box>
                 ) : (
-                  <Box sx={{ p: 2, textAlign: 'center', bgcolor: 'grey.100' }}>
-                    <Typography variant="body2" color="text.secondary">
-                      Cette conversation est fermée. Vous pouvez la rouvrir en cliquant sur l'icône en haut à droite.
-                    </Typography>
+                  <Box sx={{ p: 2, borderTop: '1px solid #e0e0e0', bgcolor: 'grey.50' }}>
+                    <Alert severity="info">
+                      Cette conversation a été fermée par l'équipe. Vous ne pouvez plus y répondre.
+                    </Alert>
                   </Box>
                 )}
               </>

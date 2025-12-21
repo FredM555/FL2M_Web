@@ -28,6 +28,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CloseIcon from '@mui/icons-material/Close';
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import RestoreIcon from '@mui/icons-material/Restore';
+import AddIcon from '@mui/icons-material/Add';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { TimePicker } from '@mui/x-date-pickers/TimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -59,6 +61,8 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [makingAvailable, setMakingAvailable] = useState(false);
+  const [isCreating, setIsCreating] = useState(false);
 
   // États pour l'édition
   const [editedAppointment, setEditedAppointment] = useState<Partial<Appointment>>({});
@@ -68,6 +72,7 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
   // États pour le drag & drop
   const [draggedAppointment, setDraggedAppointment] = useState<Appointment | null>(null);
   const [dragOverSlot, setDragOverSlot] = useState<{ day: string; hour: number; minute: number } | null>(null);
+  const [isCtrlPressed, setIsCtrlPressed] = useState(false);
 
   // États pour la copie de journée
   const [copyDayDialogOpen, setCopyDayDialogOpen] = useState(false);
@@ -227,8 +232,36 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
     return columns;
   };
 
+  // Ouvrir le dialogue pour créer un nouveau rendez-vous
+  const handleCreateAppointment = () => {
+    // Récupérer le practitioner_id depuis les rendez-vous existants
+    const practitionerId = appointments.length > 0 ? appointments[0].practitioner_id : null;
+
+    if (!practitionerId) {
+      alert('Impossible de créer un rendez-vous : practitioner_id non trouvé');
+      return;
+    }
+
+    // Initialiser avec des valeurs par défaut
+    const now = new Date();
+    now.setMinutes(0, 0, 0); // Arrondir à l'heure
+
+    setIsCreating(true);
+    setSelectedAppointment(null);
+    setEditedAppointment({
+      practitioner_id: practitionerId,
+      status: 'pending',
+      payment_status: 'unpaid',
+      client_id: undefined
+    });
+    setSelectedDate(now);
+    setSelectedTime(now);
+    setEditDialogOpen(true);
+  };
+
   // Gérer le clic sur un RDV - Ouvre le dialogue d'édition
   const handleAppointmentClick = (appointment: Appointment) => {
+    setIsCreating(false);
     setSelectedAppointment(appointment);
     setEditedAppointment(appointment);
     setSelectedDate(parseISO(appointment.start_time));
@@ -244,11 +277,26 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
     setEditedAppointment({});
     setSelectedDate(null);
     setSelectedTime(null);
+    setIsCreating(false);
   };
 
-  // Sauvegarder les modifications du RDV
+  // Sauvegarder les modifications du RDV (création ou mise à jour)
   const handleSaveAppointment = async () => {
-    if (!selectedAppointment?.id || !selectedDate || !selectedTime) return;
+    // Validation
+    if (!selectedDate || !selectedTime) {
+      alert('Veuillez sélectionner une date et une heure');
+      return;
+    }
+
+    if (!editedAppointment.service_id) {
+      alert('Veuillez sélectionner un service');
+      return;
+    }
+
+    if (!editedAppointment.practitioner_id) {
+      alert('Erreur : practitioner_id manquant');
+      return;
+    }
 
     setSaving(true);
     try {
@@ -262,49 +310,76 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
       const endTime = new Date(startTime);
       endTime.setMinutes(endTime.getMinutes() + durationMinutes);
 
-      // Vérifier si le statut passe à "confirmed"
-      const isBeingConfirmed = editedAppointment.status === 'confirmed' && selectedAppointment.status !== 'confirmed';
+      const appointmentData = {
+        practitioner_id: editedAppointment.practitioner_id,
+        service_id: editedAppointment.service_id,
+        start_time: startTime.toISOString(),
+        end_time: endTime.toISOString(),
+        status: editedAppointment.status || 'pending',
+        payment_status: editedAppointment.payment_status || 'unpaid',
+        notes: editedAppointment.notes || null,
+        client_id: editedAppointment.client_id || null
+      };
 
-      // Vérifier si le statut passe de "confirmed" à "pending" (ou autre statut non confirmé)
-      const isBeingUnconfirmed = selectedAppointment.status === 'confirmed' && editedAppointment.status !== 'confirmed';
+      if (isCreating) {
+        // MODE CRÉATION
+        console.log('[CREATE] Création d\'un nouveau rendez-vous:', appointmentData);
 
-      const { error } = await supabase
-        .from('appointments')
-        .update({
-          service_id: editedAppointment.service_id,
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-          status: editedAppointment.status,
-          payment_status: editedAppointment.payment_status,
-          notes: editedAppointment.notes
-        })
-        .eq('id', selectedAppointment.id);
+        const { error } = await supabase
+          .from('appointments')
+          .insert([appointmentData]);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      // Si le rendez-vous est confirmé, suspendre les rendez-vous conflictuels
-      if (isBeingConfirmed && selectedAppointment.practitioner_id) {
-        await suspendConflictingAppointments(
-          selectedAppointment.practitioner_id,
-          startTime.toISOString(),
-          endTime.toISOString(),
-          selectedAppointment.id
-        ).catch(err =>
-          console.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
-        );
-      }
-
-      // Si le rendez-vous n'est plus confirmé, réactiver les rendez-vous qu'il avait suspendus
-      if (isBeingUnconfirmed) {
-        const result = await reactivateSuspendedAppointments(selectedAppointment.id)
-          .catch(err => {
-            console.error('Erreur lors de la réactivation des rendez-vous:', err);
-            return { reactivatedCount: 0, reactivatedAppointments: [] };
-          });
-
-        if (result.reactivatedCount > 0) {
-          console.log(`${result.reactivatedCount} rendez-vous réactivé(s) automatiquement`);
+        alert('Rendez-vous créé avec succès !');
+      } else {
+        // MODE MISE À JOUR
+        if (!selectedAppointment?.id) {
+          alert('Erreur : ID du rendez-vous manquant');
+          return;
         }
+
+        console.log('[UPDATE] Mise à jour du rendez-vous:', appointmentData);
+
+        // Vérifier si le statut passe à "confirmed"
+        const isBeingConfirmed = editedAppointment.status === 'confirmed' && selectedAppointment.status !== 'confirmed';
+
+        // Vérifier si le statut passe de "confirmed" à "pending" (ou autre statut non confirmé)
+        const isBeingUnconfirmed = selectedAppointment.status === 'confirmed' && editedAppointment.status !== 'confirmed';
+
+        const { error } = await supabase
+          .from('appointments')
+          .update(appointmentData)
+          .eq('id', selectedAppointment.id);
+
+        if (error) throw error;
+
+        // Si le rendez-vous est confirmé, suspendre les rendez-vous conflictuels
+        if (isBeingConfirmed && selectedAppointment.practitioner_id) {
+          await suspendConflictingAppointments(
+            selectedAppointment.practitioner_id,
+            startTime.toISOString(),
+            endTime.toISOString(),
+            selectedAppointment.id
+          ).catch(err =>
+            console.error('Erreur lors de la suspension des rendez-vous conflictuels:', err)
+          );
+        }
+
+        // Si le rendez-vous n'est plus confirmé, réactiver les rendez-vous qu'il avait suspendus
+        if (isBeingUnconfirmed) {
+          const result = await reactivateSuspendedAppointments(selectedAppointment.id)
+            .catch(err => {
+              console.error('Erreur lors de la réactivation des rendez-vous:', err);
+              return { reactivatedCount: 0, reactivatedAppointments: [] };
+            });
+
+          if (result.reactivatedCount > 0) {
+            console.log(`${result.reactivatedCount} rendez-vous réactivé(s) automatiquement`);
+          }
+        }
+
+        alert('Rendez-vous mis à jour avec succès !');
       }
 
       handleCloseEditDialog();
@@ -314,7 +389,8 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
         onAppointmentChange();
       }
     } catch (error) {
-      console.error('Erreur mise à jour RDV:', error);
+      console.error('Erreur sauvegarde RDV:', error);
+      alert(`Erreur : ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setSaving(false);
     }
@@ -330,17 +406,42 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
   const handleDelete = async () => {
     if (!selectedAppointment) return;
 
+    console.log('[DELETE] Tentative de suppression du rendez-vous:', {
+      id: selectedAppointment.id,
+      status: selectedAppointment.status,
+      client_id: selectedAppointment.client_id,
+      payment_status: selectedAppointment.payment_status,
+      start_time: selectedAppointment.start_time
+    });
+
     setDeleting(true);
     try {
       // Si le rendez-vous supprimé était confirmé, réactiver les rendez-vous qu'il avait suspendus
       const wasConfirmed = selectedAppointment.status === 'confirmed';
 
-      const { error } = await supabase
-        .from('appointments')
-        .delete()
-        .eq('id', selectedAppointment.id);
+      console.log('[DELETE] Envoi de la requête de suppression via RPC...');
 
-      if (error) throw error;
+      // Utiliser une fonction RPC pour contourner les politiques RLS
+      const { error, data } = await supabase.rpc('delete_appointment_by_practitioner', {
+        appointment_id: selectedAppointment.id,
+        practitioner_id: selectedAppointment.practitioner_id
+      });
+
+      console.log('[DELETE] Réponse de Supabase RPC:', { error, data });
+
+      if (error) {
+        console.error('[DELETE] Erreur Supabase:', error);
+        alert(`Erreur lors de la suppression: ${error.message}`);
+        throw error;
+      }
+
+      if (!data) {
+        console.error('[DELETE] Aucune ligne supprimée - Politique RLS ou rendez-vous inexistant');
+        alert('Impossible de supprimer ce rendez-vous. Vérifiez vos permissions.');
+        return;
+      }
+
+      console.log('[DELETE] Suppression réussie !');
 
       // Réactiver les rendez-vous suspendus si le rendez-vous était confirmé
       if (wasConfirmed) {
@@ -362,10 +463,61 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
       if (onAppointmentChange) {
         onAppointmentChange();
       }
+
+      alert('Rendez-vous supprimé avec succès !');
     } catch (error) {
-      console.error('Erreur suppression RDV:', error);
+      console.error('[DELETE] Exception:', error);
+      alert(`Erreur lors de la suppression: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     } finally {
       setDeleting(false);
+    }
+  };
+
+  // Rendre un rendez-vous à nouveau disponible
+  const handleMakeAppointmentAvailable = async () => {
+    if (!selectedAppointment) return;
+
+    if (!window.confirm('Voulez-vous rendre ce rendez-vous à nouveau disponible? Cela effacera les informations du client.')) {
+      return;
+    }
+
+    setMakingAvailable(true);
+    try {
+      // Vérifier si le rendez-vous est payé
+      if (selectedAppointment.payment_status === 'paid') {
+        alert("Impossible de libérer un rendez-vous payé. Effectuez d'abord un remboursement.");
+        return;
+      }
+
+      // Mettre à jour le rendez-vous dans la base de données
+      const { error } = await supabase
+        .from('appointments')
+        .update({
+          client_id: null,
+          status: 'pending',
+          payment_status: 'unpaid',
+          payment_id: null,
+          beneficiary_first_name: null,
+          beneficiary_last_name: null,
+          beneficiary_birth_date: null,
+          notes: null,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', selectedAppointment.id);
+
+      if (error) throw error;
+
+      handleCloseEditDialog();
+
+      // Rafraîchir les données
+      if (onAppointmentChange) {
+        onAppointmentChange();
+      }
+    } catch (error) {
+      console.error('Erreur lors de la libération du rendez-vous:', error);
+      alert('Erreur lors de la libération du rendez-vous.');
+    } finally {
+      setMakingAvailable(false);
     }
   };
 
@@ -573,19 +725,34 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
       return;
     }
     setDraggedAppointment(appointment);
-    e.dataTransfer.effectAllowed = 'move';
+
+    // Détecter si Ctrl est enfoncé pour duplication
+    const isCtrl = e.ctrlKey || e.metaKey; // metaKey pour Mac
+    setIsCtrlPressed(isCtrl);
+
+    // Changer l'effet visuel selon le mode
+    e.dataTransfer.effectAllowed = isCtrl ? 'copy' : 'move';
   };
 
   // Drag & Drop - Fin du drag
   const handleDragEnd = () => {
     setDraggedAppointment(null);
     setDragOverSlot(null);
+    setIsCtrlPressed(false);
   };
 
   // Drag & Drop - Survol d'un slot
   const handleDragOver = (e: React.DragEvent, day: string, hour: number, minute: number = 0) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
+
+    // Mettre à jour l'état de Ctrl en temps réel (au cas où l'utilisateur appuie/relâche pendant le drag)
+    const isCtrl = e.ctrlKey || e.metaKey;
+    if (isCtrl !== isCtrlPressed) {
+      setIsCtrlPressed(isCtrl);
+    }
+
+    // Changer l'effet visuel selon le mode
+    e.dataTransfer.dropEffect = isCtrl ? 'copy' : 'move';
     setDragOverSlot({ day, hour, minute });
   };
 
@@ -595,14 +762,17 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
 
     if (!draggedAppointment) return;
 
+    const isDuplicating = e.ctrlKey || e.metaKey; // Vérifier si Ctrl est enfoncé au moment du drop
+
     try {
       // Créer la nouvelle date/heure
       const newDate = parseISO(day);
       newDate.setHours(hour, minute, 0, 0);
 
-      // Vérifier si c'est la même position (pas besoin de mise à jour)
+      // Vérifier si c'est la même position (pas besoin de mise à jour en mode déplacement)
       const currentStart = parseISO(draggedAppointment.start_time);
       if (
+        !isDuplicating && // Seulement en mode déplacement
         currentStart.getFullYear() === newDate.getFullYear() &&
         currentStart.getMonth() === newDate.getMonth() &&
         currentStart.getDate() === newDate.getDate() &&
@@ -612,6 +782,7 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
         // Même position, ne rien faire
         setDraggedAppointment(null);
         setDragOverSlot(null);
+        setIsCtrlPressed(false);
         return;
       }
 
@@ -624,47 +795,83 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
       // Vérifier les conflits avec d'autres rendez-vous CONFIRMÉS d'un service différent
       // Note: Les rendez-vous du même service peuvent se chevaucher
       // Note: Les rendez-vous disponibles (pending) peuvent se chevaucher entre eux
-      const { data: conflicts } = await supabase
+      let conflictsQuery = supabase
         .from('appointments')
         .select('id, start_time, end_time, service_id, status, service:services(name)')
         .eq('practitioner_id', draggedAppointment.practitioner_id)
-        .neq('id', draggedAppointment.id) // Exclure le rendez-vous en cours de déplacement
         .neq('service_id', draggedAppointment.service_id) // Exclure les rendez-vous du même service (toujours autorisés)
         .eq('status', 'confirmed') // UNIQUEMENT les rendez-vous confirmés bloquent
         .lt('start_time', endTime.toISOString())
         .gt('end_time', newDate.toISOString());
 
+      // En mode déplacement, exclure le rendez-vous en cours de déplacement
+      if (!isDuplicating) {
+        conflictsQuery = conflictsQuery.neq('id', draggedAppointment.id);
+      }
+
+      const { data: conflicts } = await conflictsQuery;
+
       // Si conflit avec un rendez-vous confirmé d'un autre service, bloquer
       if (conflicts && conflicts.length > 0) {
         const serviceData = conflicts[0].service as any;
         const conflictService = (Array.isArray(serviceData) ? serviceData[0]?.name : serviceData?.name) || 'un autre service';
-        alert(`Impossible de déplacer ce rendez-vous : il chevauche un rendez-vous confirmé de "${conflictService}" sur ce créneau. Les rendez-vous disponibles (verts) peuvent se chevaucher, mais pas avec des rendez-vous confirmés d'un service différent.`);
+        const action = isDuplicating ? 'dupliquer' : 'déplacer';
+        alert(`Impossible de ${action} ce rendez-vous : il chevauche un rendez-vous confirmé de "${conflictService}" sur ce créneau. Les rendez-vous disponibles (verts) peuvent se chevaucher, mais pas avec des rendez-vous confirmés d'un service différent.`);
         setDraggedAppointment(null);
         setDragOverSlot(null);
+        setIsCtrlPressed(false);
         return;
       }
 
-      // Mettre à jour le rendez-vous
-      const { error } = await supabase
-        .from('appointments')
-        .update({
-          start_time: newDate.toISOString(),
-          end_time: endTime.toISOString()
-        })
-        .eq('id', draggedAppointment.id);
+      if (isDuplicating) {
+        // MODE DUPLICATION : Créer une copie du rendez-vous
+        console.log('[DRAG&DROP] Duplication du rendez-vous');
 
-      if (error) throw error;
+        const { error } = await supabase
+          .from('appointments')
+          .insert([{
+            practitioner_id: draggedAppointment.practitioner_id,
+            service_id: draggedAppointment.service_id,
+            start_time: newDate.toISOString(),
+            end_time: endTime.toISOString(),
+            status: draggedAppointment.status,
+            payment_status: draggedAppointment.payment_status,
+            notes: draggedAppointment.notes,
+            client_id: null // Toujours disponible pour une copie
+          }]);
+
+        if (error) throw error;
+
+        console.log('[DRAG&DROP] Rendez-vous dupliqué avec succès');
+      } else {
+        // MODE DÉPLACEMENT : Mettre à jour le rendez-vous existant
+        console.log('[DRAG&DROP] Déplacement du rendez-vous');
+
+        const { error } = await supabase
+          .from('appointments')
+          .update({
+            start_time: newDate.toISOString(),
+            end_time: endTime.toISOString()
+          })
+          .eq('id', draggedAppointment.id);
+
+        if (error) throw error;
+
+        console.log('[DRAG&DROP] Rendez-vous déplacé avec succès');
+      }
 
       // Rafraîchir les données
       if (onAppointmentChange) {
         onAppointmentChange();
       }
     } catch (error) {
-      console.error('Erreur déplacement RDV:', error);
-      alert('Erreur lors du déplacement du rendez-vous.');
+      console.error('Erreur drag&drop RDV:', error);
+      const action = isDuplicating ? 'la duplication' : 'le déplacement';
+      alert(`Erreur lors de ${action} du rendez-vous.`);
     } finally {
       setDraggedAppointment(null);
       setDragOverSlot(null);
+      setIsCtrlPressed(false);
     }
   };
 
@@ -681,6 +888,15 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
           </Typography>
 
           <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+            <Button
+              size="small"
+              startIcon={<AddIcon />}
+              onClick={handleCreateAppointment}
+              variant="contained"
+              color="primary"
+            >
+              Créer un créneau
+            </Button>
             <Button
               size="small"
               startIcon={<ContentCopyIcon />}
@@ -827,16 +1043,18 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
                           bgcolor: dragOverSlot?.day === day.dateString &&
                                    dragOverSlot?.hour === hour &&
                                    dragOverSlot?.minute === minute
-                            ? 'rgba(76, 175, 80, 0.25)'
+                            ? (isCtrlPressed ? 'rgba(33, 150, 243, 0.25)' : 'rgba(76, 175, 80, 0.25)') // Bleu pour duplication, vert pour déplacement
                             : 'transparent',
                           transition: 'background-color 0.15s',
                           border: dragOverSlot?.day === day.dateString &&
                                   dragOverSlot?.hour === hour &&
                                   dragOverSlot?.minute === minute
-                            ? '2px solid rgba(76, 175, 80, 0.5)'
+                            ? (isCtrlPressed ? '2px solid rgba(33, 150, 243, 0.8)' : '2px solid rgba(76, 175, 80, 0.5)') // Bleu pour duplication, vert pour déplacement
                             : 'none',
                           '&:hover': {
-                            bgcolor: draggedAppointment ? 'rgba(76, 175, 80, 0.1)' : 'transparent'
+                            bgcolor: draggedAppointment
+                              ? (isCtrlPressed ? 'rgba(33, 150, 243, 0.1)' : 'rgba(76, 175, 80, 0.1)')
+                              : 'transparent'
                           }
                         }}
                       />
@@ -979,7 +1197,7 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, mt: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box sx={{ width: 20, height: 20, bgcolor: '#4CAF50', borderRadius: 0.5 }} />
-            <Typography variant="caption">Disponible (En attente) - Déplaçable par glisser-déposer</Typography>
+            <Typography variant="caption">Disponible (En attente) - Déplaçable/Duplicable par glisser-déposer</Typography>
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <Box sx={{ width: 20, height: 20, bgcolor: '#2196F3', borderRadius: 0.5 }} />
@@ -995,7 +1213,14 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
           </Box>
         </Box>
         <Alert severity="info" sx={{ mt: 2 }}>
-          💡 Les rendez-vous disponibles (verts) peuvent être déplacés par glisser-déposer avec précision au quart d'heure (15 min). Les services identiques sont regroupés dans la même colonne. Le déplacement est bloqué s'il y a conflit avec un autre service.
+          <Typography variant="body2" component="div">
+            <strong>💡 Glisser-déposer :</strong>
+            <ul style={{ marginTop: '8px', marginBottom: 0, paddingLeft: '20px' }}>
+              <li><strong>Déplacer</strong> : Glissez un rendez-vous disponible (vert) vers un autre créneau</li>
+              <li><strong>Dupliquer</strong> : Maintenez <kbd style={{ padding: '2px 6px', backgroundColor: '#f5f5f5', border: '1px solid #ccc', borderRadius: '3px', fontFamily: 'monospace' }}>Ctrl</kbd> (ou <kbd style={{ padding: '2px 6px', backgroundColor: '#f5f5f5', border: '1px solid #ccc', borderRadius: '3px', fontFamily: 'monospace' }}>⌘</kbd> sur Mac) pendant le glissement pour dupliquer (zone bleue)</li>
+              <li>Précision au quart d'heure (15 min). Les services identiques sont regroupés. Le déplacement est bloqué s'il y a conflit avec un autre service.</li>
+            </ul>
+          </Typography>
         </Alert>
       </Paper>
 
@@ -1008,7 +1233,9 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
           fullWidth
         >
           <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Typography variant="h6">Modifier le rendez-vous</Typography>
+            <Typography variant="h6">
+              {isCreating ? 'Créer un nouveau rendez-vous' : 'Modifier le rendez-vous'}
+            </Typography>
             <IconButton onClick={handleCloseEditDialog} size="small">
               <CloseIcon />
             </IconButton>
@@ -1043,14 +1270,16 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
                 </Grid>
               )}
 
-              {selectedAppointment?.status === 'cancelled' && !selectedAppointment?.notes?.includes('[AUTO_SUSPENDED:') && selectedAppointment?.notes && (
+              {selectedAppointment?.status === 'cancelled' && !selectedAppointment?.notes?.includes('[AUTO_SUSPENDED:') && (
                 <Grid item xs={12}>
                   <Alert severity="error">
                     <Typography variant="body2">
-                      <strong>Annulation manuelle</strong>
+                      <strong>Rendez-vous annulé</strong>
                     </Typography>
                     <Typography variant="caption">
-                      Ce rendez-vous a été annulé manuellement.
+                      {selectedAppointment?.notes
+                        ? `Ce rendez-vous a été annulé. Notes: ${selectedAppointment.notes}`
+                        : 'Ce rendez-vous a été annulé.'}
                     </Typography>
                   </Alert>
                 </Grid>
@@ -1155,25 +1384,51 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
             </Grid>
           </DialogContent>
           <DialogActions sx={{ px: 3, py: 2 }}>
+            {/* Bouton pour rendre disponible (uniquement en mode édition) */}
+            {!isCreating && selectedAppointment?.client_id && selectedAppointment?.payment_status !== 'paid' && (
+              <Button
+                color="success"
+                startIcon={<RestoreIcon />}
+                onClick={handleMakeAppointmentAvailable}
+                disabled={saving || deleting || makingAvailable}
+              >
+                {makingAvailable ? 'Libération...' : 'Rendre disponible'}
+              </Button>
+            )}
 
-                        <Button
-              color="error"
-              startIcon={<DeleteIcon />}
-              onClick={handleOpenDeleteDialog}
-              disabled={saving || deleting}
-            >
-              Supprimer
-            </Button>
+            {/* Debug: afficher pourquoi le bouton ne s'affiche pas */}
+            {!selectedAppointment?.client_id && (
+              <Typography variant="caption" color="text.secondary" sx={{ mr: 2 }}>
+                [Debug: Pas de client_id]
+              </Typography>
+            )}
+            {selectedAppointment?.client_id && selectedAppointment?.payment_status === 'paid' && (
+              <Typography variant="caption" color="text.secondary" sx={{ mr: 2 }}>
+                [Debug: Rendez-vous payé - {selectedAppointment.payment_status}]
+              </Typography>
+            )}
+
+            {/* Bouton Supprimer (uniquement en mode édition) */}
+            {!isCreating && (
+              <Button
+                color="error"
+                startIcon={<DeleteIcon />}
+                onClick={handleOpenDeleteDialog}
+                disabled={saving || deleting || makingAvailable}
+              >
+                Supprimer
+              </Button>
+            )}
             <Box sx={{ flex: 1 }} />
-            <Button onClick={handleCloseEditDialog} disabled={saving || deleting}>
+            <Button onClick={handleCloseEditDialog} disabled={saving || deleting || makingAvailable}>
               Annuler
             </Button>
             <Button
               variant="contained"
               onClick={handleSaveAppointment}
-              disabled={saving || deleting}
+              disabled={saving || deleting || makingAvailable}
             >
-              {saving ? 'Enregistrement...' : 'Mettre à jour'}
+              {saving ? 'Enregistrement...' : (isCreating ? 'Créer' : 'Mettre à jour')}
             </Button>
           </DialogActions>
         </Dialog>

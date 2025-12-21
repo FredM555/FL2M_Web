@@ -486,6 +486,22 @@ const MainLayout: React.FC = () => {
                           </Box>
                         </Box>
                         <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
+
+                        {/* ==================== ESPACE PERSONNEL ==================== */}
+                        <Box sx={{ px: 3, py: 1.5, bgcolor: 'rgba(52, 89, 149, 0.05)' }}>
+                          <Typography
+                            sx={{
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              color: '#345995',
+                              textTransform: 'uppercase',
+                              letterSpacing: '0.5px',
+                            }}
+                          >
+                            👤 Espace Personnel
+                          </Typography>
+                        </Box>
+
                         <Box sx={{ py: 1 }}>
                           <MenuItem
                             component={RouterLink}
@@ -496,9 +512,9 @@ const MainLayout: React.FC = () => {
                               py: 1.5,
                               transition: 'all 0.2s ease',
                               '&:hover': {
-                                backgroundColor: 'rgba(255, 215, 0, 0.08)',
+                                backgroundColor: 'rgba(52, 89, 149, 0.08)',
                                 '& .MuiSvgIcon-root, & .menu-icon': {
-                                  color: '#FFA500',
+                                  color: '#345995',
                                   transform: 'scale(1.1)',
                                 },
                               },
@@ -516,6 +532,36 @@ const MainLayout: React.FC = () => {
                           </MenuItem>
                           <MenuItem
                             component={RouterLink}
+                            to="/mes-rendez-vous"
+                            onClick={handleMenuClose(setUserMenuAnchor)}
+                            sx={{
+                              px: 3,
+                              py: 1.5,
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                backgroundColor: 'rgba(52, 89, 149, 0.08)',
+                                '& .menu-icon': {
+                                  transform: 'scale(1.1)',
+                                },
+                              },
+                            }}
+                          >
+                            <Box
+                              component="span"
+                              className="menu-icon"
+                              sx={{
+                                mr: 2,
+                                display: 'inline-flex',
+                                fontSize: '1.2rem',
+                                transition: 'all 0.2s ease',
+                              }}
+                            >
+                              📅
+                            </Box>
+                            <Typography sx={{ fontWeight: 500 }}>Mes rendez-vous</Typography>
+                          </MenuItem>
+                          <MenuItem
+                            component={RouterLink}
                             to="/messages"
                             onClick={handleMenuClose(setUserMenuAnchor)}
                             sx={{
@@ -523,7 +569,7 @@ const MainLayout: React.FC = () => {
                               py: 1.5,
                               transition: 'all 0.2s ease',
                               '&:hover': {
-                                backgroundColor: 'rgba(255, 215, 0, 0.08)',
+                                backgroundColor: 'rgba(52, 89, 149, 0.08)',
                                 '& .menu-icon': {
                                   transform: 'scale(1.1)',
                                 },
@@ -547,37 +593,7 @@ const MainLayout: React.FC = () => {
                                 💬
                               </Box>
                             </Badge>
-                            <Typography sx={{ fontWeight: 500 }}>Messages</Typography>
-                          </MenuItem>
-                          <MenuItem
-                            component={RouterLink}
-                            to="/mes-rendez-vous"
-                            onClick={handleMenuClose(setUserMenuAnchor)}
-                            sx={{
-                              px: 3,
-                              py: 1.5,
-                              transition: 'all 0.2s ease',
-                              '&:hover': {
-                                backgroundColor: 'rgba(255, 215, 0, 0.08)',
-                                '& .menu-icon': {
-                                  transform: 'scale(1.1)',
-                                },
-                              },
-                            }}
-                          >
-                            <Box
-                              component="span"
-                              className="menu-icon"
-                              sx={{
-                                mr: 2,
-                                display: 'inline-flex',
-                                fontSize: '1.2rem',
-                                transition: 'all 0.2s ease',
-                              }}
-                            >
-                              📅
-                            </Box>
-                            <Typography sx={{ fontWeight: 500 }}>Mes rendez-vous</Typography>
+                            <Typography sx={{ fontWeight: 500 }}>Messages personnels</Typography>
                           </MenuItem>
                           <MenuItem
                             component={RouterLink}
@@ -588,7 +604,7 @@ const MainLayout: React.FC = () => {
                               py: 1.5,
                               transition: 'all 0.2s ease',
                               '&:hover': {
-                                backgroundColor: 'rgba(255, 215, 0, 0.08)',
+                                backgroundColor: 'rgba(52, 89, 149, 0.08)',
                                 '& .menu-icon': {
                                   transform: 'scale(1.1)',
                                 },
@@ -609,76 +625,26 @@ const MainLayout: React.FC = () => {
                             </Box>
                             <Typography sx={{ fontWeight: 500 }}>Mes bénéficiaires</Typography>
                           </MenuItem>
-                          {profile?.user_type === 'intervenant' && (
-                            <MenuItem
-                              component={RouterLink}
-                              to="/intervenant/planning"
-                              onClick={handleMenuClose(setUserMenuAnchor)}
-                              sx={{
-                                px: 3,
-                                py: 1.5,
-                                transition: 'all 0.2s ease',
-                                background: 'rgba(52, 89, 149, 0.05)',
-                                borderLeft: '3px solid #345995',
-                                '&:hover': {
-                                  backgroundColor: 'rgba(52, 89, 149, 0.12)',
-                                  '& .menu-icon': {
-                                    transform: 'scale(1.1) rotate(15deg)',
-                                  },
-                                },
-                              }}
-                            >
-                              <Box
-                                component="span"
-                                className="menu-icon"
+                        </Box>
+
+                        {/* ==================== ESPACE PROFESSIONNEL ==================== */}
+                        {(profile?.user_type === 'intervenant' || profile?.user_type === 'admin') && (
+                          <>
+                            <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
+                            <Box sx={{ px: 3, py: 1.5, bgcolor: 'rgba(255, 165, 0, 0.05)' }}>
+                              <Typography
                                 sx={{
-                                  mr: 2,
-                                  display: 'inline-flex',
-                                  fontSize: '1.2rem',
-                                  transition: 'all 0.2s ease',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  color: '#FFA500',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px',
                                 }}
                               >
-                                📆
-                              </Box>
-                              <Typography sx={{ fontWeight: 500 }}>Gérer mon planning</Typography>
-                            </MenuItem>
-                          )}
-                          {profile?.user_type === 'intervenant' && (
-                            <MenuItem
-                              component={RouterLink}
-                              to="/practitioner-profile"
-                              onClick={handleMenuClose(setUserMenuAnchor)}
-                              sx={{
-                                px: 3,
-                                py: 1.5,
-                                transition: 'all 0.2s ease',
-                                background: 'rgba(52, 89, 149, 0.05)',
-                                borderLeft: '3px solid #345995',
-                                '&:hover': {
-                                  backgroundColor: 'rgba(52, 89, 149, 0.12)',
-                                  '& .menu-icon': {
-                                    transform: 'scale(1.1)',
-                                  },
-                                },
-                              }}
-                            >
-                              <Box
-                                component="span"
-                                className="menu-icon"
-                                sx={{
-                                  mr: 2,
-                                  display: 'inline-flex',
-                                  fontSize: '1.2rem',
-                                  transition: 'all 0.2s ease',
-                                }}
-                              >
-                                👤
-                              </Box>
-                              <Typography sx={{ fontWeight: 500 }}>Mon profil intervenant</Typography>
-                            </MenuItem>
-                          )}
-                          {profile?.user_type === 'admin' && (
-                            <>
+                                💼 Espace Professionnel
+                              </Typography>
+                            </Box>
+                            <Box sx={{ py: 1 }}>
                               <MenuItem
                                 component={RouterLink}
                                 to="/intervenant/planning"
@@ -687,10 +653,8 @@ const MainLayout: React.FC = () => {
                                   px: 3,
                                   py: 1.5,
                                   transition: 'all 0.2s ease',
-                                  background: 'rgba(52, 89, 149, 0.05)',
-                                  borderLeft: '3px solid #345995',
                                   '&:hover': {
-                                    backgroundColor: 'rgba(52, 89, 149, 0.12)',
+                                    backgroundColor: 'rgba(255, 165, 0, 0.08)',
                                     '& .menu-icon': {
                                       transform: 'scale(1.1) rotate(15deg)',
                                     },
@@ -709,20 +673,18 @@ const MainLayout: React.FC = () => {
                                 >
                                   📆
                                 </Box>
-                                <Typography sx={{ fontWeight: 500 }}>Gérer mon planning</Typography>
+                                <Typography sx={{ fontWeight: 500 }}>Planning intervenant</Typography>
                               </MenuItem>
                               <MenuItem
                                 component={RouterLink}
-                                to="/practitioner-profile"
+                                to="/intervenant/rendez-vous"
                                 onClick={handleMenuClose(setUserMenuAnchor)}
                                 sx={{
                                   px: 3,
                                   py: 1.5,
                                   transition: 'all 0.2s ease',
-                                  background: 'rgba(52, 89, 149, 0.05)',
-                                  borderLeft: '3px solid #345995',
                                   '&:hover': {
-                                    backgroundColor: 'rgba(52, 89, 149, 0.12)',
+                                    backgroundColor: 'rgba(255, 165, 0, 0.08)',
                                     '& .menu-icon': {
                                       transform: 'scale(1.1)',
                                     },
@@ -739,10 +701,92 @@ const MainLayout: React.FC = () => {
                                     transition: 'all 0.2s ease',
                                   }}
                                 >
-                                  👤
+                                  👔
                                 </Box>
-                                <Typography sx={{ fontWeight: 500 }}>Mon profil intervenant</Typography>
+                                <Typography sx={{ fontWeight: 500 }}>Rendez-vous clients</Typography>
                               </MenuItem>
+                              <MenuItem
+                                component={RouterLink}
+                                to="/intervenant/messages"
+                                onClick={handleMenuClose(setUserMenuAnchor)}
+                                sx={{
+                                  px: 3,
+                                  py: 1.5,
+                                  transition: 'all 0.2s ease',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                                    '& .menu-icon': {
+                                      transform: 'scale(1.1)',
+                                    },
+                                  },
+                                }}
+                              >
+                                <Box
+                                  component="span"
+                                  className="menu-icon"
+                                  sx={{
+                                    mr: 2,
+                                    display: 'inline-flex',
+                                    fontSize: '1.2rem',
+                                    transition: 'all 0.2s ease',
+                                  }}
+                                >
+                                  💬
+                                </Box>
+                                <Typography sx={{ fontWeight: 500 }}>Messages clients</Typography>
+                              </MenuItem>
+                              <MenuItem
+                                component={RouterLink}
+                                to="/practitioner-profile"
+                                onClick={handleMenuClose(setUserMenuAnchor)}
+                                sx={{
+                                  px: 3,
+                                  py: 1.5,
+                                  transition: 'all 0.2s ease',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                                    '& .menu-icon': {
+                                      transform: 'scale(1.1)',
+                                    },
+                                  },
+                                }}
+                              >
+                                <Box
+                                  component="span"
+                                  className="menu-icon"
+                                  sx={{
+                                    mr: 2,
+                                    display: 'inline-flex',
+                                    fontSize: '1.2rem',
+                                    transition: 'all 0.2s ease',
+                                  }}
+                                >
+                                  📊
+                                </Box>
+                                <Typography sx={{ fontWeight: 500 }}>Tableau de bord</Typography>
+                              </MenuItem>
+                            </Box>
+                          </>
+                        )}
+
+                        {/* ==================== ESPACE ADMIN ==================== */}
+                        {profile?.user_type === 'admin' && (
+                          <>
+                            <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
+                            <Box sx={{ px: 3, py: 1.5, bgcolor: 'rgba(255, 215, 0, 0.05)' }}>
+                              <Typography
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  fontWeight: 700,
+                                  color: '#FFD700',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '0.5px',
+                                }}
+                              >
+                                🔧 Administration
+                              </Typography>
+                            </Box>
+                            <Box sx={{ py: 1 }}>
                               <MenuItem
                                 component={RouterLink}
                                 to="/admin"
@@ -751,10 +795,8 @@ const MainLayout: React.FC = () => {
                                   px: 3,
                                   py: 1.5,
                                   transition: 'all 0.2s ease',
-                                  background: 'rgba(255, 215, 0, 0.05)',
-                                  borderLeft: '3px solid #FFD700',
                                   '&:hover': {
-                                    backgroundColor: 'rgba(255, 215, 0, 0.12)',
+                                    backgroundColor: 'rgba(255, 215, 0, 0.08)',
                                     '& .menu-icon': {
                                       transform: 'scale(1.1) rotate(15deg)',
                                     },
@@ -773,11 +815,11 @@ const MainLayout: React.FC = () => {
                                 >
                                   🔧
                                 </Box>
-                                <Typography sx={{ fontWeight: 600, color: '#345995' }}>Administration</Typography>
+                                <Typography sx={{ fontWeight: 600, color: '#345995' }}>Panel Admin</Typography>
                               </MenuItem>
-                            </>
-                          )}
-                        </Box>
+                            </Box>
+                          </>
+                        )}
                         <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
                         <Box sx={{ p: 1 }}>
                           <MenuItem
@@ -1407,17 +1449,30 @@ const MainLayout: React.FC = () => {
             </ListItem>
 
             {profile?.user_type === 'intervenant' && (
-              <ListItem
-                button
-                component={RouterLink}
-                to="/intervenant/planning"
-                onClick={toggleMobileMenu}
-              >
-                <ListItemIcon>
-                  <Box component="span" sx={{ display: 'inline-flex' }}>📆</Box>
-                </ListItemIcon>
-                <ListItemText primary="Gérer mon planning" />
-              </ListItem>
+              <>
+                <ListItem
+                  button
+                  component={RouterLink}
+                  to="/intervenant/planning"
+                  onClick={toggleMobileMenu}
+                >
+                  <ListItemIcon>
+                    <Box component="span" sx={{ display: 'inline-flex' }}>📆</Box>
+                  </ListItemIcon>
+                  <ListItemText primary="Gérer mon planning" />
+                </ListItem>
+                <ListItem
+                  button
+                  component={RouterLink}
+                  to="/intervenant/messages"
+                  onClick={toggleMobileMenu}
+                >
+                  <ListItemIcon>
+                    <Box component="span" sx={{ display: 'inline-flex' }}>💬</Box>
+                  </ListItemIcon>
+                  <ListItemText primary="Messages clients" />
+                </ListItem>
+              </>
             )}
 
             {profile?.user_type === 'admin' && (
@@ -1432,6 +1487,17 @@ const MainLayout: React.FC = () => {
                     <Box component="span" sx={{ display: 'inline-flex' }}>📆</Box>
                   </ListItemIcon>
                   <ListItemText primary="Gérer mon planning" />
+                </ListItem>
+                <ListItem
+                  button
+                  component={RouterLink}
+                  to="/intervenant/messages"
+                  onClick={toggleMobileMenu}
+                >
+                  <ListItemIcon>
+                    <Box component="span" sx={{ display: 'inline-flex' }}>💬</Box>
+                  </ListItemIcon>
+                  <ListItemText primary="Messages clients" />
                 </ListItem>
                 <ListItem
                   button

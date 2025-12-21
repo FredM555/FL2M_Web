@@ -432,13 +432,39 @@ async function handleAppointmentPaymentCompleted(
   }
 
   // Mettre à jour le statut ET le payment_status du rendez-vous
-  await supabase
+  const { data: updatedAppointment } = await supabase
     .from('appointments')
     .update({
       status: 'confirmed',
       payment_status: 'paid'
     })
-    .eq('id', appointmentId);
+    .eq('id', appointmentId)
+    .select('practitioner_id, start_time, end_time')
+    .single();
+
+  // Suspendre les rendez-vous concurrents automatiquement
+  if (updatedAppointment) {
+    try {
+      const { data: suspendResult, error: suspendError } = await supabase.rpc(
+        'suspend_conflicting_appointments',
+        {
+          p_practitioner_id: updatedAppointment.practitioner_id,
+          p_start_time: updatedAppointment.start_time,
+          p_end_time: updatedAppointment.end_time,
+          p_confirmed_appointment_id: appointmentId
+        }
+      );
+
+      if (suspendError) {
+        console.error('[Webhook] Erreur lors de la suspension des RDV concurrents:', suspendError);
+      } else if (suspendResult && suspendResult.length > 0) {
+        const count = suspendResult[0].suspended_count;
+        console.log(`[Webhook] ${count} rendez-vous concurrent(s) suspendu(s) automatiquement`);
+      }
+    } catch (suspendException) {
+      console.error('[Webhook] Exception lors de la suspension des RDV:', suspendException);
+    }
+  }
 
   // Récupérer les détails complets du rendez-vous pour l'email
   const { data: fullAppointment } = await supabase
