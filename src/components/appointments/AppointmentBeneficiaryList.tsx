@@ -62,7 +62,10 @@ export const AppointmentBeneficiaryList: React.FC<AppointmentBeneficiaryListProp
     setError(null);
     try {
       const { data, error: loadError } = await getAppointmentBeneficiaries(appointment.id);
-      if (loadError) throw loadError;
+      if (loadError) {
+        logger.error('Erreur lors du chargement des bénéficiaires:', loadError);
+        throw loadError;
+      }
 
       setBeneficiaries(data || []);
       logger.debug('Bénéficiaires chargés:', data);

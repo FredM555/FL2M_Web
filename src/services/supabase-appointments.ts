@@ -414,6 +414,126 @@ const getPractitionerDisplayName = (appointment: any) => {
  * Envoie les emails de confirmation de rendez-vous au client et au bénéficiaire
  * @param appointment Le rendez-vous confirmé avec toutes les informations
  */
+// Fonction pour construire l'email de confirmation pour l'intervenant
+const buildPractitionerEmailHtml = (appointment: any, beneficiaryName?: string) => {
+  const startDate = new Date(appointment.start_time);
+  const endDate = new Date(appointment.end_time);
+
+  const practitionerName = getPractitionerDisplayName(appointment);
+  const clientName = appointment.client?.pseudo ||
+    `${appointment.client?.first_name || ''} ${appointment.client?.last_name || ''}`.trim() ||
+    'Client';
+
+  const price = appointment.custom_price ?? appointment.service?.price;
+  const priceDisplay = price !== 9999 ? `${price} €` : 'Sur devis';
+  const isPaid = appointment.payment_status === 'paid';
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(135deg, #345995 0%, #1D3461 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+        .content { background: #f8f9fa; padding: 30px; border-radius: 0 0 8px 8px; }
+        .info-box { background: white; padding: 20px; border-left: 4px solid #FFD700; margin: 20px 0; border-radius: 4px; }
+        .alert-box { background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        .info-row { margin: 12px 0; padding: 10px; background: #f8f9fa; border-radius: 4px; }
+        .label { font-weight: bold; color: #345995; display: inline-block; width: 150px; }
+        .footer { text-align: center; margin-top: 30px; padding-top: 20px; border-top: 2px solid #FFD700; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h2 style="margin: 0; color: white;">🎉 Nouveau rendez-vous confirmé !</h2>
+        </div>
+        <div class="content">
+          <p>Bonjour ${practitionerName},</p>
+          <p>Un nouveau rendez-vous vient d'être réservé sur votre planning${isPaid ? ' et payé' : ''} :</p>
+
+          <div class="info-box">
+            <h3 style="margin-top: 0; color: #345995;">Détails du rendez-vous</h3>
+
+            <div class="info-row">
+              <span class="label">Service :</span>
+              <span>${appointment.service?.name || 'Non spécifié'}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">Date :</span>
+              <span>${formatDate(startDate)}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">Heure :</span>
+              <span>${formatTime(startDate)} - ${formatTime(endDate)}</span>
+            </div>
+
+            <div class="info-row">
+              <span class="label">Client :</span>
+              <span>${clientName}</span>
+            </div>
+
+            ${beneficiaryName ? `
+            <div class="info-row">
+              <span class="label">Bénéficiaire :</span>
+              <span>${beneficiaryName}</span>
+            </div>
+            ` : ''}
+
+            ${appointment.client?.email ? `
+            <div class="info-row">
+              <span class="label">Email :</span>
+              <span>${appointment.client.email}</span>
+            </div>
+            ` : ''}
+
+            ${appointment.client?.phone ? `
+            <div class="info-row">
+              <span class="label">Téléphone :</span>
+              <span>${appointment.client.phone}</span>
+            </div>
+            ` : ''}
+
+            ${isPaid ? `
+            <div class="info-row">
+              <span class="label">Prix :</span>
+              <span>${priceDisplay}</span>
+            </div>
+            ` : ''}
+          </div>
+
+          ${isPaid ? `
+          <div class="alert-box">
+            <p><strong>⚠️ Important - Paiement et validation</strong></p>
+            <p>Le paiement de ${priceDisplay} a été reçu et sera conservé en attente pendant 48 heures après le rendez-vous.</p>
+            <p><strong>Après la séance :</strong> Le client doit valider que la séance s'est bien déroulée. Dès validation, vous recevrez automatiquement le paiement sur votre compte Stripe Connect.</p>
+            <p><strong>Si pas de validation :</strong> Le paiement vous sera transféré automatiquement 48 heures après la fin du rendez-vous.</p>
+          </div>
+          ` : ''}
+
+          <p><strong>Rendez-vous en conflit :</strong> Les autres créneaux disponibles sur ce même horaire ont été automatiquement annulés.</p>
+
+          <p>Retrouvez tous vos rendez-vous sur votre tableau de bord : <a href="https://www.fl2m.fr/intervenant/planning" style="color: #345995; text-decoration: none; font-weight: bold;">Mon planning</a></p>
+
+          <div class="footer">
+            <p style="margin: 0; color: #345995; font-weight: bold;">FL2M IPServices</p>
+            <p style="margin: 5px 0; color: #666;">6, rue albert nicolas</p>
+            <p style="margin: 5px 0; color: #666;">+33 (0)6 95 57 31 37</p>
+          </div>
+
+          <p style="color: #999; font-size: 12px; margin-top: 30px; text-align: center;">
+            Ceci est un message automatique, merci de ne pas y répondre directement.
+          </p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
 const sendAppointmentConfirmationEmails = async (appointment: any) => {
   try {
     const startDate = new Date(appointment.start_time);
@@ -544,6 +664,20 @@ const sendAppointmentConfirmationEmails = async (appointment: any) => {
           html: emailHtml(primaryBeneficiary.first_name, primaryBeneficiary.last_name, false, beneficiaryName),
           appointmentId: appointment.id,
           emailType: 'confirmation'
+        }
+      });
+    }
+
+    // Envoyer l'email à l'intervenant
+    if (appointment.practitioner?.profile?.email) {
+      const practitionerEmailHtml = buildPractitionerEmailHtml(appointment, beneficiaryName);
+      await supabase.functions.invoke('send-email', {
+        body: {
+          to: appointment.practitioner.profile.email,
+          subject: `Nouveau rendez-vous confirmé - ${appointment.service?.name || 'FL²M Services'}`,
+          html: practitionerEmailHtml,
+          appointmentId: appointment.id,
+          emailType: 'practitioner_confirmation'
         }
       });
     }
