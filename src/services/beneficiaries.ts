@@ -1115,19 +1115,7 @@ export const getBeneficiaryDocuments = async (
   try {
     const { data, error } = await supabase
       .from('beneficiary_documents')
-      .select(`
-        *,
-        practitioner:practitioners(
-          id,
-          display_name,
-          profile:profiles(first_name, last_name, pseudo)
-        ),
-        appointment:appointments(
-          id,
-          start_time,
-          service:services(name)
-        )
-      `)
+      .select('*')
       .eq('beneficiary_id', beneficiaryId)
       .order('created_at', { ascending: false });
 

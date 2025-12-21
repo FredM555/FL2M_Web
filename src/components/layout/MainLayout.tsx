@@ -628,198 +628,194 @@ const MainLayout: React.FC = () => {
                         </Box>
 
                         {/* ==================== ESPACE PROFESSIONNEL ==================== */}
-                        {(profile?.user_type === 'intervenant' || profile?.user_type === 'admin') && (
-                          <>
-                            <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
-                            <Box sx={{ px: 3, py: 1.5, bgcolor: 'rgba(255, 165, 0, 0.05)' }}>
-                              <Typography
-                                sx={{
-                                  fontSize: '0.75rem',
-                                  fontWeight: 700,
-                                  color: '#FFA500',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.5px',
-                                }}
-                              >
-                                💼 Espace Professionnel
-                              </Typography>
-                            </Box>
-                            <Box sx={{ py: 1 }}>
-                              <MenuItem
-                                component={RouterLink}
-                                to="/intervenant/planning"
-                                onClick={handleMenuClose(setUserMenuAnchor)}
-                                sx={{
-                                  px: 3,
-                                  py: 1.5,
-                                  transition: 'all 0.2s ease',
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(255, 165, 0, 0.08)',
-                                    '& .menu-icon': {
-                                      transform: 'scale(1.1) rotate(15deg)',
-                                    },
+                        {(profile?.user_type === 'intervenant' || profile?.user_type === 'admin') && [
+                          <Divider key="divider-pro" sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />,
+                          <Box key="header-pro" sx={{ px: 3, py: 1.5, bgcolor: 'rgba(255, 165, 0, 0.05)' }}>
+                            <Typography
+                              sx={{
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                color: '#FFA500',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                              }}
+                            >
+                              💼 Espace Professionnel
+                            </Typography>
+                          </Box>,
+                          <Box key="menu-pro" sx={{ py: 1 }}>
+                            <MenuItem
+                              component={RouterLink}
+                              to="/intervenant/planning"
+                              onClick={handleMenuClose(setUserMenuAnchor)}
+                              sx={{
+                                px: 3,
+                                py: 1.5,
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                                  '& .menu-icon': {
+                                    transform: 'scale(1.1) rotate(15deg)',
                                   },
-                                }}
-                              >
-                                <Box
-                                  component="span"
-                                  className="menu-icon"
-                                  sx={{
-                                    mr: 2,
-                                    display: 'inline-flex',
-                                    fontSize: '1.2rem',
-                                    transition: 'all 0.2s ease',
-                                  }}
-                                >
-                                  📆
-                                </Box>
-                                <Typography sx={{ fontWeight: 500 }}>Planning intervenant</Typography>
-                              </MenuItem>
-                              <MenuItem
-                                component={RouterLink}
-                                to="/intervenant/rendez-vous"
-                                onClick={handleMenuClose(setUserMenuAnchor)}
+                                },
+                              }}
+                            >
+                              <Box
+                                component="span"
+                                className="menu-icon"
                                 sx={{
-                                  px: 3,
-                                  py: 1.5,
+                                  mr: 2,
+                                  display: 'inline-flex',
+                                  fontSize: '1.2rem',
                                   transition: 'all 0.2s ease',
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(255, 165, 0, 0.08)',
-                                    '& .menu-icon': {
-                                      transform: 'scale(1.1)',
-                                    },
-                                  },
                                 }}
                               >
-                                <Box
-                                  component="span"
-                                  className="menu-icon"
-                                  sx={{
-                                    mr: 2,
-                                    display: 'inline-flex',
-                                    fontSize: '1.2rem',
-                                    transition: 'all 0.2s ease',
-                                  }}
-                                >
-                                  👔
-                                </Box>
-                                <Typography sx={{ fontWeight: 500 }}>Rendez-vous clients</Typography>
-                              </MenuItem>
-                              <MenuItem
-                                component={RouterLink}
-                                to="/intervenant/messages"
-                                onClick={handleMenuClose(setUserMenuAnchor)}
+                                📆
+                              </Box>
+                              <Typography sx={{ fontWeight: 500 }}>Planning intervenant</Typography>
+                            </MenuItem>
+                            <MenuItem
+                              component={RouterLink}
+                              to="/intervenant/rendez-vous"
+                              onClick={handleMenuClose(setUserMenuAnchor)}
+                              sx={{
+                                px: 3,
+                                py: 1.5,
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                                  '& .menu-icon': {
+                                    transform: 'scale(1.1)',
+                                  },
+                                },
+                              }}
+                            >
+                              <Box
+                                component="span"
+                                className="menu-icon"
                                 sx={{
-                                  px: 3,
-                                  py: 1.5,
+                                  mr: 2,
+                                  display: 'inline-flex',
+                                  fontSize: '1.2rem',
                                   transition: 'all 0.2s ease',
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(255, 165, 0, 0.08)',
-                                    '& .menu-icon': {
-                                      transform: 'scale(1.1)',
-                                    },
-                                  },
                                 }}
                               >
-                                <Box
-                                  component="span"
-                                  className="menu-icon"
-                                  sx={{
-                                    mr: 2,
-                                    display: 'inline-flex',
-                                    fontSize: '1.2rem',
-                                    transition: 'all 0.2s ease',
-                                  }}
-                                >
-                                  💬
-                                </Box>
-                                <Typography sx={{ fontWeight: 500 }}>Messages clients</Typography>
-                              </MenuItem>
-                              <MenuItem
-                                component={RouterLink}
-                                to="/practitioner-profile"
-                                onClick={handleMenuClose(setUserMenuAnchor)}
+                                👔
+                              </Box>
+                              <Typography sx={{ fontWeight: 500 }}>Rendez-vous clients</Typography>
+                            </MenuItem>
+                            <MenuItem
+                              component={RouterLink}
+                              to="/intervenant/messages"
+                              onClick={handleMenuClose(setUserMenuAnchor)}
+                              sx={{
+                                px: 3,
+                                py: 1.5,
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                                  '& .menu-icon': {
+                                    transform: 'scale(1.1)',
+                                  },
+                                },
+                              }}
+                            >
+                              <Box
+                                component="span"
+                                className="menu-icon"
                                 sx={{
-                                  px: 3,
-                                  py: 1.5,
+                                  mr: 2,
+                                  display: 'inline-flex',
+                                  fontSize: '1.2rem',
                                   transition: 'all 0.2s ease',
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(255, 165, 0, 0.08)',
-                                    '& .menu-icon': {
-                                      transform: 'scale(1.1)',
-                                    },
-                                  },
                                 }}
                               >
-                                <Box
-                                  component="span"
-                                  className="menu-icon"
-                                  sx={{
-                                    mr: 2,
-                                    display: 'inline-flex',
-                                    fontSize: '1.2rem',
-                                    transition: 'all 0.2s ease',
-                                  }}
-                                >
-                                  📊
-                                </Box>
-                                <Typography sx={{ fontWeight: 500 }}>Tableau de bord</Typography>
-                              </MenuItem>
-                            </Box>
-                          </>
-                        )}
+                                💬
+                              </Box>
+                              <Typography sx={{ fontWeight: 500 }}>Messages clients</Typography>
+                            </MenuItem>
+                            <MenuItem
+                              component={RouterLink}
+                              to="/practitioner-profile"
+                              onClick={handleMenuClose(setUserMenuAnchor)}
+                              sx={{
+                                px: 3,
+                                py: 1.5,
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(255, 165, 0, 0.08)',
+                                  '& .menu-icon': {
+                                    transform: 'scale(1.1)',
+                                  },
+                                },
+                              }}
+                            >
+                              <Box
+                                component="span"
+                                className="menu-icon"
+                                sx={{
+                                  mr: 2,
+                                  display: 'inline-flex',
+                                  fontSize: '1.2rem',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                📊
+                              </Box>
+                              <Typography sx={{ fontWeight: 500 }}>Tableau de bord</Typography>
+                            </MenuItem>
+                          </Box>
+                        ]}
 
                         {/* ==================== ESPACE ADMIN ==================== */}
-                        {profile?.user_type === 'admin' && (
-                          <>
-                            <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
-                            <Box sx={{ px: 3, py: 1.5, bgcolor: 'rgba(255, 215, 0, 0.05)' }}>
-                              <Typography
-                                sx={{
-                                  fontSize: '0.75rem',
-                                  fontWeight: 700,
-                                  color: '#FFD700',
-                                  textTransform: 'uppercase',
-                                  letterSpacing: '0.5px',
-                                }}
-                              >
-                                🔧 Administration
-                              </Typography>
-                            </Box>
-                            <Box sx={{ py: 1 }}>
-                              <MenuItem
-                                component={RouterLink}
-                                to="/admin"
-                                onClick={handleMenuClose(setUserMenuAnchor)}
-                                sx={{
-                                  px: 3,
-                                  py: 1.5,
-                                  transition: 'all 0.2s ease',
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(255, 215, 0, 0.08)',
-                                    '& .menu-icon': {
-                                      transform: 'scale(1.1) rotate(15deg)',
-                                    },
+                        {profile?.user_type === 'admin' && [
+                          <Divider key="divider-admin" sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />,
+                          <Box key="header-admin" sx={{ px: 3, py: 1.5, bgcolor: 'rgba(255, 215, 0, 0.05)' }}>
+                            <Typography
+                              sx={{
+                                fontSize: '0.75rem',
+                                fontWeight: 700,
+                                color: '#FFD700',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                              }}
+                            >
+                              🔧 Administration
+                            </Typography>
+                          </Box>,
+                          <Box key="menu-admin" sx={{ py: 1 }}>
+                            <MenuItem
+                              component={RouterLink}
+                              to="/admin"
+                              onClick={handleMenuClose(setUserMenuAnchor)}
+                              sx={{
+                                px: 3,
+                                py: 1.5,
+                                transition: 'all 0.2s ease',
+                                '&:hover': {
+                                  backgroundColor: 'rgba(255, 215, 0, 0.08)',
+                                  '& .menu-icon': {
+                                    transform: 'scale(1.1) rotate(15deg)',
                                   },
+                                },
+                              }}
+                            >
+                              <Box
+                                component="span"
+                                className="menu-icon"
+                                sx={{
+                                  mr: 2,
+                                  display: 'inline-flex',
+                                  fontSize: '1.2rem',
+                                  transition: 'all 0.2s ease',
                                 }}
                               >
-                                <Box
-                                  component="span"
-                                  className="menu-icon"
-                                  sx={{
-                                    mr: 2,
-                                    display: 'inline-flex',
-                                    fontSize: '1.2rem',
-                                    transition: 'all 0.2s ease',
-                                  }}
-                                >
-                                  🔧
-                                </Box>
-                                <Typography sx={{ fontWeight: 600, color: '#345995' }}>Panel Admin</Typography>
-                              </MenuItem>
-                            </Box>
-                          </>
-                        )}
+                                🔧
+                              </Box>
+                              <Typography sx={{ fontWeight: 600, color: '#345995' }}>Panel Admin</Typography>
+                            </MenuItem>
+                          </Box>
+                        ]}
                         <Divider sx={{ borderColor: 'rgba(0, 0, 0, 0.08)' }} />
                         <Box sx={{ p: 1 }}>
                           <MenuItem
@@ -1448,70 +1444,71 @@ const MainLayout: React.FC = () => {
               <ListItemText primary="Mes bénéficiaires" />
             </ListItem>
 
-            {profile?.user_type === 'intervenant' && (
-              <>
-                <ListItem
-                  button
-                  component={RouterLink}
-                  to="/intervenant/planning"
-                  onClick={toggleMobileMenu}
-                >
-                  <ListItemIcon>
-                    <Box component="span" sx={{ display: 'inline-flex' }}>📆</Box>
-                  </ListItemIcon>
-                  <ListItemText primary="Gérer mon planning" />
-                </ListItem>
-                <ListItem
-                  button
-                  component={RouterLink}
-                  to="/intervenant/messages"
-                  onClick={toggleMobileMenu}
-                >
-                  <ListItemIcon>
-                    <Box component="span" sx={{ display: 'inline-flex' }}>💬</Box>
-                  </ListItemIcon>
-                  <ListItemText primary="Messages clients" />
-                </ListItem>
-              </>
-            )}
+            {profile?.user_type === 'intervenant' && [
+              <ListItem
+                key="mobile-planning-intervenant"
+                button
+                component={RouterLink}
+                to="/intervenant/planning"
+                onClick={toggleMobileMenu}
+              >
+                <ListItemIcon>
+                  <Box component="span" sx={{ display: 'inline-flex' }}>📆</Box>
+                </ListItemIcon>
+                <ListItemText primary="Gérer mon planning" />
+              </ListItem>,
+              <ListItem
+                key="mobile-messages-intervenant"
+                button
+                component={RouterLink}
+                to="/intervenant/messages"
+                onClick={toggleMobileMenu}
+              >
+                <ListItemIcon>
+                  <Box component="span" sx={{ display: 'inline-flex' }}>💬</Box>
+                </ListItemIcon>
+                <ListItemText primary="Messages clients" />
+              </ListItem>
+            ]}
 
-            {profile?.user_type === 'admin' && (
-              <>
-                <ListItem
-                  button
-                  component={RouterLink}
-                  to="/intervenant/planning"
-                  onClick={toggleMobileMenu}
-                >
-                  <ListItemIcon>
-                    <Box component="span" sx={{ display: 'inline-flex' }}>📆</Box>
-                  </ListItemIcon>
-                  <ListItemText primary="Gérer mon planning" />
-                </ListItem>
-                <ListItem
-                  button
-                  component={RouterLink}
-                  to="/intervenant/messages"
-                  onClick={toggleMobileMenu}
-                >
-                  <ListItemIcon>
-                    <Box component="span" sx={{ display: 'inline-flex' }}>💬</Box>
-                  </ListItemIcon>
-                  <ListItemText primary="Messages clients" />
-                </ListItem>
-                <ListItem
-                  button
-                  component={RouterLink}
-                  to="/admin"
-                  onClick={toggleMobileMenu}
-                >
-                  <ListItemIcon>
-                    <Box component="span" sx={{ display: 'inline-flex' }}>🔧</Box>
-                  </ListItemIcon>
-                  <ListItemText primary="Administration" />
-                </ListItem>
-              </>
-            )}
+            {profile?.user_type === 'admin' && [
+              <ListItem
+                key="mobile-planning-admin"
+                button
+                component={RouterLink}
+                to="/intervenant/planning"
+                onClick={toggleMobileMenu}
+              >
+                <ListItemIcon>
+                  <Box component="span" sx={{ display: 'inline-flex' }}>📆</Box>
+                </ListItemIcon>
+                <ListItemText primary="Gérer mon planning" />
+              </ListItem>,
+              <ListItem
+                key="mobile-messages-admin"
+                button
+                component={RouterLink}
+                to="/intervenant/messages"
+                onClick={toggleMobileMenu}
+              >
+                <ListItemIcon>
+                  <Box component="span" sx={{ display: 'inline-flex' }}>💬</Box>
+                </ListItemIcon>
+                <ListItemText primary="Messages clients" />
+              </ListItem>,
+              <ListItem
+                key="mobile-admin"
+                button
+                component={RouterLink}
+                to="/admin"
+                onClick={toggleMobileMenu}
+              >
+                <ListItemIcon>
+                  <Box component="span" sx={{ display: 'inline-flex' }}>🔧</Box>
+                </ListItemIcon>
+                <ListItemText primary="Administration" />
+              </ListItem>
+            ]}
 
             <ListItem 
               button 

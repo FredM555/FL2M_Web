@@ -14,7 +14,11 @@ import {
   Switch,
   FormControlLabel,
   TextField,
-  LinearProgress
+  LinearProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel
 } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -28,7 +32,8 @@ import {
   updateBeneficiaryDocument,
   deleteBeneficiaryDocument
 } from '../../services/beneficiaries';
-import type { BeneficiaryDocument } from '../../types/beneficiary';
+import type { BeneficiaryDocument, BeneficiaryDocumentType } from '../../types/beneficiary';
+import { getDocumentTypeLabel } from '../../types/beneficiary';
 import { logger } from '../../utils/logger';
 import { format, parseISO } from 'date-fns';
 import { fr } from 'date-fns/locale';
@@ -51,8 +56,9 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [documentType, setDocumentType] = useState<BeneficiaryDocumentType>('autre');
   const [description, setDescription] = useState('');
-  const [isVisibleToUser, setIsVisibleToUser] = useState(true);
+  const [isVisibleToUser, setIsVisibleToUser] = useState(false); // Par défaut privé (false)
 
   useEffect(() => {
     loadDocuments();
@@ -118,6 +124,7 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
         beneficiary_id: beneficiaryId,
         appointment_id: appointmentId,
         practitioner_id: practitionerId,
+        document_type: documentType,
         file_name: selectedFile.name,
         file_path: filePath,
         file_size: selectedFile.size,
@@ -137,8 +144,9 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
 
       // Réinitialiser le formulaire
       setSelectedFile(null);
+      setDocumentType('autre');
       setDescription('');
-      setIsVisibleToUser(true);
+      setIsVisibleToUser(false);
 
       // Reset file input
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
@@ -283,28 +291,60 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
           </Box>
         )}
 
+        <FormControl fullWidth sx={{ mb: 2, bgcolor: 'white' }}>
+          <InputLabel id="document-type-label">Type de document</InputLabel>
+          <Select
+            labelId="document-type-label"
+            id="document-type"
+            value={documentType}
+            label="Type de document"
+            onChange={(e) => setDocumentType(e.target.value as BeneficiaryDocumentType)}
+            disabled={uploading}
+          >
+            <MenuItem value="arbre">Arbre de vie</MenuItem>
+            <MenuItem value="arbre_detail">Arbre de vie détaillé</MenuItem>
+            <MenuItem value="plan_de_vie">Plan de vie</MenuItem>
+            <MenuItem value="analyse">Analyse numérologique</MenuItem>
+            <MenuItem value="autre">Autre</MenuItem>
+          </Select>
+        </FormControl>
+
         <TextField
           fullWidth
           multiline
           rows={2}
-          label="Description (optionnel)"
+          label="Description (optionnelle)"
+          placeholder="Ex: Certificat médical, ordonnance, résultats d'analyses..."
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           disabled={uploading}
           sx={{ mb: 2, bgcolor: 'white' }}
         />
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isVisibleToUser}
-                onChange={(e) => setIsVisibleToUser(e.target.checked)}
-                disabled={uploading}
-              />
-            }
-            label="Visible par le client"
-          />
+        <FormControlLabel
+          control={
+            <Switch
+              checked={isVisibleToUser}
+              onChange={(e) => setIsVisibleToUser(e.target.checked)}
+              disabled={uploading}
+            />
+          }
+          label={
+            <Box>
+              <Typography variant="body2">
+                {isVisibleToUser ? 'Visible par le client' : 'Privé (intervenants uniquement)'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                {isVisibleToUser
+                  ? 'Le client pourra voir et télécharger ce document'
+                  : 'Par défaut : visible uniquement par les intervenants'}
+              </Typography>
+            </Box>
+          }
+          sx={{ mb: 2 }}
+        />
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
           <Button
             variant="contained"
             startIcon={uploading ? <CircularProgress size={20} /> : <UploadFileIcon />}
@@ -341,11 +381,6 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
             Documents existants ({documents.length})
           </Typography>
           {documents.map((document) => {
-            const practitionerName = document.practitioner?.display_name ||
-                                    document.practitioner?.profile?.pseudo ||
-                                    `${document.practitioner?.profile?.first_name || ''} ${document.practitioner?.profile?.last_name || ''}`.trim() ||
-                                    'Intervenant';
-
             return (
               <Card key={document.id} sx={{ mb: 2 }}>
                 <CardContent>
@@ -356,9 +391,17 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
                         <Typography variant="body1" sx={{ fontWeight: 600 }}>
                           {document.file_name}
                         </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {formatFileSize(document.file_size)} • Uploadé par {practitionerName}
-                        </Typography>
+                        <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', mt: 0.5 }}>
+                          <Chip
+                            label={getDocumentTypeLabel(document.document_type)}
+                            size="small"
+                            color="primary"
+                            variant="outlined"
+                          />
+                          <Typography variant="caption" color="text.secondary">
+                            • {formatFileSize(document.file_size)}
+                          </Typography>
+                        </Box>
                       </Box>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1 }}>
@@ -374,13 +417,6 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
                   {document.description && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                       {document.description}
-                    </Typography>
-                  )}
-
-                  {document.appointment && (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1, fontStyle: 'italic' }}>
-                      Associé au RDV du {format(parseISO(document.appointment.start_time), 'dd MMMM yyyy', { locale: fr })}
-                      {document.appointment.service?.name && ` - ${document.appointment.service.name}`}
                     </Typography>
                   )}
 

@@ -102,9 +102,12 @@ export const AppointmentBeneficiaryList: React.FC<AppointmentBeneficiaryListProp
     return false;
   }, [profile, appointment]);
 
-  // Est-ce que l'utilisateur est l'intervenant
+  // Est-ce que l'utilisateur est l'intervenant (ou admin qui a accès aux fonctionnalités intervenant)
   const isPractitioner = React.useMemo(() => {
     if (!profile) return false;
+    // Admin a toujours accès aux fonctionnalités intervenant
+    if (profile.user_type === 'admin') return true;
+    // Intervenant uniquement sur ses propres RDV
     return profile.user_type === 'intervenant' && appointment.practitioner?.user_id === profile.id;
   }, [profile, appointment]);
 

@@ -237,6 +237,16 @@ export interface BeneficiarySearchResult {
 export type BeneficiaryNoteType = 'user' | 'practitioner' | 'shared';
 
 /**
+ * Type de document pour un bénéficiaire
+ * - arbre: Arbre de vie
+ * - arbre_detail: Arbre de vie détaillé
+ * - plan_de_vie: Plan de vie
+ * - analyse: Analyse numérologique
+ * - autre: Autre type de document
+ */
+export type BeneficiaryDocumentType = 'arbre' | 'arbre_detail' | 'plan_de_vie' | 'analyse' | 'autre';
+
+/**
  * Note sur un bénéficiaire
  */
 export interface BeneficiaryNote {
@@ -295,6 +305,7 @@ export interface BeneficiaryDocument {
   beneficiary_id: string;
   appointment_id?: string | null;
   practitioner_id?: string | null;
+  document_type: BeneficiaryDocumentType; // Type de document
   file_name: string;
   file_path: string;
   file_size?: number | null;
@@ -305,23 +316,6 @@ export interface BeneficiaryDocument {
   updated_at: string;
   created_by?: string;
   updated_by?: string;
-  // Relations jointes
-  practitioner?: {
-    id: string;
-    display_name?: string;
-    profile?: {
-      first_name?: string;
-      last_name?: string;
-      pseudo?: string;
-    };
-  };
-  appointment?: {
-    id: string;
-    start_time: string;
-    service?: {
-      name: string;
-    };
-  };
 }
 
 /**
@@ -331,6 +325,7 @@ export interface CreateBeneficiaryDocumentData {
   beneficiary_id: string;
   appointment_id?: string;
   practitioner_id: string;
+  document_type: BeneficiaryDocumentType; // Type de document (requis)
   file_name: string;
   file_path: string;
   file_size?: number;
@@ -486,4 +481,19 @@ export function getRoleInAppointmentLabel(role: BeneficiaryRoleInAppointment): s
   };
 
   return labels[role] || role;
+}
+
+/**
+ * Helper pour obtenir le label d'un type de document
+ */
+export function getDocumentTypeLabel(documentType: BeneficiaryDocumentType): string {
+  const labels: Record<BeneficiaryDocumentType, string> = {
+    arbre: 'Arbre de vie',
+    arbre_detail: 'Arbre de vie détaillé',
+    plan_de_vie: 'Plan de vie',
+    analyse: 'Analyse numérologique',
+    autre: 'Autre'
+  };
+
+  return labels[documentType] || documentType;
 }
