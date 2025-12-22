@@ -564,12 +564,15 @@ async function handleAppointmentPaymentCompleted(
     const eligibleDate = new Date(appointment.end_time);
     eligibleDate.setHours(eligibleDate.getHours() + 48);
 
-    // Mettre à jour la date d'éligibilité
+    // Mettre à jour la date d'éligibilité et marquer comme eligible
+    // La fonction process-payouts transférera le paiement une fois la date atteinte
+    // On force aussi status='succeeded' au cas où le premier UPDATE n'aurait pas fonctionné
     await supabase
       .from('transactions')
       .update({
+        status: 'succeeded',
         eligible_for_transfer_at: eligibleDate.toISOString(),
-        transfer_status: 'pending'
+        transfer_status: 'eligible'
       })
       .eq('appointment_id', appointmentId);
   }
