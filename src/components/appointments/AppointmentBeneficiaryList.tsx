@@ -22,14 +22,16 @@ import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import NoteIcon from '@mui/icons-material/Note';
 import AttachFileIcon from '@mui/icons-material/AttachFile';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import { Appointment } from '../../services/supabase';
-import { getAppointmentBeneficiaries, removeBeneficiaryFromAppointment } from '../../services/beneficiaries';
+import { getAppointmentBeneficiaries, removeBeneficiaryFromAppointment, replaceBeneficiaryInAppointment } from '../../services/beneficiaries';
 import type { AppointmentBeneficiary } from '../../types/beneficiary';
 import { useAuth } from '../../context/AuthContext';
 import { logger } from '../../utils/logger';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, differenceInHours } from 'date-fns';
 import { BeneficiaryNotesPanel } from './BeneficiaryNotesPanel';
 import { BeneficiaryDocumentsPanel } from './BeneficiaryDocumentsPanel';
+import { ChangeBeneficiaryDialog } from './ChangeBeneficiaryDialog';
 
 interface AppointmentBeneficiaryListProps {
   appointment: Appointment;
@@ -51,6 +53,8 @@ export const AppointmentBeneficiaryList: React.FC<AppointmentBeneficiaryListProp
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [beneficiaryToDelete, setBeneficiaryToDelete] = useState<AppointmentBeneficiary | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [changeDialogOpen, setChangeDialogOpen] = useState(false);
+  const [beneficiaryToChange, setBeneficiaryToChange] = useState<AppointmentBeneficiary | null>(null);
 
   // Récupérer les bénéficiaires du rendez-vous
   useEffect(() => {
@@ -111,6 +115,23 @@ export const AppointmentBeneficiaryList: React.FC<AppointmentBeneficiaryListProp
     return profile.user_type === 'intervenant' && appointment.practitioner?.user_id === profile.id;
   }, [profile, appointment]);
 
+  // Vérifier si on peut changer de bénéficiaire
+  const canChangeBeneficiary = React.useMemo(() => {
+    if (!profile || !canEdit) return false;
+
+    // Les intervenants peuvent toujours changer (ils communiquent par chat)
+    if (isPractitioner) return true;
+
+    // Pour les clients : seulement si > 48h avant le RDV
+    if (profile.user_type === 'client') {
+      const appointmentStartTime = parseISO(appointment.start_time);
+      const hoursUntilAppointment = differenceInHours(appointmentStartTime, new Date());
+      return hoursUntilAppointment > 48;
+    }
+
+    return false;
+  }, [profile, appointment, canEdit, isPractitioner]);
+
   const handleAccordionChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
     setExpandedPanel(isExpanded ? panel : false);
   };
@@ -154,6 +175,30 @@ export const AppointmentBeneficiaryList: React.FC<AppointmentBeneficiaryListProp
     } finally {
       setDeleting(false);
     }
+  };
+
+  const handleChangeClick = (beneficiary: AppointmentBeneficiary) => {
+    setBeneficiaryToChange(beneficiary);
+    setChangeDialogOpen(true);
+  };
+
+  const handleConfirmChange = async (newBeneficiaryId: string) => {
+    if (!beneficiaryToChange) return;
+
+    const { success, error: changeError } = await replaceBeneficiaryInAppointment(
+      appointment.id,
+      beneficiaryToChange.beneficiary_id,
+      newBeneficiaryId
+    );
+
+    if (changeError || !success) {
+      throw changeError || new Error('Erreur lors du changement de bénéficiaire');
+    }
+
+    // Recharger la liste
+    await loadBeneficiaries();
+    setChangeDialogOpen(false);
+    setBeneficiaryToChange(null);
   };
 
   // Limites du service
@@ -335,6 +380,17 @@ export const AppointmentBeneficiaryList: React.FC<AppointmentBeneficiaryListProp
                           Documents
                         </Button>
                       )}
+                      {canChangeBeneficiary && beneficiaries.length === 1 && (
+                        <Button
+                          size="small"
+                          startIcon={<SwapHorizIcon />}
+                          onClick={() => handleChangeClick(ab)}
+                          variant="outlined"
+                          color="primary"
+                        >
+                          Changer
+                        </Button>
+                      )}
                       {canEdit && canRemove && (
                         <Button
                           size="small"
@@ -428,6 +484,17 @@ export const AppointmentBeneficiaryList: React.FC<AppointmentBeneficiaryListProp
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Dialog de changement de bénéficiaire */}
+      {beneficiaryToChange && (
+        <ChangeBeneficiaryDialog
+          open={changeDialogOpen}
+          onClose={() => setChangeDialogOpen(false)}
+          currentBeneficiary={beneficiaryToChange}
+          onConfirm={handleConfirmChange}
+          clientId={appointment.client_id || ''}
+        />
+      )}
 
       {/* Message informatif */}
       {appointment.status !== 'completed' && appointment.status !== 'validated' && (

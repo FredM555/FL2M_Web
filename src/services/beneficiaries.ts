@@ -629,6 +629,55 @@ export const removeBeneficiaryFromAppointment = async (
 };
 
 /**
+ * Remplacer un bénéficiaire par un autre dans un rendez-vous
+ */
+export const replaceBeneficiaryInAppointment = async (
+  appointmentId: string,
+  oldBeneficiaryId: string,
+  newBeneficiaryId: string
+): Promise<{ success: boolean; error: any }> => {
+  try {
+    // Récupérer les informations de l'ancien bénéficiaire (role, role_order, etc.)
+    const { data: oldBeneficiary, error: fetchError } = await supabase
+      .from('appointment_beneficiaries')
+      .select('role, role_order, receives_notifications')
+      .eq('appointment_id', appointmentId)
+      .eq('beneficiary_id', oldBeneficiaryId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Supprimer l'ancien bénéficiaire
+    const { error: deleteError } = await supabase
+      .from('appointment_beneficiaries')
+      .delete()
+      .eq('appointment_id', appointmentId)
+      .eq('beneficiary_id', oldBeneficiaryId);
+
+    if (deleteError) throw deleteError;
+
+    // Ajouter le nouveau bénéficiaire avec les mêmes attributs
+    const { error: insertError } = await supabase
+      .from('appointment_beneficiaries')
+      .insert({
+        appointment_id: appointmentId,
+        beneficiary_id: newBeneficiaryId,
+        role: oldBeneficiary?.role || 'primary',
+        role_order: oldBeneficiary?.role_order || 1,
+        receives_notifications: oldBeneficiary?.receives_notifications ?? true
+      });
+
+    if (insertError) throw insertError;
+
+    logger.info(`Bénéficiaire remplacé dans le RDV ${appointmentId}`);
+    return { success: true, error: null };
+  } catch (error) {
+    logger.error('Erreur lors du remplacement du bénéficiaire:', error);
+    return { success: false, error };
+  }
+};
+
+/**
  * Mettre à jour les bénéficiaires d'un rendez-vous
  * (remplace tous les bénéficiaires existants)
  */
@@ -1249,6 +1298,7 @@ export default {
   getAppointmentBeneficiaries,
   addBeneficiaryToAppointment,
   removeBeneficiaryFromAppointment,
+  replaceBeneficiaryInAppointment,
   updateAppointmentBeneficiaries,
 
   // Statistiques

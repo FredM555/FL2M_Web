@@ -1401,18 +1401,6 @@ const PractitionerWeeklyCalendar: React.FC<PractitionerWeeklyCalendarProps> = ({
               </Button>
             )}
 
-            {/* Debug: afficher pourquoi le bouton ne s'affiche pas */}
-            {!selectedAppointment?.client_id && (
-              <Typography variant="caption" color="text.secondary" sx={{ mr: 2 }}>
-                [Debug: Pas de client_id]
-              </Typography>
-            )}
-            {selectedAppointment?.client_id && selectedAppointment?.payment_status === 'paid' && (
-              <Typography variant="caption" color="text.secondary" sx={{ mr: 2 }}>
-                [Debug: Rendez-vous payé - {selectedAppointment.payment_status}]
-              </Typography>
-            )}
-
             {/* Bouton Supprimer (uniquement en mode édition) */}
             {!isCreating && (
               <Button
