@@ -1623,7 +1623,7 @@ const AppointmentBookingPage: React.FC = () => {
                   },
                 }}
               >
-                {activeStep === steps.length - 1 ? 'Confirmer' : 'Suivant'}
+                {activeStep === steps.length - 1 ? 'Confirmer et payer' : 'Suivant'}
               </Button>
             </Box>
           </Paper>
