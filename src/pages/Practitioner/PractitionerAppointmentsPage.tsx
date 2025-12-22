@@ -494,24 +494,7 @@ const PractitionerAppointmentsPage = () => {
                   )}
                 </>
               ) : (
-                appointment.beneficiary_first_name && (
-                  <>
-                    <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
-                      <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                      <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                        Bénéficiaire : {appointment.beneficiary_first_name} {appointment.beneficiary_last_name}
-                      </Typography>
-                    </Box>
-                    {appointment.beneficiary_birth_date && (
-                      <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
-                        <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                        <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                          {format(parseISO(appointment.beneficiary_birth_date), 'dd/MM/yyyy', { locale: fr })}
-                        </Typography>
-                      </Box>
-                    )}
-                  </>
-                )
+                null
               )}
 
               {(() => {

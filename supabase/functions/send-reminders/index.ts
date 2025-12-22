@@ -166,22 +166,7 @@ serve(async (req) => {
           });
         }
 
-        // Envoyer au bénéficiaire si applicable
-        if (fullAppointment.beneficiary_email &&
-            fullAppointment.beneficiary_email !== fullAppointment.client?.email &&
-            fullAppointment.beneficiary_notifications_enabled &&
-            fullAppointment.beneficiary_first_name &&
-            fullAppointment.beneficiary_last_name) {
-          await supabase.functions.invoke('send-email', {
-            body: {
-              to: fullAppointment.beneficiary_email,
-              subject: `Rappel : Rendez-vous ${formatDate(startDate)} à ${formatTime(startDate)} - FL²M Services`,
-              html: createEmailHtml(fullAppointment.beneficiary_first_name, fullAppointment.beneficiary_last_name),
-              appointmentId: fullAppointment.id,
-              emailType: 'reminder'
-            }
-          });
-        }
+        // TODO: Implémenter l'envoi d'emails aux bénéficiaires via la nouvelle table appointment_beneficiaries
 
         // Marquer le rappel comme envoyé
         await supabase.rpc('mark_reminder_sent', { p_appointment_id: appointment.id });

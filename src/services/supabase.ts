@@ -88,14 +88,6 @@ export type Appointment = {
   payment_required?: boolean;
   payment_deadline?: string;
   notes?: string;
-  // Les champs beneficiary existaient déjà
-  beneficiary_first_name?: string;
-  beneficiary_last_name?: string;
-  beneficiary_birth_date?: string;
-  beneficiary_email?: string;
-  beneficiary_phone?: string;
-  beneficiary_notifications_enabled?: boolean;
-  beneficiary_relationship?: string;
   // Lien de visioconférence
   meeting_link?: string;
   // Prix personnalisé (si NULL, utilise service.price)
@@ -740,48 +732,6 @@ export const updateAppointmentStatus = async (appointmentId: string, status: str
   return result;
 };
 
-/**
- * Mettre à jour les informations du bénéficiaire d'un rendez-vous
- * (Admin ou Intervenant uniquement)
- */
-export const updateAppointmentBeneficiary = async (
-  appointmentId: string,
-  beneficiaryData: {
-    beneficiary_first_name?: string;
-    beneficiary_last_name?: string;
-    beneficiary_birth_date?: string;
-    custom_price?: number | null;
-  }
-) => {
-  // Étape 1 : Mettre à jour les données
-  const { error: updateError } = await supabase
-    .from('appointments')
-    .update(beneficiaryData)
-    .eq('id', appointmentId);
-
-  if (updateError) {
-    return { data: null, error: updateError };
-  }
-
-  // Étape 2 : Récupérer l'appointment complet avec toutes les relations
-  return supabase
-    .from('appointments')
-    .select(`
-      *,
-      client:profiles!client_id(id, first_name, last_name, email, phone),
-      practitioner:practitioners!practitioner_id(
-        id,
-        user_id,
-        bio,
-        priority,
-        profile:profiles!user_id(id, first_name, last_name, email, phone, pseudo)
-      ),
-      service:services(id, code, name, category, subcategory, price, duration, description)
-    `)
-    .eq('id', appointmentId)
-    .single();
-};
-
 export const updatePaymentStatus = (appointmentId: string, paymentStatus: string, paymentId?: string) => {
   const updateData: any = { payment_status: paymentStatus };
   if (paymentId) {
@@ -1049,22 +999,7 @@ const sendDocumentNotificationEmail = async (
       });
     }
 
-    // Envoyer l'email au bénéficiaire si différent du client et si notifications activées
-    if (appointment.beneficiary_email &&
-        appointment.beneficiary_email !== appointment.client?.email &&
-        appointment.beneficiary_notifications_enabled &&
-        appointment.beneficiary_first_name &&
-        appointment.beneficiary_last_name) {
-      await supabase.functions.invoke('send-email', {
-        body: {
-          to: appointment.beneficiary_email,
-          subject: `Nouveau document disponible - ${appointment.service?.name || 'FL²M Services'}`,
-          html: emailHtml(appointment.beneficiary_first_name, appointment.beneficiary_last_name),
-          appointmentId: appointment.id,
-          emailType: 'document'
-        }
-      });
-    }
+    // TODO: Implémenter l'envoi d'emails aux bénéficiaires via la nouvelle table appointment_beneficiaries
 
     logger.info('Email de notification de document envoyé avec succès');
   } catch (error) {
@@ -1348,22 +1283,7 @@ const sendCommentNotificationEmail = async (
       });
     }
 
-    // Envoyer l'email au bénéficiaire si différent du client et si notifications activées
-    if (appointment.beneficiary_email &&
-        appointment.beneficiary_email !== appointment.client?.email &&
-        appointment.beneficiary_notifications_enabled &&
-        appointment.beneficiary_first_name &&
-        appointment.beneficiary_last_name) {
-      await supabase.functions.invoke('send-email', {
-        body: {
-          to: appointment.beneficiary_email,
-          subject: `Nouveau commentaire sur votre rendez-vous - ${appointment.service?.name || 'FL²M Services'}`,
-          html: emailHtml(appointment.beneficiary_first_name, appointment.beneficiary_last_name),
-          appointmentId: appointment.id,
-          emailType: 'comment'
-        }
-      });
-    }
+    // TODO: Implémenter l'envoi d'emails aux bénéficiaires via la nouvelle table appointment_beneficiaries
 
     logger.info('Email de notification de commentaire envoyé avec succès');
   } catch (error) {

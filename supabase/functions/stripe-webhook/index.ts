@@ -146,9 +146,7 @@ function buildConfirmationEmailContent(appointment: any): string {
     });
   };
 
-  const beneficiaryName = appointment.beneficiary_first_name
-    ? `${appointment.beneficiary_first_name} ${appointment.beneficiary_last_name || ''}`.trim()
-    : appointment.client?.first_name
+  const beneficiaryName = appointment.client?.first_name
     ? `${appointment.client.first_name} ${appointment.client.last_name || ''}`.trim()
     : 'Cher client';
 
@@ -276,9 +274,7 @@ function buildPractitionerConfirmationEmailContent(appointment: any): string {
     });
   };
 
-  const beneficiaryName = appointment.beneficiary_first_name
-    ? `${appointment.beneficiary_first_name} ${appointment.beneficiary_last_name || ''}`.trim()
-    : appointment.client?.first_name
+  const beneficiaryName = appointment.client?.first_name
     ? `${appointment.client.first_name} ${appointment.client.last_name || ''}`.trim()
     : 'Client';
 
@@ -289,8 +285,8 @@ function buildPractitionerConfirmationEmailContent(appointment: any): string {
   const price = appointment.custom_price ?? appointment.service?.price;
   const priceDisplay = price !== 9999 ? `${price} €` : 'Sur devis';
 
-  const clientEmail = appointment.beneficiary_email || appointment.client?.email || 'Non renseigné';
-  const clientPhone = appointment.beneficiary_phone || appointment.client?.phone || 'Non renseigné';
+  const clientEmail = appointment.client?.email || 'Non renseigné';
+  const clientPhone = appointment.client?.phone || 'Non renseigné';
 
   return `
 <!DOCTYPE html>
@@ -632,7 +628,7 @@ async function handleAppointmentPaymentCompleted(
     // ========================================
     // ENVOI EMAIL AU CLIENT
     // ========================================
-    const recipientEmail = fullAppointment.beneficiary_email || fullAppointment.client?.email;
+    const recipientEmail = fullAppointment.client?.email;
 
     if (recipientEmail) {
       // Construire le contenu de l'email

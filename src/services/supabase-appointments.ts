@@ -1147,6 +1147,14 @@ export const cancelAppointment = async (
         logger.error('Erreur lors de l\'envoi des emails d\'annulation:', err)
       );
 
+      // Supprimer d'abord les bénéficiaires liés
+      const { error: deleteBeneficiariesError } = await supabase
+        .from('appointment_beneficiaries')
+        .delete()
+        .eq('appointment_id', appointmentId);
+
+      if (deleteBeneficiariesError) throw deleteBeneficiariesError;
+
       const { data, error } = await supabase
         .from('appointments')
         .update({
@@ -1155,11 +1163,6 @@ export const cancelAppointment = async (
           payment_status: 'unpaid',
           payment_id: null,
           notes: null,
-          beneficiary_first_name: null,
-          beneficiary_last_name: null,
-          beneficiary_birth_date: null,
-          beneficiary_email: null,
-          beneficiary_notifications_enabled: false,
           updated_at: new Date().toISOString(),
           updated_by: userId || null
         })

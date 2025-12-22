@@ -237,6 +237,14 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
         return;
       }
       
+      // Supprimer d'abord les bénéficiaires liés
+      const { error: deleteBeneficiariesError } = await supabase
+        .from('appointment_beneficiaries')
+        .delete()
+        .eq('appointment_id', appointment.id);
+
+      if (deleteBeneficiariesError) throw deleteBeneficiariesError;
+
       // Mettre à jour le rendez-vous dans la base de données
       const { error } = await supabase
         .from('appointments')
@@ -245,9 +253,6 @@ const AdminAppointmentsTable: React.FC<AdminAppointmentsTableProps> = ({
           status: 'pending',
           payment_status: 'unpaid',
           payment_id: null,
-          beneficiary_first_name: null,
-          beneficiary_last_name: null,
-          beneficiary_birth_date: null,
           notes: null,
           updated_at: new Date().toISOString()
         })

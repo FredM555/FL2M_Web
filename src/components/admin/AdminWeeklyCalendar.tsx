@@ -402,6 +402,14 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
       }
 
       // Mettre à jour le rendez-vous dans la base de données
+      // Supprimer d'abord les bénéficiaires liés
+      const { error: deleteBeneficiariesError } = await supabase
+        .from('appointment_beneficiaries')
+        .delete()
+        .eq('appointment_id', appointment.id);
+
+      if (deleteBeneficiariesError) throw deleteBeneficiariesError;
+
       const { error } = await supabase
         .from('appointments')
         .update({
@@ -409,9 +417,6 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
           status: 'pending',
           payment_status: 'unpaid',
           payment_id: null,
-          beneficiary_first_name: null,
-          beneficiary_last_name: null,
-          beneficiary_birth_date: null,
           notes: null,
           updated_at: new Date().toISOString()
         })
@@ -1169,12 +1174,7 @@ const AdminWeeklyCalendar: React.FC<AdminWeeklyCalendarProps> = ({
                                     <Box>
                                       <Typography variant="caption" fontWeight="bold" display="block">
                                         {appointment.client?.first_name} {appointment.client?.last_name}
-                                        </Typography>
-                                      {appointment.beneficiary_birth_date && (
-                                        <Typography variant="caption" display="block">
-                                          {format(parseISO(appointment.beneficiary_birth_date), 'dd/MM/yyyy')}
-                                        </Typography>
-                                      )}
+                                      </Typography>
                                     </Box>
                                   ) : (
                                     <Chip label="Disponible" color="default" size="small" sx={{ mt: 0.5 }} />
