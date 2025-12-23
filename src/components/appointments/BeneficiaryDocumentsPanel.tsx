@@ -18,7 +18,11 @@ import {
   Select,
   MenuItem,
   FormControl,
-  InputLabel
+  InputLabel,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions
 } from '@mui/material';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import DownloadIcon from '@mui/icons-material/Download';
@@ -26,6 +30,8 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import DescriptionIcon from '@mui/icons-material/Description';
+import PreviewIcon from '@mui/icons-material/Preview';
+import CloseIcon from '@mui/icons-material/Close';
 import {
   getBeneficiaryDocuments,
   createBeneficiaryDocument,
@@ -58,7 +64,10 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [documentType, setDocumentType] = useState<BeneficiaryDocumentType>('autre');
   const [description, setDescription] = useState('');
-  const [isVisibleToUser, setIsVisibleToUser] = useState(false); // Par défaut privé (false)
+  const [visibility, setVisibility] = useState<'public' | 'private'>('private'); // Par défaut privé
+  const [previewDocument, setPreviewDocument] = useState<BeneficiaryDocument | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [loadingPreview, setLoadingPreview] = useState(false);
 
   useEffect(() => {
     loadDocuments();
@@ -122,15 +131,13 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
       // Créer l'entrée dans la base de données
       const { data, error: createError } = await createBeneficiaryDocument({
         beneficiary_id: beneficiaryId,
-        appointment_id: appointmentId,
-        practitioner_id: practitionerId,
         document_type: documentType,
         file_name: selectedFile.name,
         file_path: filePath,
         file_size: selectedFile.size,
-        file_type: selectedFile.type,
+        file_type: 'pdf', // Force 'pdf' pour respecter la contrainte de la BDD
         description: description.trim() || undefined,
-        is_visible_to_user: isVisibleToUser
+        visibility: visibility
       });
 
       if (createError) throw createError;
@@ -146,7 +153,7 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
       setSelectedFile(null);
       setDocumentType('autre');
       setDescription('');
-      setIsVisibleToUser(false);
+      setVisibility('private');
 
       // Reset file input
       const fileInput = document.getElementById('file-upload') as HTMLInputElement;
@@ -159,6 +166,38 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
       setUploading(false);
       setUploadProgress(0);
     }
+  };
+
+  const handlePreview = async (document: BeneficiaryDocument) => {
+    setPreviewDocument(document);
+    setLoadingPreview(true);
+    setError(null);
+
+    try {
+      const { data, error } = await supabase.storage
+        .from('documents')
+        .download(document.file_path);
+
+      if (error) throw error;
+
+      // Créer une URL blob pour l'aperçu
+      const url = URL.createObjectURL(data);
+      setPreviewUrl(url);
+    } catch (err: any) {
+      logger.error('Erreur lors du chargement de l\'aperçu:', err);
+      setError(err.message || 'Erreur lors du chargement de l\'aperçu');
+      setPreviewDocument(null);
+    } finally {
+      setLoadingPreview(false);
+    }
+  };
+
+  const handleClosePreview = () => {
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setPreviewDocument(null);
+    setPreviewUrl(null);
   };
 
   const handleDownload = async (document: BeneficiaryDocument) => {
@@ -186,9 +225,10 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
 
   const handleToggleVisibility = async (document: BeneficiaryDocument) => {
     try {
+      const newVisibility = document.visibility === 'public' ? 'private' : 'public';
       const { data, error: updateError } = await updateBeneficiaryDocument(
         document.id,
-        { is_visible_to_user: !document.is_visible_to_user }
+        { visibility: newVisibility }
       );
 
       if (updateError) throw updateError;
@@ -324,18 +364,18 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
         <FormControlLabel
           control={
             <Switch
-              checked={isVisibleToUser}
-              onChange={(e) => setIsVisibleToUser(e.target.checked)}
+              checked={visibility === 'public'}
+              onChange={(e) => setVisibility(e.target.checked ? 'public' : 'private')}
               disabled={uploading}
             />
           }
           label={
             <Box>
               <Typography variant="body2">
-                {isVisibleToUser ? 'Visible par le client' : 'Privé (intervenants uniquement)'}
+                {visibility === 'public' ? 'Visible par le client' : 'Privé (intervenants uniquement)'}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                {isVisibleToUser
+                {visibility === 'public'
                   ? 'Le client pourra voir et télécharger ce document'
                   : 'Par défaut : visible uniquement par les intervenants'}
               </Typography>
@@ -406,10 +446,10 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
                     </Box>
                     <Box sx={{ display: 'flex', gap: 1 }}>
                       <Chip
-                        icon={document.is_visible_to_user ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                        label={document.is_visible_to_user ? 'Visible client' : 'Privé'}
+                        icon={document.visibility === 'public' ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                        label={document.visibility === 'public' ? 'Visible client' : 'Privé'}
                         size="small"
-                        color={document.is_visible_to_user ? 'success' : 'default'}
+                        color={document.visibility === 'public' ? 'success' : 'default'}
                       />
                     </Box>
                   </Box>
@@ -421,16 +461,24 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
                   )}
 
                   <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-                    Ajouté le {format(parseISO(document.created_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
+                    Ajouté le {format(parseISO(document.uploaded_at), 'dd MMMM yyyy à HH:mm', { locale: fr })}
                   </Typography>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end' }}>
                   <IconButton
                     size="small"
                     onClick={() => handleToggleVisibility(document)}
-                    title={document.is_visible_to_user ? 'Rendre privé' : 'Rendre visible au client'}
+                    title={document.visibility === 'public' ? 'Rendre privé' : 'Rendre visible au client'}
                   >
-                    {document.is_visible_to_user ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                    {document.visibility === 'public' ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    color="primary"
+                    onClick={() => handlePreview(document)}
+                    title="Aperçu"
+                  >
+                    <PreviewIcon fontSize="small" />
                   </IconButton>
                   <IconButton
                     size="small"
@@ -453,6 +501,69 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
           })}
         </Box>
       )}
+
+      {/* Modal d'aperçu du document */}
+      <Dialog
+        open={!!previewDocument}
+        onClose={handleClosePreview}
+        maxWidth="lg"
+        fullWidth
+        PaperProps={{
+          sx: {
+            height: '90vh',
+            maxHeight: '90vh'
+          }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box>
+            <Typography variant="h6" component="span">
+              Aperçu : {previewDocument?.file_name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              {getDocumentTypeLabel(previewDocument?.document_type || 'autre')}
+            </Typography>
+          </Box>
+          <IconButton onClick={handleClosePreview} size="small">
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
+          {loadingPreview ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <CircularProgress />
+            </Box>
+          ) : previewUrl ? (
+            <Box sx={{ flex: 1, overflow: 'hidden' }}>
+              <iframe
+                src={previewUrl}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  border: 'none'
+                }}
+                title={previewDocument?.file_name}
+              />
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+              <Typography color="text.secondary">Impossible de charger l'aperçu</Typography>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button
+            startIcon={<DownloadIcon />}
+            onClick={() => previewDocument && handleDownload(previewDocument)}
+            variant="outlined"
+          >
+            Télécharger
+          </Button>
+          <Button onClick={handleClosePreview} variant="contained">
+            Fermer
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

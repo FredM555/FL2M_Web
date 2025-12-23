@@ -67,7 +67,20 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
       try {
         const { data } = await getBeneficiaryDocumentsByType(beneficiary.id);
         if (data) {
-          setAvailableDocuments(data);
+          // Filtrer les documents selon le type d'utilisateur
+          // Les clients ne voient que les documents publics
+          if (userType === 'client') {
+            const filteredData: Record<string, BeneficiaryDocument> = {};
+            Object.entries(data).forEach(([key, document]) => {
+              if (document.visibility === 'public') {
+                filteredData[key] = document;
+              }
+            });
+            setAvailableDocuments(filteredData);
+          } else {
+            // Les intervenants et admins voient tous les documents
+            setAvailableDocuments(data);
+          }
         }
       } catch (err) {
         logger.error('Erreur lors du chargement des documents:', err);
@@ -77,7 +90,7 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
     };
 
     loadDocuments();
-  }, [beneficiary.id]);
+  }, [beneficiary.id, userType]);
 
   // Gérer le clic sur un badge de document
   const handleDocumentClick = async (document: BeneficiaryDocument, event: React.MouseEvent) => {
@@ -503,11 +516,11 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
                 Documents disponibles :
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {/* Arbre (public) */}
+                {/* Arbre */}
                 {availableDocuments.arbre && (
-                  <Tooltip title="Cliquer pour ouvrir l'Arbre">
+                  <Tooltip title={`Cliquer pour ouvrir l'Arbre${availableDocuments.arbre.visibility === 'public' ? '' : ' (privé)'}`}>
                     <Chip
-                      icon={<PublicIcon />}
+                      icon={availableDocuments.arbre.visibility === 'public' ? <PublicIcon /> : <LockIcon />}
                       label={DOCUMENT_TYPE_LABELS.arbre}
                       size="small"
                       onClick={(e) => handleDocumentClick(availableDocuments.arbre, e)}
@@ -524,11 +537,11 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
                   </Tooltip>
                 )}
 
-                {/* Arbre Détail (privé) */}
+                {/* Arbre Détail */}
                 {availableDocuments.arbre_detail && (
-                  <Tooltip title="Cliquer pour ouvrir l'Arbre Détail (privé)">
+                  <Tooltip title={`Cliquer pour ouvrir l'Arbre Détail${availableDocuments.arbre_detail.visibility === 'public' ? '' : ' (privé)'}`}>
                     <Chip
-                      icon={<LockIcon />}
+                      icon={availableDocuments.arbre_detail.visibility === 'public' ? <PublicIcon /> : <LockIcon />}
                       label={DOCUMENT_TYPE_LABELS.arbre_detail}
                       size="small"
                       onClick={(e) => handleDocumentClick(availableDocuments.arbre_detail, e)}
@@ -545,11 +558,11 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
                   </Tooltip>
                 )}
 
-                {/* Plan de vie (privé) */}
+                {/* Plan de vie */}
                 {availableDocuments.plan_de_vie && (
-                  <Tooltip title="Cliquer pour ouvrir le Plan de vie (privé)">
+                  <Tooltip title={`Cliquer pour ouvrir le Plan de vie${availableDocuments.plan_de_vie.visibility === 'public' ? '' : ' (privé)'}`}>
                     <Chip
-                      icon={<LockIcon />}
+                      icon={availableDocuments.plan_de_vie.visibility === 'public' ? <PublicIcon /> : <LockIcon />}
                       label={DOCUMENT_TYPE_LABELS.plan_de_vie}
                       size="small"
                       onClick={(e) => handleDocumentClick(availableDocuments.plan_de_vie, e)}

@@ -1186,23 +1186,8 @@ export const createBeneficiaryDocument = async (
   try {
     const { data, error } = await supabase
       .from('beneficiary_documents')
-      .insert({
-        ...documentData,
-        created_by: (await supabase.auth.getUser()).data.user?.id
-      })
-      .select(`
-        *,
-        practitioner:practitioners(
-          id,
-          display_name,
-          profile:profiles(first_name, last_name, pseudo)
-        ),
-        appointment:appointments(
-          id,
-          start_time,
-          service:services(name)
-        )
-      `)
+      .insert(documentData)
+      .select('*')
       .single();
 
     if (error) throw error;
@@ -1227,19 +1212,7 @@ export const updateBeneficiaryDocument = async (
       .from('beneficiary_documents')
       .update(documentData)
       .eq('id', documentId)
-      .select(`
-        *,
-        practitioner:practitioners(
-          id,
-          display_name,
-          profile:profiles(first_name, last_name, pseudo)
-        ),
-        appointment:appointments(
-          id,
-          start_time,
-          service:services(name)
-        )
-      `)
+      .select('*')
       .single();
 
     if (error) throw error;

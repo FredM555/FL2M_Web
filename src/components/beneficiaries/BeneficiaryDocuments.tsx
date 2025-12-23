@@ -126,12 +126,21 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
     try {
       const { data, error } = await getBeneficiaryDocuments(beneficiaryId);
       if (error) throw error;
-      setDocuments(data || []);
+
+      // Filtrer les documents selon le type d'utilisateur
+      let filteredDocuments = data || [];
+
+      // Si l'utilisateur n'est pas intervenant ou admin, ne montrer que les documents publics
+      if (profile && profile.user_type !== 'intervenant' && profile.user_type !== 'admin') {
+        filteredDocuments = filteredDocuments.filter(doc => doc.visibility === 'public');
+      }
+
+      setDocuments(filteredDocuments);
 
       // Charger les URLs blob pour chaque document
-      if (data && data.length > 0) {
+      if (filteredDocuments && filteredDocuments.length > 0) {
         const urls: Record<string, string> = {};
-        for (const doc of data) {
+        for (const doc of filteredDocuments) {
           try {
             logger.debug('[BeneficiaryDocuments] Chargement blob pour:', doc.file_name, 'path:', doc.file_path);
 
@@ -353,9 +362,18 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
         </Alert>
       )}
 
+      {/* Message informatif pour les clients */}
+      {profile && profile.user_type !== 'intervenant' && profile.user_type !== 'admin' && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Vous voyez uniquement les documents qui vous ont été partagés par votre intervenant.
+        </Alert>
+      )}
+
       {documents.length === 0 ? (
         <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
-          Aucun document disponible
+          {profile && profile.user_type !== 'intervenant' && profile.user_type !== 'admin'
+            ? 'Aucun document partagé pour le moment'
+            : 'Aucun document disponible'}
         </Typography>
       ) : (
         <List>

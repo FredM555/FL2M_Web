@@ -247,6 +247,13 @@ export type BeneficiaryNoteType = 'user' | 'practitioner' | 'shared';
 export type BeneficiaryDocumentType = 'arbre' | 'arbre_detail' | 'plan_de_vie' | 'analyse' | 'autre';
 
 /**
+ * Visibilité d'un document
+ * - public: Visible par le client
+ * - private: Visible uniquement par les intervenants
+ */
+export type BeneficiaryDocumentVisibility = 'public' | 'private';
+
+/**
  * Note sur un bénéficiaire
  */
 export interface BeneficiaryNote {
@@ -303,19 +310,17 @@ export interface UpdateBeneficiaryNoteData {
 export interface BeneficiaryDocument {
   id: string;
   beneficiary_id: string;
-  appointment_id?: string | null;
-  practitioner_id?: string | null;
   document_type: BeneficiaryDocumentType; // Type de document
   file_name: string;
   file_path: string;
   file_size?: number | null;
   file_type?: string | null;
   description?: string | null;
-  is_visible_to_user: boolean;
+  visibility: BeneficiaryDocumentVisibility; // 'public' ou 'private'
+  uploaded_at: string;
+  uploaded_by?: string | null;
   created_at: string;
   updated_at: string;
-  created_by?: string;
-  updated_by?: string;
 }
 
 /**
@@ -323,15 +328,13 @@ export interface BeneficiaryDocument {
  */
 export interface CreateBeneficiaryDocumentData {
   beneficiary_id: string;
-  appointment_id?: string;
-  practitioner_id: string;
   document_type: BeneficiaryDocumentType; // Type de document (requis)
   file_name: string;
   file_path: string;
   file_size?: number;
   file_type?: string;
   description?: string;
-  is_visible_to_user?: boolean;
+  visibility?: BeneficiaryDocumentVisibility; // 'public' ou 'private'
 }
 
 /**
@@ -339,7 +342,7 @@ export interface CreateBeneficiaryDocumentData {
  */
 export interface UpdateBeneficiaryDocumentData {
   description?: string;
-  is_visible_to_user?: boolean;
+  visibility?: BeneficiaryDocumentVisibility;
 }
 
 /**

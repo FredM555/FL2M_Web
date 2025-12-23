@@ -94,11 +94,17 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
       if (error) throw error;
 
       // Filtrer uniquement les documents arbre, arbre_detail et plan_de_vie
-      const quickAccessDocs = (data || []).filter(
+      let quickAccessDocs = (data || []).filter(
         doc => doc.document_type === 'arbre' ||
                doc.document_type === 'arbre_detail' ||
                doc.document_type === 'plan_de_vie'
       );
+
+      // Si l'utilisateur est un client, ne montrer que les documents publics
+      if (userType === 'client') {
+        quickAccessDocs = quickAccessDocs.filter(doc => doc.visibility === 'public');
+      }
+
       setDocuments(quickAccessDocs);
 
       // Charger les URLs blob pour chaque document
@@ -404,7 +410,8 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
           </Box>
 
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-            {arbreDoc && (
+            {/* Arbre - visible si public OU si l'utilisateur est intervenant/admin */}
+            {arbreDoc && (userType === 'client' ? arbreDoc.visibility === 'public' : true) && (
               <Button
                 variant="outlined"
                 startIcon={<DescriptionIcon />}
@@ -422,7 +429,12 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
               </Button>
             )}
 
-            {arbreDetailDoc && canViewSensitiveData && (
+            {/* Arbre Détail - visible uniquement pour intervenant/admin ET si public pour clients */}
+            {arbreDetailDoc && (
+              userType === 'client'
+                ? arbreDetailDoc.visibility === 'public'
+                : canViewSensitiveData
+            ) && (
               <Button
                 variant="outlined"
                 startIcon={<DescriptionIcon />}
@@ -440,7 +452,12 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
               </Button>
             )}
 
-            {planDeVieDoc && canViewSensitiveData && (
+            {/* Plan de vie - visible uniquement pour intervenant/admin ET si public pour clients */}
+            {planDeVieDoc && (
+              userType === 'client'
+                ? planDeVieDoc.visibility === 'public'
+                : canViewSensitiveData
+            ) && (
               <Button
                 variant="outlined"
                 startIcon={<DescriptionIcon />}

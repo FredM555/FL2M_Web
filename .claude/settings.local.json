@@ -79,7 +79,8 @@
       "Bash(xargs ls:*)",
       "Bash(find:*)",
       "Bash(npx supabase@latest db pull:*)",
-      "Bash(npx supabase@latest db push:*)"
+      "Bash(npx supabase@latest db push:*)",
+      "Bash(del \"C:\\\\FLM\\\\flm-services-new\\\\add_audit_columns.cjs\")"
     ],
     "deny": [],
     "ask": []
