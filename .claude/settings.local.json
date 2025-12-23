@@ -78,7 +78,8 @@
       "Bash(timeout 5 tail:*)",
       "Bash(xargs ls:*)",
       "Bash(find:*)",
-      "Bash(npx supabase@latest db pull:*)"
+      "Bash(npx supabase@latest db pull:*)",
+      "Bash(npx supabase@latest db push:*)"
     ],
     "deny": [],
     "ask": []

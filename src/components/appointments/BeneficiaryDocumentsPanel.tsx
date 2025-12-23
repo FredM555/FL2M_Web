@@ -98,12 +98,12 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
     try {
       // Générer un nom de fichier unique
       const fileExt = selectedFile.name.split('.').pop();
-      const fileName = `${beneficiaryId}/${Date.now()}.${fileExt}`;
-      const filePath = `beneficiary-documents/${fileName}`;
+      const fileName = `${Date.now()}.${fileExt}`;
+      const filePath = `beneficiaries/${beneficiaryId}/${fileName}`;
 
       // Upload vers Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
-        .from('beneficiary-documents')
+        .from('documents')
         .upload(filePath, selectedFile, {
           cacheControl: '3600',
           upsert: false
@@ -164,7 +164,7 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
   const handleDownload = async (document: BeneficiaryDocument) => {
     try {
       const { data, error } = await supabase.storage
-        .from('beneficiary-documents')
+        .from('documents')
         .download(document.file_path);
 
       if (error) throw error;
@@ -217,7 +217,7 @@ export const BeneficiaryDocumentsPanel: React.FC<BeneficiaryDocumentsPanelProps>
 
       // Supprimer du storage
       const { error: storageError } = await supabase.storage
-        .from('beneficiary-documents')
+        .from('documents')
         .remove([document.file_path]);
 
       if (storageError) {
