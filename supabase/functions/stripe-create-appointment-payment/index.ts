@@ -281,9 +281,11 @@ serve(async (req) => {
         }
       }
 
-      // Calculer les frais Stripe (1.4% + 0.25€ pour cartes européennes)
+      // Calculer les frais Stripe avec marge de sécurité
+      // Frais standards : 1,4% + 0,25€ (cartes EU) à 2,9% + 0,25€ (cartes non-EU)
+      // On utilise 2,5% + 0,25€ pour couvrir la majorité des cas
       // Ces frais sont à la charge de l'intervenant
-      stripeFees = (amount * 0.014) + 0.25;
+      stripeFees = (amount * 0.025) + 0.25;
 
       // Montant net de l'intervenant = Prix total - Commission plateforme - Frais Stripe
       practitionerAmount = amount - platformFee - stripeFees;
@@ -300,7 +302,8 @@ serve(async (req) => {
     console.log(`  - Cancel URL: ${cancelUrl}`);
 
     // Créer la session Stripe Checkout
-    // Si le intervenant a un compte Stripe Connect, utiliser application_fee_amount
+    // IMPORTANT: On NE crée PAS de transfert automatique vers l'intervenant
+    // Le transfert sera fait manuellement par process-payouts après 48h
     const sessionParams: any = {
       customer: stripeCustomerId,
       mode: 'payment',
@@ -338,13 +341,8 @@ serve(async (req) => {
       }
     };
 
-    // Si le intervenant a un compte Stripe Connect, ajouter le transfert
-    if (practitioner.stripe_account_id && practitionerAmount > 0) {
-      sessionParams.payment_intent_data.application_fee_amount = Math.round(platformFee * 100);
-      sessionParams.payment_intent_data.transfer_data = {
-        destination: practitioner.stripe_account_id
-      };
-    }
+    // NOTE: On ne configure PAS de transfert automatique (transfer_data)
+    // L'argent reste sur le compte plateforme et sera transféré après 48h via process-payouts
 
     const session = await stripe.checkout.sessions.create(sessionParams);
 
