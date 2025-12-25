@@ -80,7 +80,8 @@
       "Bash(find:*)",
       "Bash(npx supabase@latest db pull:*)",
       "Bash(npx supabase@latest db push:*)",
-      "Bash(del \"C:\\\\FLM\\\\flm-services-new\\\\add_audit_columns.cjs\")"
+      "Bash(del \"C:\\\\FLM\\\\flm-services-new\\\\add_audit_columns.cjs\")",
+      "Bash(set PGPASSWORD=j5kw3yo9zR3adYXK:*)"
     ],
     "deny": [],
     "ask": []
