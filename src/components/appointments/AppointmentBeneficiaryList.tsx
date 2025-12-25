@@ -26,6 +26,7 @@ import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 import { Appointment } from '../../services/supabase';
 import { getAppointmentBeneficiaries, removeBeneficiaryFromAppointment, replaceBeneficiaryInAppointment } from '../../services/beneficiaries';
 import type { AppointmentBeneficiary } from '../../types/beneficiary';
+import { NumerologyTriangleAvatar } from '../profile/NumerologyTriangleAvatar';
 import { useAuth } from '../../context/AuthContext';
 import { logger } from '../../utils/logger';
 import { format, parseISO, differenceInHours } from 'date-fns';
@@ -302,7 +303,33 @@ export const AppointmentBeneficiaryList: React.FC<AppointmentBeneficiaryListProp
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, width: '100%' }}>
-                    <PersonIcon sx={{ color: '#345995' }} />
+                    {/* Avatar de numérologie si disponible */}
+                    {(beneficiary.tronc || beneficiary.racine_1 || beneficiary.racine_2) ? (
+                      <NumerologyTriangleAvatar
+                        tronc={beneficiary.tronc ?? undefined}
+                        racine1={beneficiary.racine_1 ?? undefined}
+                        racine2={beneficiary.racine_2 ?? undefined}
+                        dynamique_de_vie={beneficiary.dynamique_de_vie ?? undefined}
+                        size={48}
+                      />
+                    ) : (
+                      <Box
+                        sx={{
+                          width: 48,
+                          height: 48,
+                          borderRadius: '50%',
+                          backgroundColor: '#345995',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: 'white',
+                          fontWeight: 600,
+                          fontSize: '1rem',
+                        }}
+                      >
+                        {beneficiary.first_name.charAt(0)}{beneficiary.last_name.charAt(0)}
+                      </Box>
+                    )}
                     <Box sx={{ flex: 1 }}>
                       <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                         {displayName}

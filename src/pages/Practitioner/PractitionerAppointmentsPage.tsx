@@ -42,6 +42,7 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import SacredGeometryBackground from '../../components/SacredGeometryBackground';
 import { AppointmentDetailsDialog } from '../../components/appointments/AppointmentDetailsDialog';
 import { AppointmentValidationCard } from '../../components/appointments/AppointmentValidationCard';
+import { NumerologyTriangleAvatar } from '../../components/profile/NumerologyTriangleAvatar';
 import { logger } from '../../utils/logger';
 
 // Interface pour la valeur de l'onglet
@@ -468,13 +469,13 @@ const PractitionerAppointmentsPage = () => {
                 </Box>
               )}
 
-              {/* Bénéficiaires */}
+              {/* Bénéficiaires avec avatars de numérologie */}
               {appointmentBeneficiaries[appointment.id] && appointmentBeneficiaries[appointment.id].length > 0 ? (
-                <>
-                  <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
+                <Box>
+                  <Box display="flex" alignItems="center" mb={1}>
                     <PersonIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                    <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                      Bénéficiaire(s) : {appointmentBeneficiaries[appointment.id].map(ab => ab.beneficiary ? `${ab.beneficiary.first_name} ${ab.beneficiary.last_name}` : 'Bénéficiaire').join(', ')}
+                    <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' }, fontWeight: 600 }}>
+                      Bénéficiaire(s) :
                     </Typography>
                     {appointmentBeneficiaries[appointment.id].length > 1 && (
                       <Chip
@@ -484,15 +485,59 @@ const PractitionerAppointmentsPage = () => {
                       />
                     )}
                   </Box>
-                  {appointmentBeneficiaries[appointment.id][0]?.beneficiary?.birth_date && (
-                    <Box display="flex" alignItems="center" mb={{ xs: 1.5, sm: 1 }}>
-                      <CakeIcon fontSize="small" sx={{ mr: 1, color: '#FFA500', fontSize: { xs: '1.1rem', sm: '1.25rem' } }} />
-                      <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' } }}>
-                        {format(parseISO(appointmentBeneficiaries[appointment.id][0]?.beneficiary?.birth_date || ''), 'dd/MM/yyyy', { locale: fr })}
-                      </Typography>
-                    </Box>
-                  )}
-                </>
+
+                  {/* Affichage des avatars et noms */}
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, ml: 4 }}>
+                    {appointmentBeneficiaries[appointment.id].map((ab, index) => (
+                      ab.beneficiary && (
+                        <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          {/* Avatar de numérologie */}
+                          {(ab.beneficiary.tronc || ab.beneficiary.racine_1 || ab.beneficiary.racine_2) ? (
+                            <NumerologyTriangleAvatar
+                              tronc={ab.beneficiary.tronc ?? undefined}
+                              racine1={ab.beneficiary.racine_1 ?? undefined}
+                              racine2={ab.beneficiary.racine_2 ?? undefined}
+                              dynamique_de_vie={ab.beneficiary.dynamique_de_vie ?? undefined}
+                              size={40}
+                            />
+                          ) : (
+                            <Box
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                borderRadius: '50%',
+                                backgroundColor: '#345995',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'white',
+                                fontWeight: 600,
+                                fontSize: '0.9rem',
+                              }}
+                            >
+                              {ab.beneficiary.first_name.charAt(0)}{ab.beneficiary.last_name.charAt(0)}
+                            </Box>
+                          )}
+
+                          {/* Nom et date de naissance */}
+                          <Box>
+                            <Typography variant="body2" sx={{ fontSize: { xs: '0.85rem', sm: '0.875rem' }, fontWeight: 500 }}>
+                              {ab.beneficiary.first_name} {ab.beneficiary.last_name}
+                            </Typography>
+                            {ab.beneficiary.birth_date && (
+                              <Box display="flex" alignItems="center" gap={0.5}>
+                                <CakeIcon fontSize="small" sx={{ color: '#FFA500', fontSize: '0.9rem' }} />
+                                <Typography variant="caption" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                                  {format(parseISO(ab.beneficiary.birth_date), 'dd/MM/yyyy', { locale: fr })}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+                        </Box>
+                      )
+                    ))}
+                  </Box>
+                </Box>
               ) : (
                 null
               )}

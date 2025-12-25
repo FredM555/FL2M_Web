@@ -21,6 +21,7 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import { getUserBeneficiaries } from '../../services/beneficiaries';
 import type { BeneficiaryWithAccess, AppointmentBeneficiary } from '../../types/beneficiary';
+import { NumerologyTriangleAvatar } from '../profile/NumerologyTriangleAvatar';
 import { logger } from '../../utils/logger';
 import { format, parseISO } from 'date-fns';
 
@@ -143,9 +144,20 @@ export const ChangeBeneficiaryDialog: React.FC<ChangeBeneficiaryDialogProps> = (
                       sx={{ mr: 1 }}
                     />
                     <ListItemAvatar>
-                      <Avatar sx={{ bgcolor: '#345995' }}>
-                        <PersonIcon />
-                      </Avatar>
+                      {/* Avatar avec numérologie si disponible */}
+                      {(beneficiary.tronc || beneficiary.racine_1 || beneficiary.racine_2) ? (
+                        <NumerologyTriangleAvatar
+                          tronc={beneficiary.tronc ?? undefined}
+                          racine1={beneficiary.racine_1 ?? undefined}
+                          racine2={beneficiary.racine_2 ?? undefined}
+                          dynamique_de_vie={beneficiary.dynamique_de_vie ?? undefined}
+                          size={48}
+                        />
+                      ) : (
+                        <Avatar sx={{ bgcolor: '#345995' }}>
+                          <PersonIcon />
+                        </Avatar>
+                      )}
                     </ListItemAvatar>
                     <ListItemText
                       primary={displayName}
