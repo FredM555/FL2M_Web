@@ -72,6 +72,7 @@ import AdminDashboardPage from './pages/Admin/DashboardPage';
 import AdminUsersPage from './pages/Admin/UsersPage';
 import AdminPractitionersPage from './pages/Admin/PractitionersPage';
 import AdminServicesPage from './pages/Admin/ServicesPage';
+import AdminDailyDrawsPage from './pages/Admin/DailyDrawsPage';
 import AdminAppointmentsPage from './pages/Admin/AppointmentsPage';
 import AdminTransactionsPage from './pages/Admin/AdminTransactionsPage';
 
@@ -349,6 +350,7 @@ function App() {
             <Route path="intervenants" element={<AdminPractitionersPage />} />
             <Route path="demandes-intervenant" element={<AdminPractitionerRequestsPage />} />
             <Route path="prestations" element={<AdminServicesPage />} />
+            <Route path="tirages-quotidiens" element={<AdminDailyDrawsPage />} />
             <Route path="rendez-vous" element={<AdminAppointmentsPage />} />
             <Route path="transactions" element={<AdminTransactionsPage />} />
             <Route path="messages" element={<AdminContactMessagesPage />} />

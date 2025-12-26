@@ -212,6 +212,18 @@ export type AppointmentComment = {
   author?: Profile;
 };
 
+// Type pour les tirages quotidiens (numérologie)
+export type DailyDraw = {
+  id: string;
+  type: 'quotidien' | 'climat' | 'annuel' | 'mensuel';
+  nombre: number; // Nombre numérologique (1-9, 11, 22)
+  titre: string;
+  message: string;
+  source: 'manual' | 'ai_generated'; // Source : saisie manuelle ou généré par IA
+  created_at: string;
+  updated_at: string;
+};
+
 // URL et clé d'API Supabase
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
@@ -320,6 +332,55 @@ export const deleteService = (serviceId: string) => {
     .from('services')
     .delete()
     .eq('id', serviceId);
+};
+
+// Tirages quotidiens
+export const getDailyDraws = () => {
+  return supabase
+    .from('daily_draws')
+    .select('*')
+    .order('type', { ascending: true })
+    .order('nombre', { ascending: true });
+};
+
+export const getDailyDrawById = (drawId: string) => {
+  return supabase
+    .from('daily_draws')
+    .select('*')
+    .eq('id', drawId)
+    .single();
+};
+
+export const getDailyDrawByTypeAndNumber = (type: string, nombre: number) => {
+  return supabase
+    .from('daily_draws')
+    .select('*')
+    .eq('type', type)
+    .eq('nombre', nombre);
+};
+
+export const createDailyDraw = (drawData: Partial<DailyDraw>) => {
+  return supabase
+    .from('daily_draws')
+    .insert(drawData)
+    .select()
+    .single();
+};
+
+export const updateDailyDraw = (drawId: string, drawData: Partial<DailyDraw>) => {
+  return supabase
+    .from('daily_draws')
+    .update(drawData)
+    .eq('id', drawId)
+    .select()
+    .single();
+};
+
+export const deleteDailyDraw = (drawId: string) => {
+  return supabase
+    .from('daily_draws')
+    .delete()
+    .eq('id', drawId);
 };
 
 // Intervenants

@@ -81,7 +81,8 @@
       "Bash(npx supabase@latest db pull:*)",
       "Bash(npx supabase@latest db push:*)",
       "Bash(del \"C:\\\\FLM\\\\flm-services-new\\\\add_audit_columns.cjs\")",
-      "Bash(set PGPASSWORD=j5kw3yo9zR3adYXK:*)"
+      "Bash(set PGPASSWORD=j5kw3yo9zR3adYXK:*)",
+      "Bash(del apply_daily_draws_migration.cjs)"
     ],
     "deny": [],
     "ask": []

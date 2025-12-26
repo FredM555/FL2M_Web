@@ -39,6 +39,7 @@ import MessageIcon from '@mui/icons-material/Message';
 import WorkIcon from '@mui/icons-material/Work';
 import HistoryIcon from '@mui/icons-material/History';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../services/supabase';
 import { logger } from '../../utils/logger';
@@ -155,6 +156,11 @@ const AdminLayout: React.FC = () => {
       text: 'Services',
       path: '/admin/prestations',
       icon: <DesignServicesIcon />
+    },
+    {
+      text: 'Tirages quotidiens',
+      path: '/admin/tirages-quotidiens',
+      icon: <AutoAwesomeIcon />
     },
     {
       text: 'Rendez-vous',
