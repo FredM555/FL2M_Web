@@ -9,6 +9,7 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
+import DailyDrawHomeSection from '../components/DailyDrawHomeSection';
 
 const HomePage = () => {
   return (
@@ -518,6 +519,7 @@ const HomePage = () => {
         </Box>
         </Container>
       </Box>
+      <DailyDrawHomeSection />
     </Box>
   );
 }; 

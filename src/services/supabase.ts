@@ -383,6 +383,32 @@ export const deleteDailyDraw = (drawId: string) => {
     .eq('id', drawId);
 };
 
+// Bénéficiaires
+export const getBeneficiaries = (userId: string) => {
+  return supabase
+    .from('beneficiary_access')
+    .select(`
+      beneficiary_id,
+      relationship,
+      beneficiary:beneficiaries(
+        id,
+        first_name,
+        last_name,
+        birth_date,
+        racine_1,
+        racine_2,
+        tronc,
+        dynamique_de_vie,
+        ecorce,
+        branche,
+        feuille,
+        fruit
+      )
+    `)
+    .eq('user_id', userId)
+    .order('beneficiary(first_name)', { ascending: true });
+};
+
 // Intervenants
 export const getPractitioners = (onlyActive: boolean = false) => {
   let query = supabase

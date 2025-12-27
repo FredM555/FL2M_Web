@@ -66,6 +66,7 @@ import PractitionerMessagesPage from './pages/Practitioner/PractitionerMessagesP
 import { BeneficiariesPage } from './pages/BeneficiariesPage';
 import PractitionerStripeConnectPage from './pages/PractitionerStripeConnectPage';
 import PractitionerStripeConnectSuccessPage from './pages/PractitionerStripeConnectSuccessPage';
+import MessageDuJourPage from './pages/MessageDuJourPage';
 
 // Pages admin
 import AdminDashboardPage from './pages/Admin/DashboardPage';
@@ -153,6 +154,15 @@ function App() {
       setAppReady(true);
     }
   }, [loading]);
+
+  // Protection contre aria-hidden bloqué sur #root (bug MUI Modal)
+  useEffect(() => {
+    const rootElement = document.getElementById('root');
+    if (rootElement && rootElement.getAttribute('aria-hidden') === 'true') {
+      logger.warn('[APP] Suppression de aria-hidden=true sur #root (bug MUI Modal)');
+      rootElement.removeAttribute('aria-hidden');
+    }
+  }, [location.pathname]); // Vérifie à chaque changement de route
   
   // Afficher un loader pendant le chargement de l'authentification
   if (loading) {
@@ -238,6 +248,7 @@ function App() {
             <Route path="appointment-success" element={<AppointmentPaymentSuccessPage />} />
             <Route path="contact" element={<ContactPage />} />
             <Route path="apropos" element={<AProposPage />} />
+            <Route path="message-du-jour" element={<MessageDuJourPage />} />
             <Route path="consultants" element={<ConsultantsPage />} />
             <Route path="consultants/:id" element={<ConsultantDetailPage />} />
 

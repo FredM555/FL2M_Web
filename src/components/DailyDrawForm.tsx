@@ -1,0 +1,180 @@
+// Composant formulaire pour le tirage du jour (visiteurs)
+import React, { useState } from 'react';
+import {
+  Box,
+  TextField,
+  Button,
+  Typography,
+  Paper,
+  Grid,
+  CircularProgress,
+  Alert
+} from '@mui/material';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
+import { UseDailyDrawVisitorParams } from '../hooks/useDailyDraw';
+
+interface DailyDrawFormProps {
+  getDailyDraw: (params: UseDailyDrawVisitorParams) => Promise<any>;
+  loading: boolean;
+  error: string | null;
+}
+
+const DailyDrawForm: React.FC<DailyDrawFormProps> = ({ getDailyDraw, loading, error }) => {
+  const [firstName, setFirstName] = useState('');
+  const [birthDay, setBirthDay] = useState('');
+  const [birthMonth, setBirthMonth] = useState('');
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!firstName.trim()) {
+      errors.firstName = 'Le prénom est requis';
+    }
+
+    const day = parseInt(birthDay);
+    if (!birthDay || isNaN(day) || day < 1 || day > 31) {
+      errors.birthDay = 'Jour invalide (1-31)';
+    }
+
+    const month = parseInt(birthMonth);
+    if (!birthMonth || isNaN(month) || month < 1 || month > 12) {
+      errors.birthMonth = 'Mois invalide (1-12)';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!validateForm()) return;
+
+    await getDailyDraw({
+      firstName: firstName.trim(),
+      birthDay: parseInt(birthDay),
+      birthMonth: parseInt(birthMonth)
+    });
+
+    // Le résultat sera automatiquement affiché par DailyDrawContainer
+    // quand drawData sera mis à jour dans le hook
+  };
+
+  return (
+    <Paper
+      elevation={3}
+      sx={{
+        p: 4,
+        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        color: 'white',
+        borderRadius: 3
+      }}
+    >
+      <Box sx={{ textAlign: 'center', mb: 3 }}>
+        <AutoAwesomeIcon sx={{ fontSize: 48, mb: 2 }} />
+        <Typography variant="h4" component="h2" gutterBottom fontWeight="bold">
+          Votre message numérologique du jour
+        </Typography>
+        <Typography variant="body1" sx={{ opacity: 0.9 }}>
+          Découvrez votre message personnalisé basé sur votre date de naissance
+        </Typography>
+      </Box>
+
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          borderRadius: 2,
+          p: 3
+        }}
+      >
+        {error && (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {error}
+          </Alert>
+        )}
+
+        <Grid container spacing={2}>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Prénom"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              error={!!formErrors.firstName}
+              helperText={formErrors.firstName}
+              disabled={loading}
+              placeholder="Marie"
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              label="Jour de naissance"
+              type="number"
+              value={birthDay}
+              onChange={(e) => setBirthDay(e.target.value)}
+              error={!!formErrors.birthDay}
+              helperText={formErrors.birthDay}
+              disabled={loading}
+              placeholder="15"
+              inputProps={{ min: 1, max: 31 }}
+            />
+          </Grid>
+
+          <Grid item xs={6}>
+            <TextField
+              fullWidth
+              label="Mois de naissance"
+              type="number"
+              value={birthMonth}
+              onChange={(e) => setBirthMonth(e.target.value)}
+              error={!!formErrors.birthMonth}
+              helperText={formErrors.birthMonth}
+              disabled={loading}
+              placeholder="3"
+              inputProps={{ min: 1, max: 12 }}
+            />
+          </Grid>
+
+          <Grid item xs={12}>
+            <Button
+              fullWidth
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={loading}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: 'white',
+                py: 1.5,
+                fontSize: '1.1rem',
+                fontWeight: 'bold',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5568d3 0%, #65408b 100%)',
+                }
+              }}
+            >
+              {loading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                'Découvrir mon message'
+              )}
+            </Button>
+          </Grid>
+        </Grid>
+
+        <Box sx={{ mt: 2, textAlign: 'center' }}>
+          <Typography variant="caption" color="text.secondary">
+            Gratuit • 1 message par jour • Sans inscription
+          </Typography>
+        </Box>
+      </Box>
+    </Paper>
+  );
+};
+
+export default DailyDrawForm;
