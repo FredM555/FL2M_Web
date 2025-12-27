@@ -1788,6 +1788,25 @@ const MainLayout: React.FC = () => {
                 >
                   À propos
                 </Typography>
+                <Typography
+                  component="a"
+                  href={`/flm-services-v${import.meta.env.VITE_APP_VERSION || '1.0.1'}.apk`}
+                  download
+                  sx={{
+                    color: 'rgba(255, 255, 255, 0.8)',
+                    textDecoration: 'none',
+                    fontSize: '0.875rem',
+                    transition: 'color 0.3s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    '&:hover': {
+                      color: '#FFD700',
+                    },
+                  }}
+                >
+                  📱 Application Android v{import.meta.env.VITE_APP_VERSION || '1.0.1'}
+                </Typography>
               </Box>
             </Grid>
 
