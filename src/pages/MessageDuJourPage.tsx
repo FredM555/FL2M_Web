@@ -24,7 +24,8 @@ interface Beneficiary {
 
 const MessageDuJourPage: React.FC = () => {
   const { user } = useAuth();
-  const [tabValue, setTabValue] = useState(0);
+  // Si l'utilisateur est connecté, on se positionne sur l'onglet bénéficiaire (1), sinon sur visiteur (0)
+  const [tabValue, setTabValue] = useState(user ? 1 : 0);
   const [selectedBeneficiary, setSelectedBeneficiary] = useState<Beneficiary | null>(null);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {

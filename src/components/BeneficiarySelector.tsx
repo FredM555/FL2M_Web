@@ -13,11 +13,13 @@ import {
 import { getBeneficiaries } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { logger } from '../utils/logger';
+import { NumerologyTriangleAvatar } from './profile/NumerologyTriangleAvatar';
 
 interface Beneficiary {
   id: string;
   first_name: string;
   last_name: string;
+  relationship?: string;
   racine1?: number;
   racine2?: number;
   tronc?: number;
@@ -94,6 +96,7 @@ const BeneficiarySelector: React.FC<BeneficiarySelectorProps> = ({ onBeneficiary
                 id: beneficiary?.id,
                 first_name: beneficiary?.first_name,
                 last_name: beneficiary?.last_name,
+                relationship: row.relationship,
                 racine1: beneficiary?.racine_1,
                 racine2: beneficiary?.racine_2,
                 tronc: beneficiary?.tronc,
@@ -108,6 +111,17 @@ const BeneficiarySelector: React.FC<BeneficiarySelectorProps> = ({ onBeneficiary
             });
 
           setBeneficiaries(formattedBeneficiaries);
+
+          // Sélectionner automatiquement le bénéficiaire avec relationship='self' en priorité
+          if (formattedBeneficiaries.length > 0) {
+            // Chercher d'abord le bénéficiaire avec relationship='self'
+            const selfBeneficiary = formattedBeneficiaries.find(b => b.relationship === 'self');
+            // Sinon, prendre le premier de la liste
+            const selectedBeneficiary = selfBeneficiary || formattedBeneficiaries[0];
+
+            setSelectedId(selectedBeneficiary.id);
+            onBeneficiarySelect(selectedBeneficiary);
+          }
         }
       } catch (err) {
         logger.error('Erreur lors de la récupération des bénéficiaires:', err);
@@ -168,13 +182,40 @@ const BeneficiarySelector: React.FC<BeneficiarySelectorProps> = ({ onBeneficiary
           value={selectedId}
           label="Sélectionnez un bénéficiaire"
           onChange={handleChange}
+          renderValue={(value) => {
+            if (!value) return <em>-- Choisir un bénéficiaire --</em>;
+            const beneficiary = beneficiaries.find(b => b.id === value);
+            if (!beneficiary) return '';
+            return (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <NumerologyTriangleAvatar
+                  racine1={beneficiary.racine1}
+                  racine2={beneficiary.racine2}
+                  tronc={beneficiary.tronc}
+                  dynamique_de_vie={beneficiary.dynamique_de_vie}
+                  size={28}
+                  fontSizeScale={1.5}
+                />
+                <span>{beneficiary.first_name} {beneficiary.last_name}</span>
+              </Box>
+            );
+          }}
         >
           <MenuItem value="">
             <em>-- Choisir un bénéficiaire --</em>
           </MenuItem>
           {beneficiaries.map((beneficiary) => (
             <MenuItem key={beneficiary.id} value={beneficiary.id}>
-              {beneficiary.first_name} {beneficiary.last_name}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                <NumerologyTriangleAvatar
+                  racine1={beneficiary.racine1}
+                  racine2={beneficiary.racine2}
+                  tronc={beneficiary.tronc}
+                  dynamique_de_vie={beneficiary.dynamique_de_vie}
+                  size={32}
+                />
+                <span>{beneficiary.first_name} {beneficiary.last_name}</span>
+              </Box>
             </MenuItem>
           ))}
         </Select>

@@ -9,6 +9,7 @@ interface NumerologyTriangleAvatarProps {
   tronc?: number;
   dynamique_de_vie?: number;
   size?: number;
+  fontSizeScale?: number; // Multiplicateur pour augmenter la taille des nombres (défaut: 1)
 }
 
 export const NumerologyTriangleAvatar: React.FC<NumerologyTriangleAvatarProps> = ({
@@ -16,9 +17,10 @@ export const NumerologyTriangleAvatar: React.FC<NumerologyTriangleAvatarProps> =
   racine2,
   tronc,
   dynamique_de_vie,
-  size = 120
+  size = 120,
+  fontSizeScale = 1
 }) => {
-  logger.debug('[NumerologyTriangleAvatar] Props reçues:', { racine1, racine2, tronc, dynamique_de_vie, size });
+  logger.debug('[NumerologyTriangleAvatar] Props reçues:', { racine1, racine2, tronc, dynamique_de_vie, size, fontSizeScale });
 
   // Si aucune donnée de numérologie n'est disponible, ne rien afficher
   if (!racine1 && !racine2 && !tronc) {
@@ -27,10 +29,10 @@ export const NumerologyTriangleAvatar: React.FC<NumerologyTriangleAvatarProps> =
   }
 
   // Taille de la police pour les racines
-  const fontSize = size * 0.40032; // 0.3336 * 1.2 = 0.40032 (augmentation de 20% supplémentaire)
+  const fontSize = size * 0.40032 * fontSizeScale; // 0.3336 * 1.2 = 0.40032 (augmentation de 20% supplémentaire)
   // Taille du tronc : 5% plus grand que les racines
   const troncFontSize = fontSize * 1.05;
-  const backgroundFontSize = size * 0.8; // Très grand pour la dynamique de vie en fond
+  const backgroundFontSize = size * 0.8 * fontSizeScale; // Très grand pour la dynamique de vie en fond
 
   logger.debug('[NumerologyTriangleAvatar] Rendu:', { tronc, racine1, racine2, dynamique_de_vie });
 
