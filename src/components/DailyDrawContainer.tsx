@@ -15,7 +15,7 @@ const DailyDrawContainer: React.FC = () => {
   };
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', py: 4, px: 2 }}>
+    <Box sx={{ maxWidth: 800, mx: 'auto', py: { xs: 0, sm: 4 }, px: { xs: 0, sm: 2 } }}>
       {!drawData ? (
         <DailyDrawForm
           getDailyDraw={getDailyDraw}

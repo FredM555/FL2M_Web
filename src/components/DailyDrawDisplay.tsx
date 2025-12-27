@@ -55,29 +55,29 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
   };
 
   return (
-    <Box>
+    <Box sx={{ mt: { xs: -2, sm: 0 } }}>
       {/* En-tête */}
       <Paper
         elevation={3}
         sx={{
-          p: 3,
-          mb: 3,
+          p: { xs: 1.5, sm: 3 },
+          mb: { xs: 2, sm: 3 },
           background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           color: 'white',
-          borderRadius: 3,
+          borderRadius: { xs: 0, sm: 3 },
           textAlign: 'center'
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-          <AutoAwesomeIcon sx={{ fontSize: 32, mr: 1 }} />
-          <Typography variant="h4" component="h2" fontWeight="bold">
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: { xs: 1, sm: 2 }, flexWrap: 'wrap', gap: { xs: 0.5, sm: 1 } }}>
+          <AutoAwesomeIcon sx={{ fontSize: { xs: 24, sm: 32 }, mr: { xs: 0.5, sm: 1 } }} />
+          <Typography variant="h4" component="h2" fontWeight="bold" sx={{ fontSize: { xs: '1.25rem', sm: '2rem' } }}>
             Bonjour {data.firstName} 🌟
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 2 }}>
-          <CalendarTodayIcon />
-          <Typography variant="body1">
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: { xs: 0.5, sm: 1 }, mb: { xs: 1.5, sm: 2 }, flexWrap: 'wrap' }}>
+          <CalendarTodayIcon sx={{ fontSize: { xs: 16, sm: 24 } }} />
+          <Typography variant="body1" sx={{ fontSize: { xs: '0.75rem', sm: '1rem' } }}>
             {new Date().toLocaleDateString('fr-FR', {
               weekday: 'long',
               year: 'numeric',
@@ -87,27 +87,27 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
           </Typography>
         </Box>
 
-        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, mt: 2, flexWrap: 'wrap' }}>
+        <Box sx={{ display: 'flex', justifyContent: 'center', gap: { xs: 1, sm: 2 }, mt: { xs: 1, sm: 2 }, flexWrap: 'wrap' }}>
           <Box sx={{
             backgroundColor: 'rgba(255, 255, 255, 0.25)',
             borderRadius: 2,
-            px: 2,
-            py: 1,
+            px: { xs: 1, sm: 2 },
+            py: { xs: 0.5, sm: 1 },
             display: 'flex',
             alignItems: 'center',
-            gap: 1
+            gap: { xs: 0.5, sm: 1 }
           }}>
-            <Typography sx={{ color: 'white', fontSize: '0.9rem' }}>
+            <Typography sx={{ color: 'white', fontSize: { xs: '0.7rem', sm: '0.9rem' } }}>
               {data.label1 || 'Objectif de vie'}
             </Typography>
             <Typography sx={{
               color: 'white',
               fontWeight: 'bold',
-              fontSize: '1.5rem',
+              fontSize: { xs: '1.1rem', sm: '1.5rem' },
               backgroundColor: 'rgba(255, 255, 255, 0.3)',
               borderRadius: '50%',
-              width: 40,
-              height: 40,
+              width: { xs: 32, sm: 40 },
+              height: { xs: 32, sm: 40 },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -119,23 +119,23 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
           <Box sx={{
             backgroundColor: 'rgba(255, 255, 255, 0.25)',
             borderRadius: 2,
-            px: 2,
-            py: 1,
+            px: { xs: 1, sm: 2 },
+            py: { xs: 0.5, sm: 1 },
             display: 'flex',
             alignItems: 'center',
-            gap: 1
+            gap: { xs: 0.5, sm: 1 }
           }}>
-            <Typography sx={{ color: 'white', fontSize: '0.9rem' }}>
+            <Typography sx={{ color: 'white', fontSize: { xs: '0.7rem', sm: '0.9rem' } }}>
               {data.label2 || 'Jour personnel'}
             </Typography>
             <Typography sx={{
               color: 'white',
               fontWeight: 'bold',
-              fontSize: '1.5rem',
+              fontSize: { xs: '1.1rem', sm: '1.5rem' },
               backgroundColor: 'rgba(255, 255, 255, 0.3)',
               borderRadius: '50%',
-              width: 40,
-              height: 40,
+              width: { xs: 32, sm: 40 },
+              height: { xs: 32, sm: 40 },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center'
@@ -148,23 +148,23 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
             <Box sx={{
               backgroundColor: 'rgba(255, 255, 255, 0.25)',
               borderRadius: 2,
-              px: 2,
-              py: 1,
+              px: { xs: 1, sm: 2 },
+              py: { xs: 0.5, sm: 1 },
               display: 'flex',
               alignItems: 'center',
-              gap: 1
+              gap: { xs: 0.5, sm: 1 }
             }}>
-              <Typography sx={{ color: 'white', fontSize: '0.9rem' }}>
+              <Typography sx={{ color: 'white', fontSize: { xs: '0.7rem', sm: '0.9rem' } }}>
                 {data.label3 || 'Message 3'}
               </Typography>
               <Typography sx={{
                 color: 'white',
                 fontWeight: 'bold',
-                fontSize: '1.5rem',
+                fontSize: { xs: '1.1rem', sm: '1.5rem' },
                 backgroundColor: 'rgba(255, 255, 255, 0.3)',
                 borderRadius: '50%',
-                width: 40,
-                height: 40,
+                width: { xs: 32, sm: 40 },
+                height: { xs: 32, sm: 40 },
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center'

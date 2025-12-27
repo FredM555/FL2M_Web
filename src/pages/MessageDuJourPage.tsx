@@ -37,9 +37,9 @@ const MessageDuJourPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ py: 4 }}>
-        <Box sx={{ textAlign: 'center', mb: 4 }}>
+    <Container maxWidth="lg" sx={{ px: { xs: 0, sm: 3 } }}>
+      <Box sx={{ py: { xs: 2, sm: 4 } }}>
+        <Box sx={{ textAlign: 'center', mb: 4, display: { xs: 'none', sm: 'block' } }}>
           <Typography
             variant="h3"
             component="h1"
@@ -60,8 +60,19 @@ const MessageDuJourPage: React.FC = () => {
 
         {/* Onglets : Visiteur / Bénéficiaire (si connecté) */}
         {user && (
-          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
-            <Tabs value={tabValue} onChange={handleTabChange} centered>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: { xs: 2, sm: 4 }, px: { xs: 2, sm: 0 } }}>
+            <Tabs
+              value={tabValue}
+              onChange={handleTabChange}
+              centered
+              variant="fullWidth"
+              sx={{
+                '& .MuiTab-root': {
+                  fontSize: { xs: '0.875rem', sm: '1rem' },
+                  minHeight: { xs: 48, sm: 64 }
+                }
+              }}
+            >
               <Tab label="Pour moi (visiteur)" />
               <Tab label="Pour un bénéficiaire" />
             </Tabs>
@@ -99,8 +110,8 @@ const MessageDuJourPage: React.FC = () => {
         </Box>
 
         {/* Section explicative */}
-        <Box sx={{ mt: 6, textAlign: 'center', maxWidth: 700, mx: 'auto' }}>
-          <Typography variant="h5" gutterBottom fontWeight="bold">
+        <Box sx={{ mt: { xs: 4, sm: 6 }, textAlign: 'center', maxWidth: 700, mx: 'auto', px: { xs: 2, sm: 0 } }}>
+          <Typography variant="h5" gutterBottom fontWeight="bold" sx={{ fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
             Comment ça fonctionne ?
           </Typography>
 

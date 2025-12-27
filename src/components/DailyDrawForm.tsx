@@ -65,18 +65,19 @@ const DailyDrawForm: React.FC<DailyDrawFormProps> = ({ getDailyDraw, loading, er
     <Paper
       elevation={3}
       sx={{
-        p: 4,
+        p: { xs: 3, sm: 4 },
         background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         color: 'white',
-        borderRadius: 3
+        borderRadius: { xs: 0, sm: 3 },
+        minHeight: { xs: 'calc(100vh - 120px)', sm: 'auto' }
       }}
     >
       <Box sx={{ textAlign: 'center', mb: 3 }}>
-        <AutoAwesomeIcon sx={{ fontSize: 48, mb: 2 }} />
-        <Typography variant="h4" component="h2" gutterBottom fontWeight="bold">
+        <AutoAwesomeIcon sx={{ fontSize: { xs: 40, sm: 48 }, mb: 2 }} />
+        <Typography variant="h4" component="h2" gutterBottom fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
           Votre message numérologique du jour
         </Typography>
-        <Typography variant="body1" sx={{ opacity: 0.9 }}>
+        <Typography variant="body1" sx={{ opacity: 0.9, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
           Découvrez votre message personnalisé basé sur votre date de naissance
         </Typography>
       </Box>
@@ -87,7 +88,7 @@ const DailyDrawForm: React.FC<DailyDrawFormProps> = ({ getDailyDraw, loading, er
         sx={{
           backgroundColor: 'rgba(255, 255, 255, 0.95)',
           borderRadius: 2,
-          p: 3
+          p: { xs: 2, sm: 3 }
         }}
       >
         {error && (

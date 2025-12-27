@@ -2,10 +2,9 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Paper, BottomNavigation, BottomNavigationAction, useTheme, useMediaQuery } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import GroupIcon from '@mui/icons-material/Group';
-import EventNoteIcon from '@mui/icons-material/EventNote';
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import HomeIcon from '@mui/icons-material/Home';
 import { useAuth } from '../../context/AuthContext';
 
@@ -24,7 +23,7 @@ const MobileBottomNav: React.FC = () => {
   // Déterminer quelle page est active
   const getValue = () => {
     if (location.pathname === '/') return 0;
-    if (user && location.pathname.startsWith('/mes-rendez-vous')) return 1;
+    if (user && location.pathname.startsWith('/message-du-jour')) return 1;
     if (location.pathname === '/prendre-rendez-vous') return user ? 2 : 1;
     if (location.pathname.startsWith('/consultants')) return user ? 3 : 2;
     return -1;
@@ -38,7 +37,7 @@ const MobileBottomNav: React.FC = () => {
           navigate('/');
           break;
         case 1:
-          navigate('/mes-rendez-vous');
+          navigate('/message-du-jour');
           break;
         case 2:
           navigate('/prendre-rendez-vous');
@@ -109,10 +108,10 @@ const MobileBottomNav: React.FC = () => {
           }}
         />
 
-        {/* Mes rendez-vous - seulement si connecté */}
+        {/* Message du jour - seulement si connecté */}
         {user && (
           <BottomNavigationAction
-            icon={<EventNoteIcon />}
+            icon={<AutoAwesomeIcon />}
             sx={{
               '&.Mui-selected': {
                 '& .MuiSvgIcon-root': {

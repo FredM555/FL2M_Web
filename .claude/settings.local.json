@@ -84,7 +84,8 @@
       "Bash(set PGPASSWORD=j5kw3yo9zR3adYXK:*)",
       "Bash(del apply_daily_draws_migration.cjs)",
       "Bash(del C:FLMflm-services-newcheck_beneficiary_constraints.sql)",
-      "Bash(del C:FLMflm-services-newtest_beneficiary_deletion.ts)"
+      "Bash(del C:FLMflm-services-newtest_beneficiary_deletion.ts)",
+      "Bash(git check-ignore:*)"
     ],
     "deny": [],
     "ask": []
