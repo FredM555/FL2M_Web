@@ -25,6 +25,7 @@ import { BeneficiaryStats } from '../components/beneficiaries/BeneficiaryStats';
 import { BeneficiaryAccessManager } from '../components/beneficiaries/BeneficiaryAccessManager';
 import { BeneficiaryDetails } from '../components/beneficiaries/BeneficiaryDetails';
 import { BeneficiaryDocuments } from '../components/beneficiaries/BeneficiaryDocuments';
+import { AppointmentDetailsDialog } from '../components/appointments/AppointmentDetailsDialog';
 import {
   getUserBeneficiaries,
   createBeneficiary,
@@ -33,6 +34,7 @@ import {
   updateBeneficiaryRelationship,
 } from '../services/beneficiaries';
 import { BeneficiaryWithAccess, CreateBeneficiaryData, UpdateBeneficiaryData } from '../types/beneficiary';
+import { getAppointmentById, Appointment } from '../services/supabase';
 import { useAuth } from '../context/AuthContext';
 import { logger } from '../utils/logger';
 
@@ -70,6 +72,11 @@ export const BeneficiariesPage: React.FC = () => {
 
   // Onglets dans le dialog de vue détaillée
   const [detailTab, setDetailTab] = useState(0);
+
+  // État pour le dialog des détails du rendez-vous
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
+  const [loadingAppointment, setLoadingAppointment] = useState(false);
 
   // Charger les bénéficiaires uniquement au montage ou si l'utilisateur change vraiment
   useEffect(() => {
@@ -245,6 +252,37 @@ export const BeneficiariesPage: React.FC = () => {
     setSnackbar({ ...snackbar, open: false });
   };
 
+  // Fonction pour charger et afficher les détails d'un rendez-vous
+  const handleViewAppointment = async (appointmentId: string) => {
+    try {
+      setLoadingAppointment(true);
+      const { data, error } = await getAppointmentById(appointmentId);
+
+      if (error) {
+        throw error;
+      }
+
+      if (data) {
+        setSelectedAppointment(data);
+        setAppointmentDialogOpen(true);
+      }
+    } catch (err: any) {
+      logger.error('Erreur lors du chargement du rendez-vous:', err);
+      setSnackbar({
+        open: true,
+        message: err.message || 'Erreur lors du chargement des détails du rendez-vous',
+        severity: 'error',
+      });
+    } finally {
+      setLoadingAppointment(false);
+    }
+  };
+
+  const handleCloseAppointmentDialog = () => {
+    setAppointmentDialogOpen(false);
+    setSelectedAppointment(null);
+  };
+
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
         <BeneficiaryList
@@ -360,10 +398,7 @@ export const BeneficiariesPage: React.FC = () => {
                   {detailTab === 3 && (
                     <BeneficiaryHistory
                       beneficiaryId={selectedBeneficiary.id}
-                      onViewAppointment={(id) => {
-                        // TODO: Navigation vers les détails du RDV
-                        logger.debug('View appointment:', id);
-                      }}
+                      onViewAppointment={handleViewAppointment}
                     />
                   )}
                   {detailTab === 4 && (
@@ -461,6 +496,18 @@ export const BeneficiariesPage: React.FC = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Dialog des détails du rendez-vous */}
+        {selectedAppointment && (
+          <AppointmentDetailsDialog
+            open={appointmentDialogOpen}
+            onClose={handleCloseAppointmentDialog}
+            appointment={selectedAppointment}
+            onAppointmentUpdate={(updatedAppointment) => {
+              setSelectedAppointment(updatedAppointment);
+            }}
+          />
+        )}
 
         {/* Snackbar de notification */}
         <Snackbar
