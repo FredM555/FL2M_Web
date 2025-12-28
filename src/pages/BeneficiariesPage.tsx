@@ -18,6 +18,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import { useLocation } from 'react-router-dom';
+import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { BeneficiaryList } from '../components/beneficiaries/BeneficiaryList';
 import { BeneficiaryForm } from '../components/beneficiaries/BeneficiaryForm';
 import { BeneficiaryHistory } from '../components/beneficiaries/BeneficiaryHistory';
@@ -284,8 +285,84 @@ export const BeneficiariesPage: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="xl" sx={{ py: 4 }}>
-        <BeneficiaryList
+    <Box sx={{ width: '100%', position: 'relative', minHeight: '100vh' }}>
+      {/* Image de fond avec opacité */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          backgroundImage: 'url(/images/Beneficiary.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.7,
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Overlay pour adoucir l'image */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.35) 50%, rgba(222, 226, 230, 0.4) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        sx={{
+          background: 'rgba(245, 247, 250, 0.6)',
+          backdropFilter: 'blur(2px)',
+          py: { xs: 2, md: 4 },
+          mt: { xs: '80px', md: '40px' },
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <Container maxWidth="xl">
+          {/* Bandeau bleu avec titre */}
+          <Box
+            sx={{
+              position: 'relative',
+              overflow: 'hidden',
+              mb: 3,
+              borderRadius: '16px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <Box
+              sx={{
+                background: 'linear-gradient(135deg, #345995 0%, #1D3461 100%)',
+                color: 'white',
+                p: 3,
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <SacredGeometryBackground theme="particuliers" />
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: '1.5rem', md: '2rem' },
+                  position: 'relative',
+                  zIndex: 2,
+                }}
+              >
+                Mes bénéficiaires
+              </Typography>
+            </Box>
+          </Box>
+
+          <BeneficiaryList
           beneficiaries={beneficiaries}
           loading={loading}
           error={error}
@@ -524,6 +601,8 @@ export const BeneficiariesPage: React.FC = () => {
             {snackbar.message}
           </Alert>
         </Snackbar>
-      </Container>
+        </Container>
+      </Box>
+    </Box>
   );
 };

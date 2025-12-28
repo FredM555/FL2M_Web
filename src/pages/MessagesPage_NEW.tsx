@@ -23,6 +23,7 @@ import {
 } from '@mui/material';
 import SendIcon from '@mui/icons-material/Send';
 import { useAuth } from '../context/AuthContext';
+import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import {
   MessageThread,
   MessageWithSender,
@@ -211,23 +212,95 @@ const MessagesPageNew: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="xl" sx={{
-      py: { xs: 2, md: 4 },
-      height: { xs: 'auto', md: 'calc(100vh - 108px)' },
-      display: { xs: 'block', md: 'flex' },
-      flexDirection: 'column'
-    }}>
-      <Typography variant="h4" sx={{ fontWeight: 700, mb: 3, fontSize: { xs: '1.5rem', md: '2rem' }, flexShrink: 0 }}>
-        📨 Mes messages personnels
-      </Typography>
+    <Box sx={{ width: '100%', position: 'relative', minHeight: '100vh' }}>
+      {/* Image de fond avec opacité */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          backgroundImage: 'url(/images/MesMessages.jpg)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          opacity: 0.7,
+          pointerEvents: 'none',
+        }}
+      />
+      {/* Overlay pour adoucir l'image */}
+      <Box
+        sx={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 0,
+          background: 'linear-gradient(180deg, rgba(248, 249, 250, 0.3) 0%, rgba(233, 236, 239, 0.35) 50%, rgba(222, 226, 230, 0.4) 100%)',
+          pointerEvents: 'none',
+        }}
+      />
+      <Box
+        sx={{
+          background: 'rgba(245, 247, 250, 0.6)',
+          backdropFilter: 'blur(2px)',
+          py: { xs: 2, md: 4 },
+          mt: { xs: '80px', md: '40px' },
+          position: 'relative',
+          zIndex: 1,
+        }}
+      >
+        <Container maxWidth="xl" sx={{
+          height: { xs: 'auto', md: 'calc(100vh - 200px)' },
+          display: { xs: 'block', md: 'flex' },
+          flexDirection: 'column'
+        }}>
+          {/* Bandeau bleu avec titre */}
+          <Box
+            sx={{
+              position: 'relative',
+              overflow: 'hidden',
+              mb: 3,
+              borderRadius: '16px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+              flexShrink: 0
+            }}
+          >
+            <Box
+              sx={{
+                background: 'linear-gradient(135deg, #345995 0%, #1D3461 100%)',
+                color: 'white',
+                p: 3,
+                position: 'relative',
+                overflow: 'hidden',
+              }}
+            >
+              <SacredGeometryBackground theme="particuliers" />
+              <Typography
+                variant="h4"
+                component="h1"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: '1.5rem', md: '2rem' },
+                  position: 'relative',
+                  zIndex: 2,
+                }}
+              >
+                📨 Mes messages personnels
+              </Typography>
+            </Box>
+          </Box>
 
-      {error && (
-        <Alert severity="error" sx={{ mb: 3, flexShrink: 0 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
+          {error && (
+            <Alert severity="error" sx={{ mb: 3, flexShrink: 0 }} onClose={() => setError(null)}>
+              {error}
+            </Alert>
+          )}
 
-      <Grid container spacing={0} sx={{
+          <Grid container spacing={0} sx={{
         height: { xs: '600px', md: '100%' },
         flex: { xs: 'none', md: 1 },
         minHeight: { xs: '400px', md: 0 },
@@ -560,9 +633,11 @@ const MessagesPageNew: React.FC = () => {
               </Box>
             )}
           </Paper>
-        </Grid>
-      </Grid>
-    </Container>
+          </Grid>
+          </Grid>
+        </Container>
+      </Box>
+    </Box>
   );
 };
 

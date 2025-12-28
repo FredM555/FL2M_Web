@@ -85,7 +85,10 @@
       "Bash(del apply_daily_draws_migration.cjs)",
       "Bash(del C:FLMflm-services-newcheck_beneficiary_constraints.sql)",
       "Bash(del C:FLMflm-services-newtest_beneficiary_deletion.ts)",
-      "Bash(git check-ignore:*)"
+      "Bash(git check-ignore:*)",
+      "Bash(if exist \"android\\\\app\\\\build\\\\outputs\\\\apk\" rd /s /q \"android\\\\app\\\\build\\\\outputs\\\\apk\")",
+      "Bash(if exist \"dist\" rd /s /q \"dist\")",
+      "Bash(if not exist \"public\\\\downloads\" mkdir \"public\\\\downloads\")"
     ],
     "deny": [],
     "ask": []
