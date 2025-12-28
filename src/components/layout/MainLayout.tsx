@@ -184,9 +184,9 @@ const MainLayout: React.FC = () => {
       overflow: 'hidden',
     }}>
       {/* Bandeau en deux parties - maintenant en position fixe */}
-      <AppBar 
+      <AppBar
         position="fixed" // Changé en 'fixed' pour rester visible pendant le défilement
-        sx={{ 
+        sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           boxShadow: '0 2px 10px rgba(0, 0, 0, 0.1)', // Légère ombre pour le distinguer du contenu
           width: '100vw',
@@ -196,6 +196,7 @@ const MainLayout: React.FC = () => {
           margin: 0,
           padding: 0,
           top: 0,
+          paddingTop: 'env(safe-area-inset-top)', // Respecte la zone sûre du téléphone (notch, status bar)
         }}
       >
         {/* Partie supérieure du bandeau */}

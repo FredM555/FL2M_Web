@@ -474,18 +474,26 @@ const logLoginFailed = (email: string, reason?: string) => {
       logUserLogout(user.id);
     }
 
-    return supabase.auth.signOut()
+    return supabase.auth.signOut({ scope: 'local' })
       .then(({ error }) => {
         if (error) {
+          // Ignorer l'erreur "Auth session missing!" car cela signifie que l'utilisateur est déjà déconnecté
+          if (error.message === 'Auth session missing!' || error.message.includes('session missing')) {
+            logger.info('[SIGNOUT] Session déjà expirée - déconnexion locale effectuée');
+            return { error: null };
+          }
           logger.error('[SIGNOUT] Erreur déconnexion:', error.message);
+          // Même en cas d'erreur, on considère la déconnexion locale comme réussie
+          return { error: null };
         } else {
           logger.info('[SIGNOUT] Déconnexion réussie');
         }
-        return { error: error ? new Error(error.message) : null };
+        return { error: null };
       })
       .catch(error => {
         logger.error('[SIGNOUT] Exception lors de la déconnexion:', error);
-        return { error: error as Error };
+        // Même en cas d'exception, on considère la déconnexion locale comme réussie
+        return { error: null };
       });
   };
 

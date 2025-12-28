@@ -22,43 +22,24 @@ const MobileBottomNav: React.FC = () => {
 
   // Déterminer quelle page est active
   const getValue = () => {
-    if (location.pathname === '/') return 0;
-    if (user && location.pathname.startsWith('/message-du-jour')) return 1;
-    if (location.pathname === '/prendre-rendez-vous') return user ? 2 : 1;
-    if (location.pathname.startsWith('/consultants')) return user ? 3 : 2;
+    if (location.pathname.startsWith('/message-du-jour')) return 0;
+    if (location.pathname === '/prendre-rendez-vous') return 1;
+    if (location.pathname.startsWith('/consultants')) return 2;
     return -1;
   };
 
   const handleChange = (event: React.SyntheticEvent, newValue: number) => {
-    if (user) {
-      // Navigation pour utilisateur connecté (4 boutons)
-      switch (newValue) {
-        case 0:
-          navigate('/');
-          break;
-        case 1:
-          navigate('/message-du-jour');
-          break;
-        case 2:
-          navigate('/prendre-rendez-vous');
-          break;
-        case 3:
-          navigate('/consultants');
-          break;
-      }
-    } else {
-      // Navigation pour utilisateur non connecté (3 boutons)
-      switch (newValue) {
-        case 0:
-          navigate('/');
-          break;
-        case 1:
-          navigate('/prendre-rendez-vous');
-          break;
-        case 2:
-          navigate('/consultants');
-          break;
-      }
+    // Navigation identique pour tous les utilisateurs (3 boutons)
+    switch (newValue) {
+      case 0:
+        navigate('/message-du-jour');
+        break;
+      case 1:
+        navigate('/prendre-rendez-vous');
+        break;
+      case 2:
+        navigate('/consultants');
+        break;
     }
   };
 
@@ -72,6 +53,7 @@ const MobileBottomNav: React.FC = () => {
         zIndex: 1000,
         borderTop: '2px solid rgba(255, 215, 0, 0.3)',
         boxShadow: '0 -4px 12px rgba(0, 0, 0, 0.1)',
+        paddingBottom: 'env(safe-area-inset-bottom)', // Respecte la zone sûre en bas (boutons gestuels)
       }}
       elevation={3}
     >
@@ -96,33 +78,30 @@ const MobileBottomNav: React.FC = () => {
           },
         }}
       >
-        {/* Accueil - toujours affiché */}
+        {/* Message du jour - toujours affiché en premier avec effet visuel */}
         <BottomNavigationAction
-          icon={<HomeIcon />}
+          icon={<AutoAwesomeIcon />}
           sx={{
             '&.Mui-selected': {
               '& .MuiSvgIcon-root': {
                 color: '#FFD700',
+                animation: 'pulse 2s ease-in-out infinite',
+              },
+            },
+            '@keyframes pulse': {
+              '0%, 100%': {
+                filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.6))',
+                transform: 'scale(1)',
+              },
+              '50%': {
+                filter: 'drop-shadow(0 0 16px rgba(255, 215, 0, 0.9))',
+                transform: 'scale(1.1)',
               },
             },
           }}
         />
 
-        {/* Message du jour - seulement si connecté */}
-        {user && (
-          <BottomNavigationAction
-            icon={<AutoAwesomeIcon />}
-            sx={{
-              '&.Mui-selected': {
-                '& .MuiSvgIcon-root': {
-                  color: '#FFD700',
-                },
-              },
-            }}
-          />
-        )}
-
-        {/* Prendre RDV - toujours affiché */}
+        {/* Prendre RDV - en deuxième */}
         <BottomNavigationAction
           icon={<CalendarMonthIcon />}
           sx={{
@@ -134,7 +113,7 @@ const MobileBottomNav: React.FC = () => {
           }}
         />
 
-        {/* Consultants - toujours affiché */}
+        {/* Consultants/Intervenants - en troisième */}
         <BottomNavigationAction
           icon={<GroupIcon />}
           sx={{

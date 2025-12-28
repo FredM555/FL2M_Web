@@ -1,5 +1,5 @@
 // Composant formulaire pour le tirage du jour (visiteurs)
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   TextField,
@@ -19,11 +19,28 @@ interface DailyDrawFormProps {
   error: string | null;
 }
 
+const STORAGE_KEY = 'dailyDrawVisitorData';
+
 const DailyDrawForm: React.FC<DailyDrawFormProps> = ({ getDailyDraw, loading, error }) => {
   const [firstName, setFirstName] = useState('');
   const [birthDay, setBirthDay] = useState('');
   const [birthMonth, setBirthMonth] = useState('');
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
+  // Charger les données depuis localStorage au montage du composant
+  useEffect(() => {
+    try {
+      const savedData = localStorage.getItem(STORAGE_KEY);
+      if (savedData) {
+        const { firstName: savedFirstName, birthDay: savedBirthDay, birthMonth: savedBirthMonth } = JSON.parse(savedData);
+        if (savedFirstName) setFirstName(savedFirstName);
+        if (savedBirthDay) setBirthDay(savedBirthDay.toString());
+        if (savedBirthMonth) setBirthMonth(savedBirthMonth.toString());
+      }
+    } catch (error) {
+      console.error('Erreur lors du chargement des données sauvegardées:', error);
+    }
+  }, []);
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
@@ -51,11 +68,20 @@ const DailyDrawForm: React.FC<DailyDrawFormProps> = ({ getDailyDraw, loading, er
 
     if (!validateForm()) return;
 
-    await getDailyDraw({
+    const params = {
       firstName: firstName.trim(),
       birthDay: parseInt(birthDay),
       birthMonth: parseInt(birthMonth)
-    });
+    };
+
+    // Sauvegarder les données dans localStorage pour la prochaine visite
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(params));
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des données:', error);
+    }
+
+    await getDailyDraw(params);
 
     // Le résultat sera automatiquement affiché par DailyDrawContainer
     // quand drawData sera mis à jour dans le hook
