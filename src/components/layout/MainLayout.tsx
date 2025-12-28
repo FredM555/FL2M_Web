@@ -1790,8 +1790,8 @@ const MainLayout: React.FC = () => {
                 </Typography>
                 <Typography
                   component="a"
-                  href={`/flm-services-v${import.meta.env.VITE_APP_VERSION || '1.0.1'}.apk`}
-                  download
+                  href={`/downloads/fl2m-app-v${import.meta.env.VITE_APP_VERSION || '1.0.1'}.apk`}
+                  download={`fl2m-app-v${import.meta.env.VITE_APP_VERSION || '1.0.1'}.apk`}
                   sx={{
                     color: 'rgba(255, 255, 255, 0.8)',
                     textDecoration: 'none',
@@ -1800,6 +1800,7 @@ const MainLayout: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     gap: 0.5,
+                    cursor: 'pointer',
                     '&:hover': {
                       color: '#FFD700',
                     },
