@@ -12,15 +12,6 @@ export default defineConfig({
   },
   build: {
     minify: 'esbuild',
-    rollupOptions: {
-      output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-mui': ['@mui/material', '@mui/icons-material'],
-          'vendor-supabase': ['@supabase/supabase-js']
-        }
-      }
-    },
     chunkSizeWarningLimit: 1000
   },
   server: {
