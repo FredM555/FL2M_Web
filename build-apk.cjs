@@ -108,12 +108,12 @@ async function main() {
   // Étape 4: Synchroniser Capacitor
   execCommand('npx cap sync android', 'Synchronisation Capacitor Android');
 
-  // Étape 5: Compiler APK Release
-  execCommand('cd android && .\\gradlew assembleRelease', 'Compilation APK Release optimisée');
+  // Étape 5: Compiler APK Debug (installable sans signature)
+  execCommand('cd android && .\\gradlew assembleDebug', 'Compilation APK Debug installable');
 
   // Étape 6: Copier l'APK
   log('\n📋 Copie de l\'APK...', 'blue');
-  const sourceApk = path.join(__dirname, 'android', 'app', 'build', 'outputs', 'apk', 'release', 'app-universal-release-unsigned.apk');
+  const sourceApk = path.join(__dirname, 'android', 'app', 'build', 'outputs', 'apk', 'debug', 'app-universal-debug.apk');
   const targetApk = path.join(__dirname, 'public', 'downloads', `fl2m-app-v${version}.apk`);
 
   if (!fs.existsSync(sourceApk)) {

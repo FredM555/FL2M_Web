@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.FlmServices.app',
-  appName: 'flm-services-new',
+  appName: 'FL²M',
   webDir: 'dist',
   server: {
     androidScheme: 'https'

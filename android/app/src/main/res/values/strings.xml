@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">flm-services-new</string>
-    <string name="title_activity_main">flm-services-new</string>
+    <string name="app_name">FL²M</string>
+    <string name="title_activity_main">FL²M</string>
     <string name="package_name">com.FlmServices.app</string>
     <string name="custom_url_scheme">com.FlmServices.app</string>
 </resources>
