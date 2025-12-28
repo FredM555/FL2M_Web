@@ -1,6 +1,7 @@
 // Page dédiée au message du jour
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Container, Box, Typography, Tabs, Tab } from '@mui/material';
+import { useLocation } from 'react-router-dom';
 import DailyDrawContainer from '../components/DailyDrawContainer';
 import BeneficiarySelector from '../components/BeneficiarySelector';
 import BeneficiaryDailyDraw from '../components/BeneficiaryDailyDraw';
@@ -46,7 +47,7 @@ const MessageDuJourPage: React.FC = () => {
             gutterBottom
             sx={{
               fontWeight: 'bold',
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #1D3461 0%, #345995 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}

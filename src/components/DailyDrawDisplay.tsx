@@ -7,13 +7,15 @@ import {
   Divider,
   Button,
   Card,
-  CardContent
+  CardContent,
+  IconButton
 } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ShareIcon from '@mui/icons-material/Share';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EventIcon from '@mui/icons-material/Event';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { DailyDrawData } from '../hooks/useDailyDraw';
 import { useNavigate } from 'react-router-dom';
 
@@ -34,7 +36,7 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
     if (navigator.share) {
       navigator.share({
         title: 'Mon message numérologique du jour',
-        text: `Découvrez votre message du jour sur FL²M Services !`,
+        text: `Découvrez votre message du jour sur FL²M !`,
         url: window.location.href
       }).catch(() => {
         // Fallback si le partage échoue
@@ -55,21 +57,51 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
   };
 
   return (
-    <Box sx={{ mt: { xs: -2, sm: 0 } }}>
+    <Box sx={{ mt: { xs: 1, sm: 2 }, pt: { xs: 1, sm: 0 } }}>
       {/* En-tête */}
       <Paper
         elevation={3}
         sx={{
           p: { xs: 1.5, sm: 3 },
           mb: { xs: 2, sm: 3 },
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(135deg, #1D3461 0%, #345995 50%, #4A7BA7 100%)',
           color: 'white',
           borderRadius: { xs: 0, sm: 3 },
-          textAlign: 'center'
+          textAlign: 'center',
+          border: { xs: 'none', sm: '3px solid #FFD700' },
+          boxShadow: { xs: 3, sm: '0 8px 32px rgba(255, 215, 0, 0.2)' },
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: { xs: 1, sm: 2 }, flexWrap: 'wrap', gap: { xs: 0.5, sm: 1 } }}>
-          <AutoAwesomeIcon sx={{ fontSize: { xs: 24, sm: 32 }, mr: { xs: 0.5, sm: 1 } }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', mb: { xs: 1, sm: 2 }, position: 'relative', flexWrap: 'wrap', gap: { xs: 0.5, sm: 1 } }}>
+          {/* Bouton retour à gauche */}
+          {onReset && (
+            <IconButton
+              onClick={onReset}
+              size="small"
+              sx={{
+                position: 'absolute',
+                left: { xs: 0, sm: 8 },
+                color: '#1D3461',
+                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                boxShadow: '0 2px 8px rgba(255, 215, 0, 0.4)',
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #FFC700 0%, #FF9500 100%)',
+                  boxShadow: '0 4px 12px rgba(255, 215, 0, 0.5)',
+                },
+              }}
+            >
+              <ArrowBackIcon fontSize="small" />
+            </IconButton>
+          )}
+
+          <AutoAwesomeIcon sx={{
+            fontSize: { xs: 24, sm: 32 },
+            mr: { xs: 0.5, sm: 1 },
+            background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.5))',
+          }} />
           <Typography variant="h4" component="h2" fontWeight="bold" sx={{ fontSize: { xs: '1.25rem', sm: '2rem' } }}>
             Bonjour {data.firstName} 🌟
           </Typography>
@@ -319,16 +351,36 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
           variant="outlined"
           startIcon={<ShareIcon />}
           onClick={handleShare}
+          sx={{
+            borderColor: '#FFD700',
+            color: '#1D3461',
+            '&:hover': {
+              borderColor: '#FFA500',
+              backgroundColor: 'rgba(255, 215, 0, 0.1)',
+            }
+          }}
         >
           Partager
         </Button>
         {onReset && (
           <Button
-            variant="outlined"
+            variant="contained"
             startIcon={<RefreshIcon />}
             onClick={onReset}
+            sx={{
+              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+              color: '#1D3461',
+              fontWeight: 'bold',
+              boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FFC700 0%, #FF9500 100%)',
+                boxShadow: '0 6px 16px rgba(255, 215, 0, 0.4)',
+                transform: 'translateY(-2px)',
+              },
+              transition: 'all 0.3s ease',
+            }}
           >
-            Nouveau tirage
+            Nouveau message pour quelqu'un d'autre
           </Button>
         )}
       </Box>
@@ -339,9 +391,11 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
           sx={{
             p: 4,
             textAlign: 'center',
-            background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+            background: 'linear-gradient(135deg, #1D3461 0%, #345995 100%)',
             color: 'white',
-            borderRadius: 3
+            borderRadius: 3,
+            border: '2px solid #FFD700',
+            boxShadow: '0 8px 32px rgba(255, 215, 0, 0.2)',
           }}
           elevation={3}
         >
@@ -357,14 +411,18 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
             startIcon={<EventIcon />}
             onClick={handleBookAppointment}
             sx={{
-              backgroundColor: 'white',
-              color: '#f5576c',
+              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+              color: '#1D3461',
               fontWeight: 'bold',
               px: 4,
               py: 1.5,
+              boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
               '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              }
+                background: 'linear-gradient(135deg, #FFC700 0%, #FF9500 100%)',
+                boxShadow: '0 6px 16px rgba(255, 215, 0, 0.4)',
+                transform: 'translateY(-2px)',
+              },
+              transition: 'all 0.3s ease',
             }}
           >
             Prendre rendez-vous

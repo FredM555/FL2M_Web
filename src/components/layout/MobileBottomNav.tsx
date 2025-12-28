@@ -82,9 +82,17 @@ const MobileBottomNav: React.FC = () => {
         <BottomNavigationAction
           icon={<AutoAwesomeIcon />}
           sx={{
+            '& .MuiSvgIcon-root': {
+              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 4px rgba(255, 215, 0, 0.4))',
+            },
             '&.Mui-selected': {
               '& .MuiSvgIcon-root': {
-                color: '#FFD700',
+                background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
                 animation: 'pulse 2s ease-in-out infinite',
               },
             },

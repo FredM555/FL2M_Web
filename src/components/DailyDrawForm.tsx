@@ -92,19 +92,32 @@ const DailyDrawForm: React.FC<DailyDrawFormProps> = ({ getDailyDraw, loading, er
       elevation={3}
       sx={{
         p: { xs: 3, sm: 4 },
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+        background: 'linear-gradient(135deg, #1D3461 0%, #345995 50%, #4A7BA7 100%)',
         color: 'white',
         borderRadius: { xs: 0, sm: 3 },
-        minHeight: { xs: 'calc(100vh - 120px)', sm: 'auto' }
+        minHeight: { xs: 'calc(100vh - 120px)', sm: 'auto' },
+        border: { xs: 'none', sm: '3px solid #FFD700' },
+        boxShadow: { xs: 3, sm: '0 8px 32px rgba(255, 215, 0, 0.2)' },
       }}
     >
       <Box sx={{ textAlign: 'center', mb: 3 }}>
-        <AutoAwesomeIcon sx={{ fontSize: { xs: 40, sm: 48 }, mb: 2 }} />
+        <Box sx={{
+          display: 'inline-block',
+          background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+          borderRadius: '50%',
+          p: 1,
+          boxShadow: '0 0 20px rgba(255, 215, 0, 0.6)',
+        }}>
+          <AutoAwesomeIcon sx={{
+            fontSize: { xs: 40, sm: 48 },
+            color: 'white',
+          }} />
+        </Box>
         <Typography variant="h4" component="h2" gutterBottom fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
           Votre message numérologique du jour
         </Typography>
         <Typography variant="body1" sx={{ opacity: 0.9, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
-          Découvrez votre message personnalisé basé sur votre date de naissance
+          Découvrez votre message personnalisé basé sur votre jour et mois de naissance
         </Typography>
       </Box>
 
@@ -166,33 +179,36 @@ const DailyDrawForm: React.FC<DailyDrawFormProps> = ({ getDailyDraw, loading, er
               inputProps={{ min: 1, max: 12 }}
             />
           </Grid>
-
-          <Grid item xs={12}>
-            <Button
-              fullWidth
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={loading}
-              sx={{
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                color: 'white',
-                py: 1.5,
-                fontSize: '1.1rem',
-                fontWeight: 'bold',
-                '&:hover': {
-                  background: 'linear-gradient(135deg, #5568d3 0%, #65408b 100%)',
-                }
-              }}
-            >
-              {loading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                'Découvrir mon message'
-              )}
-            </Button>
-          </Grid>
         </Grid>
+
+        <Button
+          fullWidth
+          type="submit"
+          variant="contained"
+          size="large"
+          disabled={loading}
+          sx={{
+            mt: 3,
+            background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+            color: '#1D3461',
+            py: 1.5,
+            fontSize: '1.1rem',
+            fontWeight: 'bold',
+            boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #FFC700 0%, #FF9500 100%)',
+              boxShadow: '0 6px 16px rgba(255, 215, 0, 0.4)',
+              transform: 'translateY(-2px)',
+            },
+            transition: 'all 0.3s ease',
+          }}
+        >
+          {loading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            'Découvrir mon message'
+          )}
+        </Button>
 
         <Box sx={{ mt: 2, textAlign: 'center' }}>
           <Typography variant="caption" color="text.secondary">

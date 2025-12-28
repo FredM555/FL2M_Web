@@ -30,8 +30,11 @@ const DailyDrawHomeSection: React.FC = () => {
           <AutoAwesomeIcon
             sx={{
               fontSize: 48,
-              color: 'primary.main',
-              mb: 1
+              mb: 1,
+              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.5))',
             }}
           />
           <Typography
@@ -40,7 +43,7 @@ const DailyDrawHomeSection: React.FC = () => {
             gutterBottom
             fontWeight="bold"
             sx={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              background: 'linear-gradient(135deg, #1D3461 0%, #345995 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
             }}
@@ -150,17 +153,17 @@ const DailyDrawHomeSection: React.FC = () => {
             size="large"
             onClick={() => navigate('/message-du-jour')}
             sx={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: 'white',
+              background: 'linear-gradient(135deg, #FFD700 0%, #FFA500 100%)',
+              color: '#1D3461',
               py: 1.2,
               px: 4,
               fontSize: '1rem',
               fontWeight: 'bold',
               borderRadius: 3,
-              boxShadow: 4,
+              boxShadow: '0 4px 12px rgba(255, 215, 0, 0.3)',
               '&:hover': {
-                background: 'linear-gradient(135deg, #5568d3 0%, #65408b 100%)',
-                boxShadow: 6,
+                background: 'linear-gradient(135deg, #FFC700 0%, #FF9500 100%)',
+                boxShadow: '0 6px 16px rgba(255, 215, 0, 0.4)',
                 transform: 'translateY(-2px)',
               },
               transition: 'all 0.3s'
