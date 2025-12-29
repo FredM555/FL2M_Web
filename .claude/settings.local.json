@@ -88,7 +88,10 @@
       "Bash(git check-ignore:*)",
       "Bash(if exist \"android\\\\app\\\\build\\\\outputs\\\\apk\" rd /s /q \"android\\\\app\\\\build\\\\outputs\\\\apk\")",
       "Bash(if exist \"dist\" rd /s /q \"dist\")",
-      "Bash(if not exist \"public\\\\downloads\" mkdir \"public\\\\downloads\")"
+      "Bash(if not exist \"public\\\\downloads\" mkdir \"public\\\\downloads\")",
+      "Bash(keytool:*)",
+      "Bash(npm run build:aab:*)",
+      "Bash(gradlew.bat bundleRelease:*)"
     ],
     "deny": [],
     "ask": []

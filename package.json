@@ -8,6 +8,7 @@
     "dev": "npm run copy-pdf-worker && vite",
     "build": "npm run copy-pdf-worker && tsc -b && vite build",
     "build:apk": "node build-apk.cjs",
+    "build:aab": "node build-aab.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",

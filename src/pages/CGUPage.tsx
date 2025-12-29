@@ -78,7 +78,7 @@ const CGUPage: React.FC = () => {
               mb: 4,
             }}
           >
-            Dernière mise à jour : 14 décembre 2024
+            Dernière mise à jour : 29 décembre 2025
           </Typography>
 
           <Divider sx={{ mb: 4 }} />
