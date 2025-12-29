@@ -1,10 +1,11 @@
 // src/App.tsx
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
-import { Box, CircularProgress } from '@mui/material';
+import { Box } from '@mui/material';
 import './index.css'
 import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
+import LoadingScreen from './components/LoadingScreen';
 import { useEffect, useState } from 'react';
 
 // Layouts
@@ -92,17 +93,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Afficher le spinner pendant le chargement
   if (loading) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        width: '100%'
-      }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingScreen message="Chargement..." />;
   }
 
   // Rediriger si l'utilisateur n'est pas connecté
@@ -121,17 +112,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 
   // Afficher le spinner pendant le chargement
   if (loading) {
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        width: '100%'
-      }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingScreen message="Chargement..." />;
   }
 
   // Rediriger si l'utilisateur n'est pas un admin
@@ -168,17 +149,7 @@ function App() {
   // Afficher un loader pendant le chargement de l'authentification
   if (loading) {
     logger.debug("Affichage du chargement...");
-    return (
-      <Box sx={{ 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center', 
-        height: '100vh',
-        width: '100%'
-      }}>
-        <CircularProgress />
-      </Box>
-    );
+    return <LoadingScreen message="Chargement..." />;
   }
   
   logger.debug("Prêt à afficher l'application principale");
@@ -209,18 +180,7 @@ function App() {
   if (!appReady) {
     return (
       <ErrorBoundary>
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'center', 
-          alignItems: 'center', 
-          height: '100vh',
-          width: '100vw',
-          maxWidth: '100%',
-          margin: 0,
-          padding: 0
-        }}>
-          <CircularProgress />
-        </Box>
+        <LoadingScreen message="Préparation de l'application..." />
       </ErrorBoundary>
     );
   }
