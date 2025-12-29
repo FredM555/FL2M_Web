@@ -72,12 +72,12 @@ Validité: 10 000 jours (environ 27 ans)
 
 **Titre court (30 caractères max):**
 ```
-FL²M - Numérologie & Coaching
+FL²M - Numérologie - activateur de potentiels
 ```
 
 **Description complète (4000 caractères max):**
 ```
-Découvrez FL²M, votre application de numérologie et de coaching personnel.
+Découvrez FL²M, votre application de numérologie et d'accompagnement personnel.
 
 🔮 FONCTIONNALITÉS PRINCIPALES
 
@@ -88,7 +88,7 @@ Découvrez FL²M, votre application de numérologie et de coaching personnel.
   Créez et gérez vos profils numériques et ceux de vos bénéficiaires
 
 • Prise de Rendez-vous
-  Réservez facilement des consultations avec nos praticiens certifiés
+  Réservez facilement des consultations avec intervenants certifiés
 
 • Espace Personnel Sécurisé
   Accédez à votre historique, documents et suivi personnalisé
@@ -101,13 +101,13 @@ Découvrez FL²M, votre application de numérologie et de coaching personnel.
 
 👥 ACCOMPAGNEMENT PROFESSIONNEL
 
-Connectez-vous avec des praticiens expérimentés pour des consultations
+Connectez-vous avec des intervenants expérimentés pour des consultations
 personnalisées en présentiel ou à distance.
 
 📱 SIMPLE ET INTUITIF
 
 Interface moderne et facile à utiliser pour accéder à tous vos services
-de numérologie et coaching en quelques clics.
+de numérologie et d'accompagnement en quelques clics.
 
 🔒 SÉCURISÉ ET CONFIDENTIEL
 
@@ -116,7 +116,7 @@ Vos données sont protégées et restent strictement confidentielles.
 
 **Description courte (80 caractères max):**
 ```
-Numérologie, coaching et messages personnalisés quotidiens
+Numérologie, accompagnement et messages personnalisés quotidiens
 ```
 
 #### B. Assets Graphiques Requis
@@ -140,7 +140,7 @@ Recommandations:
   1. Page d'accueil avec navigation
   2. Message du jour (visiteur)
   3. Message du jour (bénéficiaire)
-  4. Liste des praticiens/consultants
+  4. Liste des intervenants/consultants
   5. Profil utilisateur
   6. Prise de rendez-vous
 

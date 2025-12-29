@@ -93,6 +93,7 @@ const ContactPage = () => {
     'Question générale',
     'Prise de rendez-vous',
     'Informations sur une prestation',
+    'Suppression de compte',
     'Partenariat',
     'Autre'
   ];

@@ -30,6 +30,7 @@ import AuthCallbackPage from './pages/AuthCallbackPage';
 import ProfileCompletionPage from './pages/ProfileCompletionPage';
 import MentionsLegalesPage from './pages/MentionsLegalesPage';
 import PolitiqueConfidentialitePage from './pages/PolitiqueConfidentialitePage';
+import SuppressionComptePage from './pages/SuppressionComptePage';
 import CGUPage from './pages/CGUPage';
 
 // Composants Particuliers
@@ -255,6 +256,7 @@ function App() {
             {/* Pages légales */}
             <Route path="mentions-legales" element={<MentionsLegalesPage />} />
             <Route path="politique-confidentialite" element={<PolitiqueConfidentialitePage />} />
+            <Route path="suppression-compte" element={<SuppressionComptePage />} />
             <Route path="cgu" element={<CGUPage />} />
 
             {/* Routes Particuliers */}

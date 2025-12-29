@@ -452,7 +452,11 @@ const PolitiqueConfidentialitePage: React.FC = () => {
             <Typography variant="body1" component="div" sx={{ pl: 2 }}>
               <strong>Droit d'accès :</strong> Vous pouvez demander l'accès à vos données personnelles<br /><br />
               <strong>Droit de rectification :</strong> Vous pouvez demander la correction de données inexactes ou incomplètes<br /><br />
-              <strong>Droit à l'effacement :</strong> Vous pouvez demander la suppression de vos données dans certains cas<br /><br />
+              <strong>Droit à l'effacement :</strong> Vous pouvez demander la suppression de vos données dans certains cas (
+              <a href="/suppression-compte" style={{ color: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.3)' }}>
+                voir la procédure
+              </a>
+              )<br /><br />
               <strong>Droit à la limitation du traitement :</strong> Vous pouvez demander la limitation du traitement de vos données<br /><br />
               <strong>Droit à la portabilité :</strong> Vous pouvez recevoir vos données dans un format structuré et lisible<br /><br />
               <strong>Droit d'opposition :</strong> Vous pouvez vous opposer au traitement de vos données pour des motifs légitimes<br /><br />
