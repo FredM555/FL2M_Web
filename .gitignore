@@ -29,8 +29,6 @@ dist-ssr
 *.sw?
 nul
 
-# APK/AAB files (too large for GitHub)
-*.apk
+# AAB files (too large for GitHub)
 *.aab
-public/downloads/*.apk
 public/downloads/*.aab
