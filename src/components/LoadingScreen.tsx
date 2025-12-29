@@ -14,37 +14,30 @@ const LoadingScreen = ({ message }: LoadingScreenProps) => {
     const interval = setInterval(() => {
       setCurrentIndex((prev) => {
         if (prev >= numerologyNumbers.length - 1) {
-          setIsComplete(true);
+          // Attendre 400ms avant de déclencher l'effet final
+          setTimeout(() => {
+            setIsComplete(true);
+          }, 400);
           return prev;
         }
         return prev + 1;
       });
-    }, 200); // Accéléré de 300ms à 200ms
+    }, 200);
 
     return () => clearInterval(interval);
   }, []);
 
-  // Calculer la position de chaque nombre en cercle complet
+  // Calculer la position de chaque nombre en cercle
   const getCirclePosition = (index: number, total: number) => {
-    const angle = (index / total) * 2 * Math.PI - Math.PI / 2; // Commence en haut
-    const radius = 110; // Rayon du cercle
+    const angle = (index / total) * 2 * Math.PI - Math.PI / 2;
+    const radius = 110;
     const x = Math.cos(angle) * radius;
     const y = Math.sin(angle) * radius;
     return { x, y };
   };
 
-  // Calculer la couleur pour chaque nombre (dégradé de clair à foncé)
-  const getNumberColor = (index: number, total: number) => {
-    const ratio = index / (total - 1);
-    // Interpolation entre #FFD700 (255, 215, 0) et #FFA500 (255, 165, 0)
-    const r = 255;
-    const g = Math.round(215 - ratio * (215 - 165));
-    const b = 0;
-    return `rgb(${r}, ${g}, ${b})`;
-  };
-
-  // Calculer l'opacité du logo
-  const logoOpacity = currentIndex / (numerologyNumbers.length - 1);
+  // Calculer l'opacité progressive du logo
+  const logoOpacity = 0.3 + (currentIndex / (numerologyNumbers.length - 1)) * 0.7;
 
   return (
     <Box
@@ -58,10 +51,64 @@ const LoadingScreen = ({ message }: LoadingScreenProps) => {
         maxWidth: '100%',
         margin: 0,
         padding: 0,
-        backgroundColor: '#ffffff',
+        background: 'linear-gradient(135deg, #0a1628 0%, #1D3461 50%, #345995 100%)',
+        overflow: 'hidden',
+        position: 'relative',
       }}
     >
-      {/* Conteneur pour le cercle */}
+      {/* Particules mystiques en arrière-plan */}
+      {[...Array(20)].map((_, i) => (
+        <Box
+          key={i}
+          sx={{
+            position: 'absolute',
+            width: { xs: 2, sm: 3 },
+            height: { xs: 2, sm: 3 },
+            borderRadius: '50%',
+            background: 'rgba(255, 215, 0, 0.6)',
+            boxShadow: '0 0 10px rgba(255, 215, 0, 0.8)',
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            animation: `float ${3 + Math.random() * 4}s ease-in-out infinite`,
+            animationDelay: `${Math.random() * 2}s`,
+            '@keyframes float': {
+              '0%, 100%': {
+                transform: 'translateY(0px)',
+                opacity: 0.3,
+              },
+              '50%': {
+                transform: `translateY(-${20 + Math.random() * 20}px)`,
+                opacity: 1,
+              },
+            },
+          }}
+        />
+      ))}
+
+      {/* Cercles concentriques mystiques */}
+      {[1, 2, 3].map((ring) => (
+        <Box
+          key={ring}
+          sx={{
+            position: 'absolute',
+            width: { xs: ring * 100, sm: ring * 120, md: ring * 140 },
+            height: { xs: ring * 100, sm: ring * 120, md: ring * 140 },
+            border: '1px solid rgba(255, 215, 0, 0.1)',
+            borderRadius: '50%',
+            animation: `rotate ${10 + ring * 5}s linear infinite, pulse ${2 + ring}s ease-in-out infinite`,
+            '@keyframes rotate': {
+              '0%': { transform: 'rotate(0deg)' },
+              '100%': { transform: 'rotate(360deg)' },
+            },
+            '@keyframes pulse': {
+              '0%, 100%': { opacity: 0.2 },
+              '50%': { opacity: 0.4 },
+            },
+          }}
+        />
+      ))}
+
+      {/* Conteneur principal */}
       <Box
         sx={{
           position: 'relative',
@@ -70,35 +117,52 @@ const LoadingScreen = ({ message }: LoadingScreenProps) => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
+          zIndex: 10,
         }}
       >
-        {/* Logo FL²M au centre avec opacité progressive */}
+        {/* Logo FL²M avec effet mystique */}
         <Box
           component="img"
           src="/logo-flm2.png"
           alt="FL²M Logo"
           sx={{
             position: 'absolute',
-            width: { xs: 80, sm: 100, md: 120 },
-            height: { xs: 80, sm: 100, md: 120 },
-            opacity: 0.3 + logoOpacity * 0.7, // De 0.3 à 1.0
-            transition: 'opacity 0.2s ease',
-            animation: 'pulse 2s ease-in-out infinite',
-            '@keyframes pulse': {
+            width: { xs: 100, sm: 120, md: 140 },
+            height: { xs: 100, sm: 120, md: 140 },
+            filter: isComplete
+              ? 'drop-shadow(0 0 60px rgba(255, 215, 0, 1)) drop-shadow(0 0 100px rgba(255, 215, 0, 0.8))'
+              : 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.6))',
+            opacity: logoOpacity,
+            transform: isComplete ? 'scale(1.15)' : 'scale(1)',
+            transition: 'opacity 0.3s ease, filter 0.5s ease, transform 0.5s ease',
+            animation: isComplete ? 'logoFinalGlow 1.5s ease-in-out infinite' : 'logoGlow 3s ease-in-out infinite',
+            '@keyframes logoGlow': {
               '0%, 100%': {
+                filter: 'drop-shadow(0 0 20px rgba(255, 215, 0, 0.6))',
                 transform: 'scale(1)',
               },
               '50%': {
+                filter: 'drop-shadow(0 0 40px rgba(255, 215, 0, 1))',
                 transform: 'scale(1.05)',
+              },
+            },
+            '@keyframes logoFinalGlow': {
+              '0%, 100%': {
+                filter: 'drop-shadow(0 0 60px rgba(255, 215, 0, 1)) drop-shadow(0 0 100px rgba(255, 215, 0, 0.8))',
+              },
+              '50%': {
+                filter: 'drop-shadow(0 0 80px rgba(255, 215, 0, 1)) drop-shadow(0 0 120px rgba(255, 165, 0, 1))',
               },
             },
           }}
         />
 
-        {/* Nombres en cercle sans fond */}
+        {/* Nombres de numérologie */}
         {numerologyNumbers.map((num, index) => {
           const pos = getCirclePosition(index, numerologyNumbers.length);
-          const color = getNumberColor(index, numerologyNumbers.length);
+          const isActive = index <= currentIndex;
+          const isCurrent = index === currentIndex && !isComplete;
+
           return (
             <Box
               key={num}
@@ -106,15 +170,27 @@ const LoadingScreen = ({ message }: LoadingScreenProps) => {
                 position: 'absolute',
                 left: '50%',
                 top: '50%',
-                transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) ${
-                  index === currentIndex ? 'scale(1.3)' : 'scale(1)'
-                }`,
-                fontSize: { xs: 18, sm: 20, md: 22 },
+                transform: `translate(calc(-50% + ${pos.x}px), calc(-50% + ${pos.y}px)) scale(${
+                  isCurrent ? '1.4' : '1'
+                })`,
+                fontSize: { xs: 20, sm: 24, md: 28 },
                 fontWeight: 'bold',
-                transition: 'all 0.2s ease',
-                color: index <= currentIndex ? color : '#e0e0e0',
-                textShadow:
-                  index === currentIndex ? `0 0 10px ${color}` : 'none',
+                transition: isComplete
+                  ? 'opacity 1s ease, color 1s ease, text-shadow 1s ease, transform 0.3s ease'
+                  : 'all 0.3s ease',
+                color: isComplete
+                  ? 'rgba(255, 215, 0, 0.3)'
+                  : isActive
+                  ? '#FFD700'
+                  : 'rgba(255, 255, 255, 0.2)',
+                textShadow: isComplete
+                  ? '0 0 5px rgba(255, 215, 0, 0.2)'
+                  : isCurrent
+                  ? '0 0 15px #FFD700, 0 0 30px #FFA500'
+                  : isActive
+                  ? '0 0 10px rgba(255, 215, 0, 0.8)'
+                  : 'none',
+                opacity: isComplete ? 0.15 : isActive ? 1 : 0.3,
               }}
             >
               {num}
@@ -123,15 +199,18 @@ const LoadingScreen = ({ message }: LoadingScreenProps) => {
         })}
       </Box>
 
-      {/* Message optionnel */}
+      {/* Message avec style mystique */}
       {message && (
         <Box
           sx={{
-            marginTop: 3,
-            color: '#666666',
+            marginTop: 4,
+            color: 'rgba(255, 255, 255, 0.8)',
             fontSize: { xs: 14, sm: 16 },
             fontWeight: 300,
             textAlign: 'center',
+            textShadow: '0 0 10px rgba(255, 215, 0, 0.5)',
+            letterSpacing: '0.1em',
+            zIndex: 10,
           }}
         >
           {message}

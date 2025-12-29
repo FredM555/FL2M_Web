@@ -57,29 +57,41 @@ const MentionsLegalesPage: React.FC = () => {
             boxShadow: '0 2px 12px rgba(0,0,0,0.08)',
           }}
         >
-          {/* En-tête */}
-          <Typography
-            variant="h3"
-            component="h1"
-            gutterBottom
-            sx={{
-              fontWeight: 700,
-              color: '#1D3461',
-              mb: 2,
-              fontSize: { xs: '2rem', md: '2.5rem' },
-            }}
-          >
-            Mentions Légales
-          </Typography>
-          <Typography
-            variant="body1"
-            sx={{
-              color: 'text.secondary',
-              mb: 4,
-            }}
-          >
-            Dernière mise à jour : 29 décembre 2025
-          </Typography>
+          {/* En-tête avec Logo */}
+          <Box sx={{ display: 'flex', gap: 2, mb: 4 }}>
+            <Box
+              component="img"
+              src="/logo-flm2.png"
+              alt="FL²M Logo"
+              sx={{
+                height: { xs: '60px', md: '75px' },
+                width: 'auto',
+                objectFit: 'contain',
+              }}
+            />
+            <Box>
+              <Typography
+                variant="h3"
+                component="h1"
+                sx={{
+                  fontWeight: 700,
+                  color: '#1D3461',
+                  fontSize: { xs: '2rem', md: '2.5rem' },
+                  mb: 1,
+                }}
+              >
+                Mentions Légales
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'text.secondary',
+                }}
+              >
+                Dernière mise à jour : 29 décembre 2025
+              </Typography>
+            </Box>
+          </Box>
 
           <Divider sx={{ mb: 4 }} />
 
@@ -96,6 +108,7 @@ const MentionsLegalesPage: React.FC = () => {
             >
               1. Éditeur du site
             </Typography>
+            
             <Typography variant="body1" paragraph>
               Le site FL²M (https://fl2m.fr) est édité par :
             </Typography>

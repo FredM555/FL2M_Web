@@ -29,25 +29,66 @@
       }
     </style>
     <style>
-      /* Splash screen pour le chargement initial */
+      /* Splash screen mystique */
       #splash-screen {
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         height: 100vh;
-        background-color: #ffffff;
+        background: linear-gradient(135deg, #0a1628 0%, #1D3461 50%, #345995 100%);
         display: flex;
         flex-direction: column;
         justify-content: center;
         align-items: center;
         z-index: 9999;
         transition: opacity 0.5s ease-out;
+        overflow: hidden;
       }
 
       #splash-screen.fade-out {
         opacity: 0;
         pointer-events: none;
+      }
+
+      /* Particules dorées flottantes */
+      .splash-particle {
+        position: absolute;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        background: rgba(255, 215, 0, 0.6);
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+        animation: float 5s ease-in-out infinite;
+      }
+
+      @keyframes float {
+        0%, 100% {
+          transform: translateY(0px);
+          opacity: 0.3;
+        }
+        50% {
+          transform: translateY(-30px);
+          opacity: 1;
+        }
+      }
+
+      /* Cercles concentriques */
+      .splash-ring {
+        position: absolute;
+        border: 1px solid rgba(255, 215, 0, 0.1);
+        border-radius: 50%;
+        animation: rotate 15s linear infinite, pulse-ring 3s ease-in-out infinite;
+      }
+
+      @keyframes rotate {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      @keyframes pulse-ring {
+        0%, 100% { opacity: 0.2; }
+        50% { opacity: 0.4; }
       }
 
       #splash-container {
@@ -57,38 +98,82 @@
         display: flex;
         justify-content: center;
         align-items: center;
+        z-index: 10;
       }
 
       #splash-logo {
         position: absolute;
-        width: 100px;
-        height: 100px;
+        width: 120px;
+        height: 120px;
+        filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
         opacity: 0.3;
-        transition: opacity 0.2s ease;
-        animation: pulse 2s ease-in-out infinite;
+        transition: opacity 0.3s ease, filter 0.5s ease, transform 0.5s ease;
+        animation: logoGlow 3s ease-in-out infinite;
       }
 
-      @keyframes pulse {
+      #splash-logo.complete {
+        filter: drop-shadow(0 0 60px rgba(255, 215, 0, 1)) drop-shadow(0 0 100px rgba(255, 215, 0, 0.8));
+        transform: scale(1.15);
+        animation: logoFinalGlow 1.5s ease-in-out infinite;
+      }
+
+      @keyframes logoGlow {
         0%, 100% {
+          filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
           transform: scale(1);
         }
         50% {
+          filter: drop-shadow(0 0 40px rgba(255, 215, 0, 1));
           transform: scale(1.05);
+        }
+      }
+
+      @keyframes logoFinalGlow {
+        0%, 100% {
+          filter: drop-shadow(0 0 60px rgba(255, 215, 0, 1)) drop-shadow(0 0 100px rgba(255, 215, 0, 0.8));
+        }
+        50% {
+          filter: drop-shadow(0 0 80px rgba(255, 215, 0, 1)) drop-shadow(0 0 120px rgba(255, 165, 0, 1));
         }
       }
 
       .splash-number {
         position: absolute;
-        font-size: 20px;
+        font-size: 24px;
         font-weight: bold;
-        color: #e0e0e0;
-        transition: all 0.2s ease;
+        color: rgba(255, 255, 255, 0.2);
+        transition: all 0.3s ease, opacity 1s ease 0.3s;
         left: 50%;
         top: 50%;
+        opacity: 0.3;
       }
 
       .splash-number.active {
-        transform: scale(1.3);
+        color: #FFD700;
+        opacity: 1;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+      }
+
+      .splash-number.current {
+        text-shadow: 0 0 15px #FFD700, 0 0 30px #FFA500;
+      }
+
+      .splash-number.fading {
+        opacity: 0.15 !important;
+        color: rgba(255, 215, 0, 0.3) !important;
+        text-shadow: 0 0 5px rgba(255, 215, 0, 0.2) !important;
+        transition: opacity 1s ease, color 1s ease, text-shadow 1s ease !important;
+      }
+
+      #splash-message {
+        margin-top: 30px;
+        color: rgba(255, 255, 255, 0.8);
+        font-size: 16px;
+        font-weight: 300;
+        text-align: center;
+        text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        letter-spacing: 0.1em;
+        z-index: 10;
       }
 
       @media (max-width: 600px) {
@@ -97,18 +182,30 @@
           height: 280px;
         }
         #splash-logo {
-          width: 80px;
-          height: 80px;
+          width: 100px;
+          height: 100px;
         }
         .splash-number {
-          font-size: 18px;
+          font-size: 20px;
+        }
+        .splash-particle {
+          width: 2px;
+          height: 2px;
         }
       }
     </style>
   </head>
   <body style="width: 100%; margin: 0; padding: 0; overflow-x: hidden;">
-    <!-- Splash screen affiché pendant le chargement initial -->
+    <!-- Splash screen mystique -->
     <div id="splash-screen">
+      <!-- Particules dorées (générées dynamiquement) -->
+      <div id="particles-container"></div>
+
+      <!-- Cercles concentriques -->
+      <div class="splash-ring" style="width: 140px; height: 140px;"></div>
+      <div class="splash-ring" style="width: 240px; height: 240px;"></div>
+      <div class="splash-ring" style="width: 340px; height: 340px;"></div>
+
       <div id="splash-container">
         <img id="splash-logo" src="/logo-flm2.png" alt="FL²M Logo" />
         <div class="splash-number" data-index="0">1</div>
@@ -128,83 +225,102 @@
     <div id="root" style="width: 100%; margin: 0; padding: 0;"></div>
     <script type="module" src="/src/main.tsx"></script>
     <script>
-      // Positionner les nombres en cercle complet
-      const numbers = document.querySelectorAll('.splash-number');
-      const totalNumbers = numbers.length;
-      const radius = 110; // Rayon du cercle
-      const logo = document.getElementById('splash-logo');
-
-      // Fonction pour calculer la couleur de chaque nombre (dégradé de clair à foncé)
-      function getNumberColor(index, total) {
-        const ratio = index / (total - 1);
-        // Interpolation entre #FFD700 (255, 215, 0) et #FFA500 (255, 165, 0)
-        const r = 255;
-        const g = Math.round(215 - ratio * (215 - 165));
-        const b = 0;
-        return `rgb(${r}, ${g}, ${b})`;
+      // Créer les particules dorées
+      const particlesContainer = document.getElementById('particles-container');
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'splash-particle';
+        particle.style.left = Math.random() * 100 + '%';
+        particle.style.top = Math.random() * 100 + '%';
+        particle.style.animationDelay = Math.random() * 2 + 's';
+        particle.style.animationDuration = (3 + Math.random() * 4) + 's';
+        particlesContainer.appendChild(particle);
       }
 
+      // Positionner les nombres en cercle
+      const numbers = document.querySelectorAll('.splash-number');
+      const totalNumbers = numbers.length;
+      const radius = 110;
+      const logo = document.getElementById('splash-logo');
+
       numbers.forEach((num, index) => {
-        const angle = (index / totalNumbers) * 2 * Math.PI - Math.PI / 2; // Commence en haut
+        const angle = (index / totalNumbers) * 2 * Math.PI - Math.PI / 2;
         const x = Math.cos(angle) * radius;
         const y = Math.sin(angle) * radius;
         num.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px))`;
       });
 
-      // Animation de la progression numérique
+      // Animation de la progression
       let currentIndex = 0;
       let animationComplete = false;
+      let finalEffectTriggered = false;
 
       function animateNumbers() {
         numbers.forEach((num, index) => {
-          num.classList.remove('active');
-          const color = getNumberColor(index, totalNumbers);
+          num.classList.remove('active', 'current');
+
+          // Calculer la position
+          const angle = (index / totalNumbers) * 2 * Math.PI - Math.PI / 2;
+          const x = Math.cos(angle) * radius;
+          const y = Math.sin(angle) * radius;
+
           if (index <= currentIndex) {
-            num.style.color = color;
-            if (index === currentIndex) {
-              num.style.textShadow = `0 0 10px ${color}`;
-            } else {
-              num.style.textShadow = 'none';
-            }
+            num.classList.add('active');
+          }
+          if (index === currentIndex) {
+            num.classList.add('current');
+            // Agrandir le nombre actuel tout en gardant sa position
+            num.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(1.4)`;
+          } else {
+            // Taille normale pour les autres
+            num.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(1)`;
           }
         });
 
-        if (numbers[currentIndex]) {
-          const angle = (currentIndex / totalNumbers) * 2 * Math.PI - Math.PI / 2;
-          const x = Math.cos(angle) * radius;
-          const y = Math.sin(angle) * radius;
-          numbers[currentIndex].classList.add('active');
-          numbers[currentIndex].style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(1.3)`;
-        }
-
-        // Mettre à jour l'opacité du logo
+        // Augmenter progressivement l'opacité du logo (de 0.3 à 1)
         const logoOpacity = 0.3 + (currentIndex / (totalNumbers - 1)) * 0.7;
         if (logo) {
           logo.style.opacity = logoOpacity;
         }
 
-        if (currentIndex >= totalNumbers - 1) {
+        if (currentIndex >= totalNumbers - 1 && !finalEffectTriggered) {
           animationComplete = true;
-        } else {
+          finalEffectTriggered = true;
+
+          // Attendre 400ms pour que le 22 soit bien visible en surbrillance
+          setTimeout(function() {
+            // Activer l'effet final lumineux sur le logo
+            if (logo) {
+              logo.classList.add('complete');
+            }
+            // Faire disparaître progressivement tous les nombres
+            numbers.forEach((num, idx) => {
+              num.classList.remove('current');
+              num.classList.add('fading');
+              const angle = (idx / totalNumbers) * 2 * Math.PI - Math.PI / 2;
+              const x = Math.cos(angle) * radius;
+              const y = Math.sin(angle) * radius;
+              num.style.transform = `translate(calc(-50% + ${x}px), calc(-50% + ${y}px)) scale(1)`;
+            });
+          }, 400);
+        } else if (!animationComplete) {
           currentIndex++;
         }
       }
 
-      const numberInterval = setInterval(animateNumbers, 200); // Accéléré à 200ms
+      const numberInterval = setInterval(animateNumbers, 200);
 
-      // Masquer le splash screen seulement après l'animation complète
+      // Masquer le splash screen après animation complète
       let loadComplete = false;
       window.addEventListener('load', function() {
         loadComplete = true;
       });
 
-      // Vérifier périodiquement si l'animation est complète ET le chargement terminé
       const checkInterval = setInterval(function() {
         if (animationComplete && loadComplete) {
           clearInterval(numberInterval);
           clearInterval(checkInterval);
 
-          // Attendre un peu sur le dernier nombre (22)
           setTimeout(function() {
             const splash = document.getElementById('splash-screen');
             if (splash) {
@@ -213,7 +329,7 @@
                 splash.style.display = 'none';
               }, 500);
             }
-          }, 800); // Pause de 800ms sur le 22
+          }, 800);
         }
       }, 100);
     </script>

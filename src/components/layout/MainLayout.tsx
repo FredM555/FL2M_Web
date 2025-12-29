@@ -1563,20 +1563,30 @@ const MainLayout: React.FC = () => {
           <Grid container spacing={4} sx={{ py: 6 }}>
             {/* Section À propos */}
             <Grid item xs={12} md={4}>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  fontWeight: 600,
-                  background: 'linear-gradient(45deg, #FFD700, #FFA500)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  mb: 2,
-                }}
-              >
-                F L ²M
-              </Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                <Box
+                  component="img"
+                  src="/logo-flm2.png"
+                  alt="FL²M Logo"
+                  sx={{
+                    height: '1.5rem',
+                    width: 'auto',
+                    objectFit: 'contain',
+                  }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 600,
+                    background: 'linear-gradient(45deg, #FFD700, #FFA500)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  FL²M
+                </Typography>
+              </Box>
               <Typography
                 variant="body2"
                 sx={{
