@@ -114,7 +114,7 @@ const DailyDrawForm: React.FC<DailyDrawFormProps> = ({ getDailyDraw, loading, er
           }} />
         </Box>
         <Typography variant="h4" component="h2" gutterBottom fontWeight="bold" sx={{ fontSize: { xs: '1.5rem', sm: '2rem' } }}>
-          Votre message numérologique du jour
+          Votre message du jour
         </Typography>
         <Typography variant="body1" sx={{ opacity: 0.9, fontSize: { xs: '0.875rem', sm: '1rem' } }}>
           Découvrez votre message personnalisé basé sur votre jour et mois de naissance

@@ -1,6 +1,7 @@
 // src/pages/CGUPage.tsx
 import React from 'react';
 import { Box, Container, Typography, Divider, Paper } from '@mui/material';
+import { Link } from 'react-router-dom';
 
 const CGUPage: React.FC = () => {
   return (
@@ -466,9 +467,9 @@ const CGUPage: React.FC = () => {
             </Typography>
             <Typography variant="body1" paragraph>
               Le traitement des données personnelles des utilisateurs est effectué conformément à notre{' '}
-              <a href="/politique-confidentialite" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+              <Link to="/politique-confidentialite" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
                 Politique de Confidentialité
-              </a>, qui fait partie intégrante des présentes CGU.
+              </Link>, qui fait partie intégrante des présentes CGU.
             </Typography>
           </Box>
 
@@ -640,9 +641,9 @@ const CGUPage: React.FC = () => {
               <strong>Email :</strong> contact@fl2m.fr<br />
               <strong>Courrier :</strong> FL2M IPS, 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
               <strong>Formulaire de contact :</strong>{' '}
-              <a href="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+              <Link to="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
                 https://fl2m.fr/contact
-              </a>
+              </Link>
             </Typography>
           </Box>
 

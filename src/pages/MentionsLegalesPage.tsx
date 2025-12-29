@@ -1,6 +1,7 @@
 // src/pages/MentionsLegalesPage.tsx
 import React from 'react';
 import { Box, Container, Typography, Divider, Paper } from '@mui/material';
+import { Link } from 'react-router-dom';
 
 const MentionsLegalesPage: React.FC = () => {
   return (
@@ -222,9 +223,9 @@ const MentionsLegalesPage: React.FC = () => {
             </Typography>
             <Typography variant="body1" paragraph>
               Pour plus d'informations sur la collecte et le traitement de vos données personnelles, consultez notre{' '}
-              <a href="/politique-confidentialite" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+              <Link to="/politique-confidentialite" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
                 Politique de Confidentialité
-              </a>.
+              </Link>.
             </Typography>
           </Box>
 
@@ -265,9 +266,9 @@ const MentionsLegalesPage: React.FC = () => {
             </Typography>
             <Typography variant="body1" paragraph>
               Pour plus d'informations sur la gestion des cookies, consultez la section dédiée dans notre{' '}
-              <a href="/politique-confidentialite" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+              <Link to="/politique-confidentialite" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
                 Politique de Confidentialité
-              </a>.
+              </Link>.
             </Typography>
           </Box>
 
@@ -351,9 +352,9 @@ const MentionsLegalesPage: React.FC = () => {
               <strong>Par email :</strong> contact@fl2m.fr<br />
               <strong>Par courrier :</strong> FL2M IPS, 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
               <strong>Via le formulaire de contact :</strong>{' '}
-              <a href="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+              <Link to="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
                 Page Contact
-              </a>
+              </Link>
             </Typography>
           </Box>
         </Paper>

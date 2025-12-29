@@ -35,7 +35,7 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: 'Mon message numérologique du jour',
+        title: 'Mon message du jour',
         text: `Découvrez votre message du jour sur FL²M !`,
         url: window.location.href
       }).catch(() => {

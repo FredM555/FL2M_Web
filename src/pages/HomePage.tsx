@@ -1,7 +1,6 @@
 // src/pages/HomePage.tsx
 import { Box, Button, Container, Grid, Paper, Typography, Card, CardContent, useTheme, useMediaQuery } from '@mui/material';
-import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import PersonIcon from '@mui/icons-material/Person';
 import BusinessIcon from '@mui/icons-material/Business';
 import SportsSoccerIcon from '@mui/icons-material/SportsSoccer';
@@ -11,30 +10,10 @@ import PsychologyIcon from '@mui/icons-material/Psychology';
 import GroupsIcon from '@mui/icons-material/Groups';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import DailyDrawHomeSection from '../components/DailyDrawHomeSection';
-import { Capacitor } from '@capacitor/core';
 
 const HomePage = () => {
-  const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-
-  // Sur mobile (application), rediriger automatiquement vers /message-du-jour au démarrage
-  useEffect(() => {
-    // Détecte si on est dans l'application mobile Capacitor
-    const isNativeApp = Capacitor.isNativePlatform();
-
-    // Rediriger uniquement si :
-    // 1. On est sur une plateforme native (iOS/Android)
-    // OU 2. On est sur mobile et on vient directement sur la page d'accueil
-    if (isNativeApp || (isMobile && window.location.pathname === '/')) {
-      // Petit délai pour laisser le temps à la page de se charger
-      const timer = setTimeout(() => {
-        navigate('/message-du-jour', { replace: true });
-      }, 100);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isMobile, navigate]);
 
   return (
     <Box

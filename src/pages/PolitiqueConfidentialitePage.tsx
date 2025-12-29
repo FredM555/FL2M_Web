@@ -1,6 +1,7 @@
 // src/pages/PolitiqueConfidentialitePage.tsx
 import React from 'react';
 import { Box, Container, Typography, Divider, Paper } from '@mui/material';
+import { Link } from 'react-router-dom';
 
 const PolitiqueConfidentialitePage: React.FC = () => {
   return (
@@ -465,9 +466,9 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               <strong>Droit d'accès :</strong> Vous pouvez demander l'accès à vos données personnelles<br /><br />
               <strong>Droit de rectification :</strong> Vous pouvez demander la correction de données inexactes ou incomplètes<br /><br />
               <strong>Droit à l'effacement :</strong> Vous pouvez demander la suppression de vos données dans certains cas (
-              <a href="/suppression-compte" style={{ color: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.3)' }}>
+              <Link to="/suppression-compte" style={{ color: 'inherit', textDecoration: 'underline', textDecorationColor: 'rgba(0,0,0,0.3)' }}>
                 voir la procédure
-              </a>
+              </Link>
               )<br /><br />
               <strong>Droit à la limitation du traitement :</strong> Vous pouvez demander la limitation du traitement de vos données<br /><br />
               <strong>Droit à la portabilité :</strong> Vous pouvez recevoir vos données dans un format structuré et lisible<br /><br />
@@ -483,9 +484,9 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               <strong>Par email :</strong> contact@fl2m.fr (objet : "Exercice de mes droits RGPD")<br />
               <strong>Par courrier :</strong> FL2M IPS - RGPD, 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
               <strong>Via le formulaire de contact :</strong>{' '}
-              <a href="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+              <Link to="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
                 Page Contact
-              </a>
+              </Link>
             </Typography>
 
             <Typography variant="body1" paragraph sx={{ mt: 2 }}>
@@ -657,9 +658,9 @@ const PolitiqueConfidentialitePage: React.FC = () => {
               <strong>Email :</strong> contact@fl2m.fr<br />
               <strong>Courrier :</strong> FL2M IPS, 6 rue Albert Nicolas, 26600 Tain-l'Hermitage, France<br />
               <strong>Formulaire de contact :</strong>{' '}
-              <a href="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
+              <Link to="/contact" style={{ color: '#FFD700', textDecoration: 'none', fontWeight: 600 }}>
                 https://fl2m.fr/contact
-              </a>
+              </Link>
             </Typography>
           </Box>
 
