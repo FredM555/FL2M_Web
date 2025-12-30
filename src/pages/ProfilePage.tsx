@@ -126,7 +126,10 @@ const ProfilePage = () => {
       if (error) {
         logger.error('Erreur lors du chargement des documents:', error);
       } else if (data) {
-        setDocuments(data);
+        // Filtrer pour n'afficher QUE les documents publics
+        // Les documents privés sont accessibles uniquement dans la partie intervenant (rendez-vous)
+        const publicDocuments = data.filter(doc => doc.visibility === 'public');
+        setDocuments(publicDocuments);
       }
     } catch (err) {
       logger.error('Erreur:', err);
@@ -817,7 +820,7 @@ const ProfilePage = () => {
                           border: '1px solid rgba(52, 89, 149, 0.3)',
                         }}
                       >
-                        Aucun document disponible pour le moment. Vos documents seront ajoutés par vos intervenants.
+                        Aucun document public disponible pour le moment. Vos documents publics seront ajoutés par vos intervenants. Les documents privés sont accessibles uniquement dans la partie intervenant.
                       </Alert>
                     )}
                   </CardContent>

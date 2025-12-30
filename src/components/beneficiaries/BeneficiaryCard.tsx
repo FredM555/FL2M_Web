@@ -67,20 +67,15 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
       try {
         const { data } = await getBeneficiaryDocumentsByType(beneficiary.id);
         if (data) {
-          // Filtrer les documents selon le type d'utilisateur
-          // Les clients ne voient que les documents publics
-          if (userType === 'client') {
-            const filteredData: Record<string, BeneficiaryDocument> = {};
-            Object.entries(data).forEach(([key, document]) => {
-              if (document.visibility === 'public') {
-                filteredData[key] = document;
-              }
-            });
-            setAvailableDocuments(filteredData);
-          } else {
-            // Les intervenants et admins voient tous les documents
-            setAvailableDocuments(data);
-          }
+          // Filtrer pour n'afficher QUE les documents publics (pour tous les utilisateurs)
+          // Les documents privés sont accessibles uniquement dans la partie intervenant (rendez-vous)
+          const filteredData: Record<string, BeneficiaryDocument> = {};
+          Object.entries(data).forEach(([key, document]) => {
+            if (document.visibility === 'public') {
+              filteredData[key] = document;
+            }
+          });
+          setAvailableDocuments(filteredData);
         }
       } catch (err) {
         logger.error('Erreur lors du chargement des documents:', err);

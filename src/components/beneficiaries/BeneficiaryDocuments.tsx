@@ -69,7 +69,7 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
     if (!uploaderProfile) return 'Utilisateur inconnu';
 
     // Pour les intervenants et admins : afficher display_name + titre
-    if (uploaderProfile.user_type === 'practitioner' || uploaderProfile.user_type === 'admin') {
+    if (uploaderProfile.user_type === 'intervenant' || uploaderProfile.user_type === 'admin') {
       const displayName = uploaderProfile.display_name || `${uploaderProfile.first_name} ${uploaderProfile.last_name}`;
       const title = uploaderProfile.title;
 
@@ -127,13 +127,10 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
       const { data, error } = await getBeneficiaryDocuments(beneficiaryId);
       if (error) throw error;
 
-      // Filtrer les documents selon le type d'utilisateur
+      // Filtrer pour n'afficher QUE les documents publics
+      // Les documents privés sont accessibles uniquement dans la partie intervenant (rendez-vous)
       let filteredDocuments = data || [];
-
-      // Si l'utilisateur n'est pas intervenant ou admin, ne montrer que les documents publics
-      if (profile && profile.user_type !== 'intervenant' && profile.user_type !== 'admin') {
-        filteredDocuments = filteredDocuments.filter(doc => doc.visibility === 'public');
-      }
+      filteredDocuments = filteredDocuments.filter(doc => doc.visibility === 'public');
 
       setDocuments(filteredDocuments);
 
@@ -362,18 +359,14 @@ export const BeneficiaryDocuments: React.FC<BeneficiaryDocumentsProps> = ({
         </Alert>
       )}
 
-      {/* Message informatif pour les clients */}
-      {profile && profile.user_type !== 'intervenant' && profile.user_type !== 'admin' && (
-        <Alert severity="info" sx={{ mb: 2 }}>
-          Vous voyez uniquement les documents qui vous ont été partagés par votre intervenant.
-        </Alert>
-      )}
+      {/* Message informatif pour tous les utilisateurs */}
+      <Alert severity="info" sx={{ mb: 2 }}>
+        Cette page affiche uniquement les documents publics. Les documents privés sont accessibles uniquement dans la partie intervenant (rendez-vous).
+      </Alert>
 
       {documents.length === 0 ? (
         <Typography color="text.secondary" sx={{ py: 3, textAlign: 'center' }}>
-          {profile && profile.user_type !== 'intervenant' && profile.user_type !== 'admin'
-            ? 'Aucun document partagé pour le moment'
-            : 'Aucun document disponible'}
+          Aucun document public pour le moment
         </Typography>
       ) : (
         <List>

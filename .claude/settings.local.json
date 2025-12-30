@@ -91,7 +91,9 @@
       "Bash(if not exist \"public\\\\downloads\" mkdir \"public\\\\downloads\")",
       "Bash(keytool:*)",
       "Bash(npm run build:aab:*)",
-      "Bash(gradlew.bat bundleRelease:*)"
+      "Bash(gradlew.bat bundleRelease:*)",
+      "Bash(java:*)",
+      "Bash(gradlew.bat:*)"
     ],
     "deny": [],
     "ask": []

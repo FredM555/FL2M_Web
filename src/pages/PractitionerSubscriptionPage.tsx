@@ -45,9 +45,29 @@ const PractitionerSubscriptionPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
+  // États pour le code promo
+  const [promoCode, setPromoCode] = useState('');
+  const [promoCodeValid, setPromoCodeValid] = useState<boolean | null>(null);
+  const [promoCodeMessage, setPromoCodeMessage] = useState('');
+  const [validatingPromoCode, setValidatingPromoCode] = useState(false);
+  const [promoCodeId, setPromoCodeId] = useState<string | null>(null);
+
+  // États pour l'annulation d'abonnement
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [canceling, setCanceling] = useState(false);
+
   useEffect(() => {
     loadCurrentContract();
   }, [user]);
+
+  // Réinitialiser la validation du code promo quand le type de contrat change
+  useEffect(() => {
+    if (promoCodeValid !== null) {
+      setPromoCodeValid(null);
+      setPromoCodeMessage('');
+      setPromoCodeId(null);
+    }
+  }, [selectedContractType]);
 
   const loadCurrentContract = async () => {
     if (!user) {
@@ -177,6 +197,66 @@ const PractitionerSubscriptionPage: React.FC = () => {
       logger.error('Erreur lors du changement d\'abonnement:', err);
       setError(err.message || 'Erreur lors du changement d\'abonnement');
       setSubmitting(false);
+    }
+  };
+
+  const validatePromoCode = async () => {
+    if (!promoCode.trim() || !user) return;
+
+    setValidatingPromoCode(true);
+    setPromoCodeValid(null);
+    setPromoCodeMessage('');
+
+    try {
+      const { data, error } = await supabase.rpc('validate_promo_code', {
+        p_code: promoCode.trim().toUpperCase(),
+        p_user_id: user.id,
+        p_contract_type: selectedContractType
+      });
+
+      if (error) throw error;
+
+      const result = data[0];
+      setPromoCodeValid(result.valid);
+      setPromoCodeMessage(result.message);
+      if (result.valid) {
+        setPromoCodeId(result.promo_code_id);
+      }
+    } catch (err: any) {
+      logger.error('Erreur lors de la validation du code promo:', err);
+      setPromoCodeValid(false);
+      setPromoCodeMessage('Erreur lors de la validation du code');
+    } finally {
+      setValidatingPromoCode(false);
+    }
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!currentContract || !user) return;
+
+    setCanceling(true);
+    setError(null);
+
+    try {
+      // Mettre à jour le contrat pour indiquer l'annulation à la fin de la période
+      const { error: updateError } = await supabase
+        .from('practitioner_contracts')
+        .update({
+          cancel_at_period_end: true,
+          canceled_at: new Date().toISOString()
+        })
+        .eq('id', currentContract.id);
+
+      if (updateError) throw updateError;
+
+      // Recharger le contrat
+      await loadCurrentContract();
+      setCancelDialogOpen(false);
+    } catch (err: any) {
+      logger.error('Erreur lors de l\'annulation de l\'abonnement:', err);
+      setError(err.message || 'Erreur lors de l\'annulation de l\'abonnement');
+    } finally {
+      setCanceling(false);
     }
   };
 

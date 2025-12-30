@@ -43,6 +43,7 @@ import SacredGeometryBackground from '../../components/SacredGeometryBackground'
 import { AppointmentDetailsDialog } from '../../components/appointments/AppointmentDetailsDialog';
 import { AppointmentValidationCard } from '../../components/appointments/AppointmentValidationCard';
 import { NumerologyTriangleAvatar } from '../../components/profile/NumerologyTriangleAvatar';
+import { PractitionerBeneficiariesList } from '../../components/practitioner/PractitionerBeneficiariesList';
 import { logger } from '../../utils/logger';
 
 // Interface pour la valeur de l'onglet
@@ -860,6 +861,7 @@ const PractitionerAppointmentsPage = () => {
                 />
                 <Tab label="Passés" />
                 <Tab label="Annulés" />
+                <Tab label="Bénéficiaires" />
               </Tabs>
             </Box>
 
@@ -950,6 +952,17 @@ const PractitionerAppointmentsPage = () => {
                     renderAppointmentCard(appointment, false)
                   )}
                 </Grid>
+              )}
+            </TabPanel>
+
+            {/* Onglet "Bénéficiaires" */}
+            <TabPanel value={tabValue} index={4}>
+              {practitionerId ? (
+                <PractitionerBeneficiariesList practitionerId={practitionerId} />
+              ) : (
+                <Alert severity="warning">
+                  Impossible de charger les bénéficiaires. Aucun ID d'intervenant trouvé.
+                </Alert>
               )}
             </TabPanel>
           </Paper>
