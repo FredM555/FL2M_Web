@@ -1,6 +1,7 @@
 // src/context/AuthContext.tsx - Solution modifiée sans awaits
 import { createContext, useContext, useState, useEffect, ReactNode, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
 import { supabase, Profile, getProfile, logActivity } from '../services/supabase';
 import { logger } from '../utils/logger';
 
@@ -387,10 +388,18 @@ const logLoginFailed = (email: string, reason?: string) => {
       sessionStorage.setItem('oauth_redirect', currentPath);
     }
 
+    // Détecter la plateforme et utiliser la bonne URL de redirection
+    const isNative = Capacitor.isNativePlatform();
+    const redirectTo = isNative
+      ? 'https://www.fl2m.fr/auth/callback'  // Deep link pour mobile
+      : `${window.location.origin}/auth/callback`; // URL web standard
+
+    logger.info('[SIGNIN_GOOGLE] Plateforme:', isNative ? 'Mobile (native)' : 'Web', 'redirectTo:', redirectTo);
+
     return supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent',
@@ -415,10 +424,18 @@ const logLoginFailed = (email: string, reason?: string) => {
       sessionStorage.setItem('oauth_redirect', currentPath);
     }
 
+    // Détecter la plateforme et utiliser la bonne URL de redirection
+    const isNative = Capacitor.isNativePlatform();
+    const redirectTo = isNative
+      ? 'https://www.fl2m.fr/auth/callback'  // Deep link pour mobile
+      : `${window.location.origin}/auth/callback`; // URL web standard
+
+    logger.info('[SIGNIN_APPLE] Plateforme:', isNative ? 'Mobile (native)' : 'Web', 'redirectTo:', redirectTo);
+
     return supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo,
       },
     })
       .then(({ error }) => {
