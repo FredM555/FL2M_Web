@@ -3,27 +3,25 @@ import React, { useState, useEffect } from 'react';
 import {
   Box,
   Card,
-  CardContent,
   Typography,
   Rating,
   TextField,
-  Button,
   Chip,
   CircularProgress,
   Alert,
-  IconButton,
-  Collapse,
   Grid,
   ToggleButtonGroup,
   ToggleButton,
   Divider,
   Stack,
-  Paper
+  Paper,
+  IconButton
 } from '@mui/material';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import ExpandLessIcon from '@mui/icons-material/ExpandLess';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
+import EditIcon from '@mui/icons-material/Edit';
+import CheckIcon from '@mui/icons-material/Check';
+import CloseIcon from '@mui/icons-material/Close';
 import {
   getBeneficiaryMessageHistory,
   getBeneficiaryRatingStats,
@@ -39,6 +37,13 @@ interface Props {
   beneficiaryName: string;
 }
 
+// Grouper les messages par jour
+interface MessagesByDate {
+  date: string;
+  messages: DailyMessageHistory[];
+  timestamp: number;
+}
+
 export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, beneficiaryName }) => {
   const [messages, setMessages] = useState<DailyMessageHistory[]>([]);
   const [stats, setStats] = useState<MessageHistoryStats | null>(null);
@@ -46,7 +51,6 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'rated' | 'unrated'>('all');
   const [minRating, setMinRating] = useState<number | null>(null);
-  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set());
 
   // Charger les messages et les stats
   useEffect(() => {
@@ -132,28 +136,83 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
     }
   };
 
-  const toggleExpand = (messageId: string) => {
-    setExpandedMessages(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(messageId)) {
-        newSet.delete(messageId);
-      } else {
-        newSet.add(messageId);
-      }
-      return newSet;
-    });
+  // Fonction pour déterminer la couleur en fonction de l'origine
+  const getColorForOrigine = (origineLabel: string): string => {
+    // Triangle fondamental (Tronc, Racines, Dynamique) → Bleu
+    if (
+      origineLabel.includes('Tronc') ||
+      origineLabel.includes('Racine') ||
+      origineLabel.includes('Dynamique')
+    ) {
+      return '#345995'; // primary.main
+    }
+
+    // Jour personnel → Violet
+    if (origineLabel.includes('Jour personnel')) {
+      return '#9c27b0'; // secondary.main
+    }
+
+    // Arbre numérologique (Écorce, Branche, Feuille, Fruit) → Rouge
+    if (
+      origineLabel.includes('Écorce') ||
+      origineLabel.includes('Branche') ||
+      origineLabel.includes('Feuille') ||
+      origineLabel.includes('Fruit')
+    ) {
+      return '#ff6b6b';
+    }
+
+    // Par défaut → Bleu
+    return '#345995';
   };
 
-  const formatDate = (dateString: string) => {
+  // Grouper les messages par date
+  const groupMessagesByDate = (): MessagesByDate[] => {
+    const grouped = new Map<string, DailyMessageHistory[]>();
+
+    messages.forEach(msg => {
+      const dateKey = new Date(msg.viewed_at).toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+
+      if (!grouped.has(dateKey)) {
+        grouped.set(dateKey, []);
+      }
+      grouped.get(dateKey)!.push(msg);
+    });
+
+    // Convertir en tableau et trier
+    const result = Array.from(grouped.entries()).map(([date, msgs]) => {
+      // Trier les messages d'un même jour par heure croissante
+      const sortedMsgs = msgs.sort((a, b) => {
+        return new Date(a.viewed_at).getTime() - new Date(b.viewed_at).getTime();
+      });
+
+      return {
+        date,
+        messages: sortedMsgs,
+        // Garder le timestamp pour trier les groupes
+        timestamp: new Date(msgs[0].viewed_at).getTime()
+      };
+    });
+
+    // Trier les groupes par date décroissante (plus récent en premier)
+    result.sort((a, b) => b.timestamp - a.timestamp);
+
+    return result;
+  };
+
+  const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit'
     }).format(date);
   };
+
+  const messagesByDate = groupMessagesByDate();
 
   if (loading) {
     return (
@@ -165,63 +224,46 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
 
   return (
     <Box>
-      <Typography variant="h5" sx={{ mb: 3, fontWeight: 600 }}>
-        Mes Messages du Jour
-      </Typography>
-
-      {/* Statistiques */}
+      {/* Statistiques compactes */}
       {stats && stats.total_messages > 0 && (
-        <Paper sx={{ p: 3, mb: 3, backgroundColor: 'primary.50' }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Statistiques
-          </Typography>
+        <Paper sx={{ p: 2, mb: 2, backgroundColor: 'rgba(52, 89, 149, 0.05)' }}>
           <Grid container spacing={2}>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body2" color="text.secondary">
-                Total messages
-              </Typography>
-              <Typography variant="h6">{stats.total_messages}</Typography>
+            <Grid item xs={3}>
+              <Typography variant="caption" color="text.secondary">Total</Typography>
+              <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>{stats.total_messages}</Typography>
             </Grid>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body2" color="text.secondary">
-                Messages notés
-              </Typography>
-              <Typography variant="h6">{stats.rated_messages}</Typography>
+            <Grid item xs={3}>
+              <Typography variant="caption" color="text.secondary">Notés</Typography>
+              <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>{stats.rated_messages}</Typography>
             </Grid>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body2" color="text.secondary">
-                Note moyenne
-              </Typography>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography variant="h6">
+            <Grid item xs={3}>
+              <Typography variant="caption" color="text.secondary">Moyenne</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>
                   {stats.average_rating ? stats.average_rating.toFixed(1) : '-'}
                 </Typography>
-                {stats.average_rating && (
-                  <Rating value={stats.average_rating} precision={0.1} readOnly size="small" />
-                )}
+                {stats.average_rating && <StarIcon sx={{ fontSize: 16, color: 'primary.main' }} />}
               </Box>
             </Grid>
-            <Grid item xs={6} sm={3}>
-              <Typography variant="body2" color="text.secondary">
-                5 étoiles
-              </Typography>
-              <Typography variant="h6">{stats.five_stars_count}</Typography>
+            <Grid item xs={3}>
+              <Typography variant="caption" color="text.secondary">5★</Typography>
+              <Typography variant="h6" sx={{ fontSize: '1.1rem' }}>{stats.five_stars_count}</Typography>
             </Grid>
           </Grid>
         </Paper>
       )}
 
-      {/* Filtres */}
-      <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+      {/* Filtres compacts */}
+      <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
         <ToggleButtonGroup
           value={filter}
           exclusive
           onChange={(_, newFilter) => newFilter && setFilter(newFilter)}
           size="small"
         >
-          <ToggleButton value="all">Tous</ToggleButton>
-          <ToggleButton value="rated">Notés</ToggleButton>
-          <ToggleButton value="unrated">Non notés</ToggleButton>
+          <ToggleButton value="all" sx={{ py: 0.5, px: 1.5 }}>Tous</ToggleButton>
+          <ToggleButton value="rated" sx={{ py: 0.5, px: 1.5 }}>Notés</ToggleButton>
+          <ToggleButton value="unrated" sx={{ py: 0.5, px: 1.5 }}>Non notés</ToggleButton>
         </ToggleButtonGroup>
 
         <ToggleButtonGroup
@@ -230,37 +272,52 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
           onChange={(_, newRating) => setMinRating(newRating)}
           size="small"
         >
-          <ToggleButton value={null}>Toutes notes</ToggleButton>
-          <ToggleButton value={5}>5★</ToggleButton>
-          <ToggleButton value={4}>4★+</ToggleButton>
-          <ToggleButton value={3}>3★+</ToggleButton>
+          <ToggleButton value={null} sx={{ py: 0.5, px: 1.5 }}>Toutes</ToggleButton>
+          <ToggleButton value={5} sx={{ py: 0.5, px: 1.5 }}>5★</ToggleButton>
+          <ToggleButton value={4} sx={{ py: 0.5, px: 1.5 }}>4★+</ToggleButton>
+          <ToggleButton value={3} sx={{ py: 0.5, px: 1.5 }}>3★+</ToggleButton>
         </ToggleButtonGroup>
       </Box>
 
       {/* Messages d'erreur */}
       {error && (
-        <Alert severity="error" sx={{ mb: 3 }} onClose={() => setError(null)}>
+        <Alert severity="error" sx={{ mb: 2, py: 0.5 }} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
 
-      {/* Liste des messages */}
+      {/* Messages groupés par date */}
       {messages.length === 0 ? (
-        <Alert severity="info">
+        <Alert severity="info" sx={{ py: 1 }}>
           Aucun message trouvé. Consultez votre message du jour pour commencer votre historique !
         </Alert>
       ) : (
         <Stack spacing={2}>
-          {messages.map((message) => (
-            <MessageCard
-              key={message.id}
-              message={message}
-              expanded={expandedMessages.has(message.id)}
-              onToggleExpand={() => toggleExpand(message.id)}
-              onRate={handleRateMessage}
-              onUpdateNote={handleUpdateNote}
-              formatDate={formatDate}
-            />
+          {messagesByDate.map((group) => (
+            <Box key={group.date}>
+              {/* Séparateur de date */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+                <Divider sx={{ flex: 1 }} />
+                <Typography variant="body2" sx={{ fontWeight: 600, color: 'primary.main' }}>
+                  {group.date}
+                </Typography>
+                <Divider sx={{ flex: 1 }} />
+              </Box>
+
+              {/* Messages du jour */}
+              <Stack spacing={1}>
+                {group.messages.map((message) => (
+                  <CompactMessageCard
+                    key={message.id}
+                    message={message}
+                    onRate={handleRateMessage}
+                    onUpdateNote={handleUpdateNote}
+                    formatTime={formatTime}
+                    getColorForOrigine={getColorForOrigine}
+                  />
+                ))}
+              </Stack>
+            </Box>
           ))}
         </Stack>
       )}
@@ -268,23 +325,21 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
   );
 };
 
-// Composant pour afficher un message
-interface MessageCardProps {
+// Composant compact pour afficher un message
+interface CompactMessageCardProps {
   message: DailyMessageHistory;
-  expanded: boolean;
-  onToggleExpand: () => void;
   onRate: (messageId: string, rating: number) => void;
   onUpdateNote: (messageId: string, note: string) => void;
-  formatDate: (dateString: string) => string;
+  formatTime: (dateString: string) => string;
+  getColorForOrigine: (origineLabel: string) => string;
 }
 
-const MessageCard: React.FC<MessageCardProps> = ({
+const CompactMessageCard: React.FC<CompactMessageCardProps> = ({
   message,
-  expanded,
-  onToggleExpand,
   onRate,
   onUpdateNote,
-  formatDate
+  formatTime,
+  getColorForOrigine
 }) => {
   const [noteEditing, setNoteEditing] = useState(false);
   const [noteValue, setNoteValue] = useState(message.user_note || '');
@@ -294,124 +349,143 @@ const MessageCard: React.FC<MessageCardProps> = ({
     setNoteEditing(false);
   };
 
+  const backgroundColor = getColorForOrigine(message.origine_label);
+
   return (
-    <Card variant="outlined">
-      <CardContent>
-        {/* En-tête */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Box sx={{ flex: 1 }}>
-            <Chip
-              label={message.origine_label}
-              size="small"
-              sx={{ mb: 1 }}
-              color="primary"
-              variant="outlined"
-            />
-            <Typography variant="h6" sx={{ fontWeight: 600 }}>
-              {message.titre}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Consulté le {formatDate(message.viewed_at)}
-            </Typography>
-          </Box>
-          <IconButton onClick={onToggleExpand} size="small">
-            {expanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-          </IconButton>
+    <Card
+      variant="outlined"
+      sx={{
+        p: 1.5,
+        backgroundColor: 'rgba(255, 255, 255, 0.7)',
+        transition: 'all 0.2s ease',
+        '&:hover': {
+          backgroundColor: 'rgba(255, 255, 255, 0.95)',
+          boxShadow: 1
+        }
+      }}
+    >
+      {/* En-tête avec nombre et titre */}
+      <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1 }}>
+        {/* Nombre en évidence */}
+        <Box
+          sx={{
+            minWidth: 45,
+            height: 45,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor,
+            color: 'white',
+            borderRadius: '8px',
+            fontWeight: 700,
+            fontSize: '1.3rem',
+            flexShrink: 0
+          }}
+        >
+          {message.nombre}
         </Box>
 
-        {/* Contenu développé */}
-        <Collapse in={expanded}>
-          <Divider sx={{ my: 2 }} />
-
-          {/* Message */}
-          <Typography variant="body1" sx={{ mb: 3, whiteSpace: 'pre-line' }}>
-            {message.message}
-          </Typography>
-
-          {/* Notation */}
-          <Box sx={{ mb: 3 }}>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              Votre notation :
+        {/* Infos principales */}
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.9rem' }}>
+              {message.titre}
             </Typography>
-            <Rating
-              value={message.rating || 0}
-              onChange={(_, newValue) => newValue && onRate(message.id, newValue)}
-              size="large"
-              icon={<StarIcon fontSize="inherit" />}
-              emptyIcon={<StarBorderIcon fontSize="inherit" />}
-            />
-            {message.rated_at && (
-              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                Noté le {formatDate(message.rated_at)}
+            <Typography variant="caption" color="text.secondary" sx={{ whiteSpace: 'nowrap' }}>
+              {formatTime(message.viewed_at)}
+            </Typography>
+          </Box>
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.75rem' }}>
+            {message.origine_label}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* Message */}
+      <Typography
+        variant="body2"
+        sx={{
+          mb: 1,
+          whiteSpace: 'pre-line',
+          fontSize: '0.875rem',
+          lineHeight: 1.5,
+          color: 'text.primary'
+        }}
+      >
+        {message.message}
+      </Typography>
+
+      {/* Notation */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+        <Rating
+          value={message.rating || 0}
+          onChange={(_, newValue) => newValue && onRate(message.id, newValue)}
+          size="small"
+          icon={<StarIcon fontSize="inherit" />}
+          emptyIcon={<StarBorderIcon fontSize="inherit" />}
+        />
+      </Box>
+
+      {/* Note personnelle */}
+      {noteEditing ? (
+        <Box>
+          <TextField
+            fullWidth
+            multiline
+            rows={2}
+            value={noteValue}
+            onChange={(e) => setNoteValue(e.target.value)}
+            placeholder="Note personnelle..."
+            size="small"
+            sx={{
+              mb: 0.5,
+              '& .MuiInputBase-input': { fontSize: '0.875rem' }
+            }}
+          />
+          <Box sx={{ display: 'flex', gap: 0.5 }}>
+            <IconButton size="small" color="primary" onClick={handleSaveNote}>
+              <CheckIcon fontSize="small" />
+            </IconButton>
+            <IconButton
+              size="small"
+              onClick={() => {
+                setNoteValue(message.user_note || '');
+                setNoteEditing(false);
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+        </Box>
+      ) : (
+        message.user_note || !message.user_note ? (
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
+            {message.user_note && (
+              <Typography
+                variant="caption"
+                sx={{
+                  fontStyle: 'italic',
+                  flex: 1,
+                  color: 'text.secondary',
+                  fontSize: '0.8rem',
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
+                  p: 0.5,
+                  borderRadius: 0.5
+                }}
+              >
+                {message.user_note}
               </Typography>
             )}
+            <IconButton
+              size="small"
+              onClick={() => setNoteEditing(true)}
+              sx={{ p: 0.5 }}
+            >
+              <EditIcon sx={{ fontSize: 16 }} />
+            </IconButton>
           </Box>
-
-          {/* Note personnelle */}
-          <Box>
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              Note personnelle :
-            </Typography>
-            {noteEditing ? (
-              <Box>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={3}
-                  value={noteValue}
-                  onChange={(e) => setNoteValue(e.target.value)}
-                  placeholder="Ajoutez une note personnelle..."
-                  size="small"
-                  sx={{ mb: 1 }}
-                />
-                <Box sx={{ display: 'flex', gap: 1 }}>
-                  <Button size="small" variant="contained" onClick={handleSaveNote}>
-                    Enregistrer
-                  </Button>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    onClick={() => {
-                      setNoteValue(message.user_note || '');
-                      setNoteEditing(false);
-                    }}
-                  >
-                    Annuler
-                  </Button>
-                </Box>
-              </Box>
-            ) : (
-              <Box>
-                {message.user_note ? (
-                  <Typography variant="body2" sx={{ fontStyle: 'italic', mb: 1 }}>
-                    {message.user_note}
-                  </Typography>
-                ) : (
-                  <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', mb: 1 }}>
-                    Aucune note personnelle
-                  </Typography>
-                )}
-                <Button size="small" onClick={() => setNoteEditing(true)}>
-                  {message.user_note ? 'Modifier' : 'Ajouter une note'}
-                </Button>
-              </Box>
-            )}
-          </Box>
-        </Collapse>
-
-        {/* Aperçu quand non développé */}
-        {!expanded && (
-          <Box sx={{ mt: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              {message.rating ? (
-                <Rating value={message.rating} readOnly size="small" />
-              ) : (
-                <Chip label="Non noté" size="small" variant="outlined" />
-              )}
-            </Box>
-          </Box>
-        )}
-      </CardContent>
+        ) : null
+      )}
     </Card>
   );
 };

@@ -26,6 +26,7 @@ import { BeneficiaryStats } from '../components/beneficiaries/BeneficiaryStats';
 import { BeneficiaryAccessManager } from '../components/beneficiaries/BeneficiaryAccessManager';
 import { BeneficiaryDetails } from '../components/beneficiaries/BeneficiaryDetails';
 import { BeneficiaryDocuments } from '../components/beneficiaries/BeneficiaryDocuments';
+import { BeneficiaryMessageHistory } from '../components/beneficiary/BeneficiaryMessageHistory';
 import { AppointmentDetailsDialog } from '../components/appointments/AppointmentDetailsDialog';
 import {
   getUserBeneficiaries,
@@ -451,6 +452,7 @@ export const BeneficiariesPage: React.FC = () => {
                 <Tabs value={detailTab} onChange={(_e, newValue) => setDetailTab(newValue)}>
                   <Tab label="Informations" />
                   <Tab label="Documents" />
+                  <Tab label="Messages du jour" />
                   <Tab label="Statistiques" />
                   <Tab label="Historique" />
                   <Tab label="Accès partagés" />
@@ -471,14 +473,20 @@ export const BeneficiariesPage: React.FC = () => {
                       canEdit={selectedBeneficiary.can_edit}
                     />
                   )}
-                  {detailTab === 2 && <BeneficiaryStats beneficiaryId={selectedBeneficiary.id} />}
-                  {detailTab === 3 && (
+                  {detailTab === 2 && (
+                    <BeneficiaryMessageHistory
+                      beneficiaryId={selectedBeneficiary.id}
+                      beneficiaryName={`${selectedBeneficiary.first_name} ${selectedBeneficiary.last_name}`}
+                    />
+                  )}
+                  {detailTab === 3 && <BeneficiaryStats beneficiaryId={selectedBeneficiary.id} />}
+                  {detailTab === 4 && (
                     <BeneficiaryHistory
                       beneficiaryId={selectedBeneficiary.id}
                       onViewAppointment={handleViewAppointment}
                     />
                   )}
-                  {detailTab === 4 && (
+                  {detailTab === 5 && (
                     <BeneficiaryAccessManager
                       beneficiary={selectedBeneficiary}
                     />
