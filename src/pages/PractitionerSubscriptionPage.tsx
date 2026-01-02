@@ -41,7 +41,7 @@ const PractitionerSubscriptionPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [currentContract, setCurrentContract] = useState<PractitionerContract | null>(null);
-  const [selectedContractType, setSelectedContractType] = useState<ContractType>('decouverte');
+  const [selectedContractType, setSelectedContractType] = useState<ContractType>('standard'); // Seul type disponible
   const [error, setError] = useState<string | null>(null);
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
 
@@ -55,6 +55,7 @@ const PractitionerSubscriptionPage: React.FC = () => {
   // États pour l'annulation d'abonnement
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [canceling, setCanceling] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
 
   useEffect(() => {
     loadCurrentContract();
@@ -260,6 +261,34 @@ const PractitionerSubscriptionPage: React.FC = () => {
     }
   };
 
+  const handleReactivateSubscription = async () => {
+    if (!currentContract || !user) return;
+
+    setReactivating(true);
+    setError(null);
+
+    try {
+      // Annuler l'annulation en remettant cancel_at_period_end à false
+      const { error: updateError } = await supabase
+        .from('practitioner_contracts')
+        .update({
+          cancel_at_period_end: false,
+          canceled_at: null
+        })
+        .eq('id', currentContract.id);
+
+      if (updateError) throw updateError;
+
+      // Recharger le contrat
+      await loadCurrentContract();
+    } catch (err: any) {
+      logger.error('Erreur lors de la réactivation de l\'abonnement:', err);
+      setError(err.message || 'Erreur lors de la réactivation de l\'abonnement');
+    } finally {
+      setReactivating(false);
+    }
+  };
+
   const calculateNextBillingDate = () => {
     if (!currentContract) return null;
 
@@ -341,14 +370,67 @@ const PractitionerSubscriptionPage: React.FC = () => {
                 Date de début : {new Date(currentContract.start_date).toLocaleDateString('fr-FR')}
               </Typography>
               <Typography variant="body2">
-                Prochain paiement : {calculateNextBillingDate()}
+                Prochaine échéance : {calculateNextBillingDate()}
+              </Typography>
+              <Typography variant="body2">
+                Montant : {formatAmount(currentContract.monthly_fee)}
               </Typography>
               <Typography variant="body2">
                 RDV ce mois-ci : {currentContract.appointments_this_month}
                 {currentContract.max_appointments_per_month && ` / ${currentContract.max_appointments_per_month}`}
               </Typography>
+
+              <Box sx={{ mt: 3 }}>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  fullWidth
+                  onClick={() => setCancelDialogOpen(true)}
+                  disabled={currentContract.cancel_at_period_end ?? false}
+                  sx={{
+                    borderColor: 'rgba(255, 255, 255, 0.5)',
+                    color: 'white',
+                    '&:hover': {
+                      borderColor: 'white',
+                      bgcolor: 'rgba(255, 255, 255, 0.1)'
+                    }
+                  }}
+                >
+                  {currentContract.cancel_at_period_end
+                    ? 'Annulation planifiée'
+                    : 'Annuler l\'abonnement'}
+                </Button>
+              </Box>
             </CardContent>
           </Card>
+
+          {currentContract.cancel_at_period_end && (
+            <Alert
+              severity="warning"
+              sx={{ mb: 3 }}
+              action={
+                <Button
+                  color="inherit"
+                  size="small"
+                  onClick={handleReactivateSubscription}
+                  disabled={reactivating}
+                  startIcon={reactivating ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon />}
+                >
+                  {reactivating ? 'Réactivation...' : 'Réactiver'}
+                </Button>
+              }
+            >
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                Annulation planifiée
+              </Typography>
+              <Typography variant="body2">
+                Votre abonnement sera annulé à la fin de la période en cours ({calculateNextBillingDate()}).
+              </Typography>
+              <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+                Vous avez changé d'avis ? Cliquez sur "Réactiver" pour conserver votre abonnement.
+              </Typography>
+            </Alert>
+          )}
 
           <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
             <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
@@ -363,38 +445,41 @@ const PractitionerSubscriptionPage: React.FC = () => {
         </Paper>
       )}
 
-      {/* Sélection du nouvel abonnement */}
-      <Paper sx={{ p: 4, borderRadius: 3 }}>
-        <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
-          {currentContract ? 'Changer d\'abonnement' : 'Choisir un abonnement'}
-        </Typography>
+      {/* Section abonnement - Masquée car un seul type d'abonnement disponible */}
+      {/* L'utilisateur ne peut pas changer de type d'abonnement */}
+      {!currentContract && (
+        <Paper sx={{ p: 4, borderRadius: 3 }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>
+            Votre abonnement FL2M Standard
+          </Typography>
 
-        <ContractTypeSelector
-          value={selectedContractType}
-          onChange={setSelectedContractType}
-        />
+          <ContractTypeSelector
+            value={selectedContractType}
+            onChange={setSelectedContractType}
+          />
 
-        {error && (
-          <Alert severity="error" sx={{ mt: 3 }}>
-            {error}
-          </Alert>
-        )}
+          {error && (
+            <Alert severity="error" sx={{ mt: 3 }}>
+              {error}
+            </Alert>
+          )}
 
-        <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
-          <Button onClick={() => navigate('/practitioner/profile')}>
-            Annuler
-          </Button>
-          <Button
-            variant="contained"
-            size="large"
-            onClick={handleChangeSubscription}
-            disabled={submitting || !currentContract || selectedContractType === currentContract.contract_type}
-            startIcon={submitting ? <CircularProgress size={20} /> : null}
-          >
-            {submitting ? 'Traitement...' : currentContract ? 'Changer d\'abonnement' : 'Choisir cet abonnement'}
-          </Button>
-        </Box>
-      </Paper>
+          <Box sx={{ mt: 4, display: 'flex', justifyContent: 'space-between' }}>
+            <Button onClick={() => navigate('/practitioner/profile')}>
+              Annuler
+            </Button>
+            <Button
+              variant="contained"
+              size="large"
+              onClick={handleChangeSubscription}
+              disabled={submitting}
+              startIcon={submitting ? <CircularProgress size={20} /> : null}
+            >
+              {submitting ? 'Traitement...' : 'Activer mon abonnement'}
+            </Button>
+          </Box>
+        </Paper>
+      )}
 
       {/* Dialog de confirmation */}
       <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)} maxWidth="sm" fullWidth>
@@ -431,6 +516,50 @@ const PractitionerSubscriptionPage: React.FC = () => {
           </Button>
           <Button variant="contained" onClick={handleConfirmChange} autoFocus>
             Confirmer et payer
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de confirmation d'annulation */}
+      <Dialog open={cancelDialogOpen} onClose={() => setCancelDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <WarningIcon color="error" />
+            Confirmer l'annulation de l'abonnement
+          </Box>
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+              Êtes-vous sûr de vouloir annuler votre abonnement ?
+            </Typography>
+          </Alert>
+
+          <Typography variant="body2" paragraph>
+            Votre abonnement <strong>{currentContract && getContractTypeLabel(currentContract.contract_type as ContractType)}</strong> sera
+            annulé à la fin de votre période de facturation en cours.
+          </Typography>
+
+          <Typography variant="body2" paragraph>
+            Vous pourrez continuer à utiliser tous les services jusqu'au <strong>{calculateNextBillingDate()}</strong>.
+          </Typography>
+
+          <Typography variant="body2" color="error">
+            Après cette date, votre compte intervenant sera désactivé et vous ne pourrez plus accepter de rendez-vous.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCancelDialogOpen(false)}>
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleCancelSubscription}
+            disabled={canceling}
+            startIcon={canceling ? <CircularProgress size={20} /> : null}
+          >
+            {canceling ? 'Annulation...' : 'Confirmer l\'annulation'}
           </Button>
         </DialogActions>
       </Dialog>

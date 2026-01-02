@@ -11,6 +11,7 @@ import {
   cleanOldTirages
 } from '../utils/numerology';
 import { logger } from '../utils/logger';
+import { saveMessageToHistory } from '../services/dailyMessageHistory';
 
 export interface DailyDrawData {
   nombre1: number;
@@ -182,6 +183,39 @@ export const useDailyDrawBeneficiary = () => {
         fetchRandomMessage(nombre2),
         fetchRandomMessage(nombre3)
       ]);
+
+      // Enregistrer les messages dans l'historique (en parallèle, sans bloquer si erreur)
+      Promise.all([
+        message1 && saveMessageToHistory({
+          beneficiaryId,
+          dailyDrawId: message1.id,
+          nombre: nombre1,
+          origineLabel: label1,
+          titre: message1.titre,
+          message: message1.message
+        }).catch(err => logger.error('[Daily Draw] Erreur sauvegarde message 1:', err)),
+
+        message2 && saveMessageToHistory({
+          beneficiaryId,
+          dailyDrawId: message2.id,
+          nombre: nombre2,
+          origineLabel: label2,
+          titre: message2.titre,
+          message: message2.message
+        }).catch(err => logger.error('[Daily Draw] Erreur sauvegarde message 2:', err)),
+
+        message3 && saveMessageToHistory({
+          beneficiaryId,
+          dailyDrawId: message3.id,
+          nombre: nombre3,
+          origineLabel: label3,
+          titre: message3.titre,
+          message: message3.message
+        }).catch(err => logger.error('[Daily Draw] Erreur sauvegarde message 3:', err))
+      ]).catch(() => {
+        // Ignorer les erreurs d'enregistrement - ce n'est pas critique
+        logger.warn('[Daily Draw] Certains messages n\'ont pas pu être enregistrés dans l\'historique');
+      });
 
       const result: DailyDrawData = {
         nombre1,

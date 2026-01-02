@@ -18,7 +18,8 @@ import {
   List,
   ListItem,
   ListItemIcon,
-  ListItemText
+  ListItemText,
+  TextField
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ScheduleIcon from '@mui/icons-material/Schedule';
@@ -28,6 +29,7 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import ContractTypeSelector from '../admin/ContractTypeSelector';
 import { ContractType, CONTRACT_CONFIGS, formatAmount, PractitionerContract } from '../../types/payments';
+import { STRIPE_PRICE_IDS } from '../../services/stripe';
 import { supabase } from '../../services/supabase';
 import { logger } from '../../utils/logger';
 
@@ -42,11 +44,16 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [changeDialogOpen, setChangeDialogOpen] = useState(false);
-  const [selectedNewType, setSelectedNewType] = useState<ContractType>('decouverte');
+  const [selectedNewType, setSelectedNewType] = useState<ContractType>('standard'); // Seul type disponible
   const [submitting, setSubmitting] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [cancelSubscriptionDialogOpen, setCancelSubscriptionDialogOpen] = useState(false);
+  const [cancelingSubscription, setCancelingSubscription] = useState(false);
+  const [reactivating, setReactivating] = useState(false);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoCodeError, setPromoCodeError] = useState<string | null>(null);
 
   useEffect(() => {
     loadCurrentContract();
@@ -122,32 +129,190 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
       const today = new Date();
       const config = CONTRACT_CONFIGS[selectedNewType];
 
-      // Créer le premier contrat
-      const { error: createError } = await supabase
+      let contract;
+
+      // Vérifier s'il existe déjà un contrat pending_payment pour ce practitioner
+      const { data: existingContract, error: checkError } = await supabase
         .from('practitioner_contracts')
-        .insert({
-          practitioner_id: practitionerId,
-          contract_type: selectedNewType,
-          monthly_fee: config.monthly_fee,
-          commission_fixed: config.commission_fixed,
-          commission_percentage: config.commission_percentage,
-          commission_cap: config.commission_cap,
-          max_appointments_per_month: config.max_appointments_per_month,
-          start_date: today.toISOString().split('T')[0],
-          status: selectedNewType === 'decouverte' ? 'active' : 'pending_payment'
-        });
+        .select('*')
+        .eq('practitioner_id', practitionerId)
+        .eq('status', 'pending_payment')
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-      if (createError) throw createError;
+      if (checkError) {
+        logger.error('[Subscription] Erreur vérification contrat:', checkError);
+        throw checkError;
+      }
 
-      // Recharger les données
-      await loadCurrentContract();
+      if (existingContract) {
+        // Réutiliser le contrat existant
+        logger.info('[Subscription] Réutilisation du contrat existant:', existingContract);
+        contract = existingContract;
+      } else {
+        // Créer un nouveau contrat avec status 'pending_payment'
+        const { data: newContract, error: createError } = await supabase
+          .from('practitioner_contracts')
+          .insert({
+            practitioner_id: practitionerId,
+            contract_type: selectedNewType,
+            monthly_fee: config.monthly_fee,
+            commission_fixed: config.commission_fixed,
+            commission_percentage: config.commission_percentage,
+            commission_cap: config.commission_cap,
+            max_appointments_per_month: config.max_appointments_per_month,
+            start_date: today.toISOString().split('T')[0],
+            status: 'pending_payment'
+          })
+          .select()
+          .single();
 
-      alert(`Abonnement ${selectedNewType.toUpperCase()} activé avec succès !${selectedNewType !== 'decouverte' ? '\n\nVeuillez procéder au paiement pour activer votre abonnement.' : ''}`);
+        if (createError) throw createError;
+
+        logger.info('[Subscription] Nouveau contrat créé:', newContract);
+        contract = newContract;
+      }
+
+      // ÉTAPE 1 : Créer une session de paiement Stripe Checkout pour l'abonnement
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error('Session non trouvée');
+
+      // Récupérer le Price ID Stripe pour ce type de contrat
+      const priceId = STRIPE_PRICE_IDS[selectedNewType];
+      if (!priceId) {
+        throw new Error(`Prix Stripe non configuré pour le type ${selectedNewType}`);
+      }
+
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const response = await fetch(
+        `${supabaseUrl}/functions/v1/stripe-create-subscription-checkout`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            priceId,
+            contractId: contract.id,
+            contractType: selectedNewType,
+            promoCode: promoCode || undefined, // Envoyer le code promo si présent
+            // Après paiement, rediriger vers la page qui vérifiera Stripe Connect
+            successUrl: `${window.location.origin}/practitioner-payment-success?contractId=${contract.id}`,
+            cancelUrl: `${window.location.origin}/practitioner-profile?tab=subscription`
+          })
+        }
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Erreur lors de la création de la session de paiement');
+      }
+
+      const { url: checkoutUrl } = await response.json();
+
+      if (!checkoutUrl) {
+        throw new Error('URL de paiement non reçue');
+      }
+
+      // Rediriger vers Stripe Checkout pour le paiement
+      logger.info('[Subscription] Redirection vers Stripe Checkout');
+      window.location.href = checkoutUrl;
+
     } catch (err: any) {
       logger.error('Erreur lors de la création de l\'abonnement:', err);
-      setError(err.message || 'Erreur lors de la création de l\'abonnement');
-    } finally {
+
+      // Vérifier si l'erreur concerne le code promo
+      const errorMessage = err.message || 'Erreur lors de la création de l\'abonnement';
+
+      if (errorMessage.includes('code promo') || errorMessage.includes('Code promo')) {
+        // Afficher l'erreur dans le champ code promo
+        setPromoCodeError(errorMessage);
+        setError(null); // Ne pas afficher d'erreur générale
+      } else {
+        // Afficher l'erreur générale
+        setError(errorMessage);
+      }
+
       setSubmitting(false);
+    }
+  };
+
+  const calculateNextBillingDate = () => {
+    if (!currentContract) return null;
+
+    const currentStartDate = new Date(currentContract.start_date);
+    const today = new Date();
+    const dayOfMonth = currentStartDate.getDate();
+
+    let nextBillingDate = new Date(today.getFullYear(), today.getMonth(), dayOfMonth);
+
+    if (nextBillingDate <= today) {
+      nextBillingDate = new Date(today.getFullYear(), today.getMonth() + 1, dayOfMonth);
+    }
+
+    return format(nextBillingDate, 'dd MMMM yyyy', { locale: fr });
+  };
+
+  const handleCancelSubscription = async () => {
+    if (!currentContract) return;
+
+    setCancelingSubscription(true);
+    setError(null);
+
+    try {
+      // Mettre à jour le contrat pour indiquer l'annulation à la fin de la période
+      const { error: updateError } = await supabase
+        .from('practitioner_contracts')
+        .update({
+          cancel_at_period_end: true,
+          canceled_at: new Date().toISOString()
+        })
+        .eq('id', currentContract.id);
+
+      if (updateError) throw updateError;
+
+      // Recharger le contrat
+      await loadCurrentContract();
+      setCancelSubscriptionDialogOpen(false);
+
+      alert('Votre abonnement sera annulé à la fin de votre période de facturation en cours.');
+    } catch (err: any) {
+      logger.error('Erreur lors de l\'annulation de l\'abonnement:', err);
+      setError(err.message || 'Erreur lors de l\'annulation de l\'abonnement');
+    } finally {
+      setCancelingSubscription(false);
+    }
+  };
+
+  const handleReactivateSubscription = async () => {
+    if (!currentContract) return;
+
+    setReactivating(true);
+    setError(null);
+
+    try {
+      // Annuler l'annulation en remettant cancel_at_period_end à false
+      const { error: updateError } = await supabase
+        .from('practitioner_contracts')
+        .update({
+          cancel_at_period_end: false,
+          canceled_at: null
+        })
+        .eq('id', currentContract.id);
+
+      if (updateError) throw updateError;
+
+      // Recharger le contrat
+      await loadCurrentContract();
+
+      alert('Votre abonnement a été réactivé avec succès ! Il continuera normalement.');
+    } catch (err: any) {
+      logger.error('Erreur lors de la réactivation de l\'abonnement:', err);
+      setError(err.message || 'Erreur lors de la réactivation de l\'abonnement');
+    } finally {
+      setReactivating(false);
     }
   };
 
@@ -244,7 +409,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
           commission_cap: config.commission_cap,
           max_appointments_per_month: config.max_appointments_per_month,
           start_date: startDate.toISOString().split('T')[0],
-          status: selectedNewType === 'decouverte' ? 'active' : 'pending_payment'
+          status: 'pending_payment' // Standard nécessite toujours un paiement
         });
 
       if (createError) throw createError;
@@ -317,6 +482,38 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
           disabled={submitting}
         />
 
+        {/* Champ de code promo */}
+        <Box sx={{ mt: 3, maxWidth: 400, mx: 'auto' }}>
+          <Alert severity="info" sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+              💰 Code promo disponible : BIENVENUE2025
+            </Typography>
+            <Typography variant="caption">
+              Bénéficiez du premier mois gratuit !
+            </Typography>
+          </Alert>
+
+          <TextField
+            fullWidth
+            label="Code promo (optionnel)"
+            placeholder="Ex: BIENVENUE2025"
+            value={promoCode}
+            onChange={(e) => {
+              setPromoCode(e.target.value.toUpperCase());
+              setPromoCodeError(null);
+            }}
+            disabled={submitting}
+            error={!!promoCodeError}
+            helperText={promoCodeError || 'Entrez votre code promo pour le premier mois gratuit'}
+            InputProps={{
+              startAdornment: (
+                <Box sx={{ mr: 1, color: 'text.secondary' }}>🎁</Box>
+              )
+            }}
+            sx={{ mb: 2 }}
+          />
+        </Box>
+
         <Box sx={{ textAlign: 'center', mt: 4 }}>
           <Button
             variant="contained"
@@ -331,7 +528,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
               }
             }}
           >
-            {submitting ? 'Création en cours...' : 'Activer mon abonnement'}
+            {submitting ? 'Création en cours...' : 'Payer & Activer mon abonnement'}
           </Button>
         </Box>
       </Box>
@@ -375,9 +572,73 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
                 </Typography>
               </Grid>
             )}
+            {!currentContract.cancel_at_period_end && !currentContract.end_date && (
+              <>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                    <strong>Prochaine échéance:</strong> {calculateNextBillingDate()}
+                  </Typography>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                    <strong>Montant:</strong> {formatAmount(currentContract.monthly_fee)}
+                  </Typography>
+                </Grid>
+              </>
+            )}
           </Grid>
+
+          {!currentContract.cancel_at_period_end && !currentContract.end_date && (
+            <Box sx={{ mt: 3 }}>
+              <Button
+                variant="outlined"
+                color="error"
+                fullWidth
+                onClick={() => setCancelSubscriptionDialogOpen(true)}
+                sx={{
+                  borderColor: 'rgba(255, 255, 255, 0.5)',
+                  color: 'white',
+                  '&:hover': {
+                    borderColor: 'white',
+                    bgcolor: 'rgba(255, 255, 255, 0.1)'
+                  }
+                }}
+              >
+                Annuler l'abonnement
+              </Button>
+            </Box>
+          )}
         </CardContent>
       </Card>
+
+      {currentContract.cancel_at_period_end && (
+        <Alert
+          severity="warning"
+          sx={{ mb: 3 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              onClick={handleReactivateSubscription}
+              disabled={reactivating}
+              startIcon={reactivating ? <CircularProgress size={16} color="inherit" /> : <CheckCircleIcon />}
+            >
+              {reactivating ? 'Réactivation...' : 'Réactiver'}
+            </Button>
+          }
+        >
+          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+            Annulation planifiée
+          </Typography>
+          <Typography variant="body2">
+            Votre abonnement sera annulé à la fin de votre période de facturation en cours ({calculateNextBillingDate()}).
+            Vous pourrez continuer à utiliser tous les services jusqu'à cette date.
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 1, fontStyle: 'italic' }}>
+            Vous avez changé d'avis ? Cliquez sur "Réactiver" pour conserver votre abonnement.
+          </Typography>
+        </Alert>
+      )}
 
       {/* Carte du contrat suivant */}
       {upcomingContract && (
@@ -462,14 +723,24 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
               <ListItemText
                 primary="Commission par rendez-vous"
                 secondary={
-                  currentContract.contract_type === 'decouverte'
-                    ? `max(${formatAmount(config.commission_fixed!)}, ${config.commission_percentage}%)`
+                  currentContract.contract_type === 'decouverte' || currentContract.contract_type === 'standard'
+                    ? `${formatAmount(config.commission_fixed!)} fixe`
                     : currentContract.contract_type === 'starter'
                     ? `min(${formatAmount(config.commission_fixed!)}, ${config.commission_percentage}%)`
                     : currentContract.contract_type === 'pro'
                     ? `${formatAmount(config.commission_fixed!)} fixe`
                     : 'Aucune commission'
                 }
+              />
+            </ListItem>
+
+            <ListItem>
+              <ListItemIcon>
+                <InfoIcon color="info" />
+              </ListItemIcon>
+              <ListItemText
+                primary="Frais de paiement Stripe"
+                secondary="~2% par transaction, à votre charge"
               />
             </ListItem>
 
@@ -498,8 +769,8 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
         </CardContent>
       </Card>
 
-      {/* Bouton de changement */}
-      {!currentContract.end_date && (
+      {/* Bouton de changement - DÉSACTIVÉ car un seul type d'abonnement */}
+      {/* {!currentContract.end_date && (
         <Box sx={{ textAlign: 'center' }}>
           <Button
             variant="outlined"
@@ -518,7 +789,7 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
             Changer d'abonnement
           </Button>
         </Box>
-      )}
+      )} */}
 
       {currentContract.end_date && (
         <Alert severity="info" icon={<InfoIcon />} sx={{ mb: 3 }}>
@@ -656,6 +927,52 @@ const SubscriptionManagement: React.FC<SubscriptionManagementProps> = ({ practit
             startIcon={cancelling ? <CircularProgress size={20} /> : null}
           >
             {cancelling ? 'Annulation...' : 'Oui, annuler le changement'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog de confirmation d'annulation d'abonnement */}
+      <Dialog
+        open={cancelSubscriptionDialogOpen}
+        onClose={() => !cancelingSubscription && setCancelSubscriptionDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          Annuler l'abonnement
+        </DialogTitle>
+        <DialogContent>
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+              Êtes-vous sûr de vouloir annuler votre abonnement ?
+            </Typography>
+          </Alert>
+
+          <Typography variant="body2" paragraph>
+            Votre abonnement <strong>{currentContract?.contract_type.toUpperCase()}</strong> sera
+            annulé à la fin de votre période de facturation en cours.
+          </Typography>
+
+          <Typography variant="body2" paragraph>
+            Vous pourrez continuer à utiliser tous les services jusqu'au <strong>{calculateNextBillingDate()}</strong>.
+          </Typography>
+
+          <Typography variant="body2" color="error">
+            Après cette date, votre compte intervenant sera désactivé et vous ne pourrez plus accepter de rendez-vous.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCancelSubscriptionDialogOpen(false)} disabled={cancelingSubscription}>
+            Annuler
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleCancelSubscription}
+            disabled={cancelingSubscription}
+            startIcon={cancelingSubscription ? <CircularProgress size={20} /> : null}
+          >
+            {cancelingSubscription ? 'Annulation...' : 'Confirmer l\'annulation'}
           </Button>
         </DialogActions>
       </Dialog>

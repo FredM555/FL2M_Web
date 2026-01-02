@@ -45,6 +45,7 @@ import type { BeneficiaryWithAccess } from '../types/beneficiary';
 import { getBeneficiaryDocuments, getSignedBeneficiaryDocumentUrl, DOCUMENT_TYPE_LABELS } from '../services/beneficiaryDocuments';
 import type { BeneficiaryDocument } from '../services/beneficiaryDocuments';
 import { logger } from '../utils/logger';
+import { BeneficiaryMessageHistory } from '../components/beneficiary/BeneficiaryMessageHistory';
 
 const ProfilePage = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -823,6 +824,26 @@ const ProfilePage = () => {
                         Aucun document public disponible pour le moment. Vos documents publics seront ajoutés par vos intervenants. Les documents privés sont accessibles uniquement dans la partie intervenant.
                       </Alert>
                     )}
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
+
+            {/* Section Mes Messages du Jour */}
+            {myBeneficiary && (
+              <Grid item xs={12}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    borderRadius: '16px',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+                  }}
+                >
+                  <CardContent sx={{ p: 4 }}>
+                    <BeneficiaryMessageHistory
+                      beneficiaryId={myBeneficiary.id}
+                      beneficiaryName={myBeneficiary.first_name}
+                    />
                   </CardContent>
                 </Card>
               </Grid>

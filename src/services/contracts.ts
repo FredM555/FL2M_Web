@@ -273,7 +273,7 @@ export class ContractsService {
       logger.error('Erreur lors de la récupération des statistiques:', error);
       return {
         total: 0,
-        by_type: { decouverte: 0, starter: 0, pro: 0, premium: 0 },
+        by_type: { decouverte: 0, standard: 0, starter: 0, pro: 0, premium: 0 },
         active: 0,
         suspended: 0,
         terminated: 0,
@@ -282,7 +282,7 @@ export class ContractsService {
 
     const stats = {
       total: data.length,
-      by_type: { decouverte: 0, starter: 0, pro: 0, premium: 0 } as Record<ContractType, number>,
+      by_type: { decouverte: 0, standard: 0, starter: 0, pro: 0, premium: 0 } as Record<ContractType, number>,
       active: 0,
       suspended: 0,
       terminated: 0,

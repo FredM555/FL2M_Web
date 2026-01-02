@@ -30,6 +30,8 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
   onChange,
   disabled = false
 }) => {
+  // SEUL ABONNEMENT ACTIF: STANDARD
+  // Les autres sont conservés mais désactivés (commentés) pour possibilité de réactivation
   const contractOptions: Array<{
     type: ContractType;
     icon: React.ReactNode;
@@ -39,37 +41,38 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
     description: string;
   }> = [
     {
-      type: 'decouverte',
+      type: 'standard',
       icon: <StarIcon />,
-      color: '#FFA726',
-      bgGradient: 'linear-gradient(135deg, rgba(255, 167, 38, 0.1) 0%, rgba(255, 167, 38, 0.05) 100%)',
-      label: 'Découverte',
-      description: 'Pour tester la plateforme'
+      color: '#345995',
+      bgGradient: 'linear-gradient(135deg, rgba(52, 89, 149, 0.1) 0%, rgba(52, 89, 149, 0.05) 100%)',
+      label: 'FL2M Standard',
+      description: 'Tarification simple et transparente'
     },
-    {
-      type: 'starter',
-      icon: <RocketLaunchIcon />,
-      color: '#42A5F5',
-      bgGradient: 'linear-gradient(135deg, rgba(66, 165, 245, 0.1) 0%, rgba(66, 165, 245, 0.05) 100%)',
-      label: 'Starter',
-      description: 'Pour démarrer son activité'
-    },
-    {
-      type: 'pro',
-      icon: <DiamondIcon />,
-      color: '#AB47BC',
-      bgGradient: 'linear-gradient(135deg, rgba(171, 71, 188, 0.1) 0%, rgba(171, 71, 188, 0.05) 100%)',
-      label: 'Pro',
-      description: 'Pour les professionnels établis'
-    },
-    {
-      type: 'premium',
-      icon: <AllInclusiveIcon />,
-      color: '#66BB6A',
-      bgGradient: 'linear-gradient(135deg, rgba(102, 187, 106, 0.1) 0%, rgba(102, 187, 106, 0.05) 100%)',
-      label: 'Premium',
-      description: 'Aucune commission, tous les RDV gratuits'
-    }
+    // DÉSACTIVÉS - Conservés pour compatibilité
+    // {
+    //   type: 'starter',
+    //   icon: <RocketLaunchIcon />,
+    //   color: '#42A5F5',
+    //   bgGradient: 'linear-gradient(135deg, rgba(66, 165, 245, 0.1) 0%, rgba(66, 165, 245, 0.05) 100%)',
+    //   label: 'Starter',
+    //   description: 'Pour démarrer son activité'
+    // },
+    // {
+    //   type: 'pro',
+    //   icon: <DiamondIcon />,
+    //   color: '#AB47BC',
+    //   bgGradient: 'linear-gradient(135deg, rgba(171, 71, 188, 0.1) 0%, rgba(171, 71, 188, 0.05) 100%)',
+    //   label: 'Pro',
+    //   description: 'Pour les professionnels établis'
+    // },
+    // {
+    //   type: 'premium',
+    //   icon: <AllInclusiveIcon />,
+    //   color: '#66BB6A',
+    //   bgGradient: 'linear-gradient(135deg, rgba(102, 187, 106, 0.1) 0%, rgba(102, 187, 106, 0.05) 100%)',
+    //   label: 'Premium',
+    //   description: 'Aucune commission, tous les RDV gratuits'
+    // }
   ];
 
   const renderContractDetails = (type: ContractType) => {
@@ -97,16 +100,20 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
             <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
               Commission par RDV
             </Typography>
-            {type === 'decouverte' && (
+            {type === 'standard' && (
               <>
                 <Typography variant="body2" color="text.secondary">
-                  {config.commission_percentage}% du prix (minimum {formatAmount(config.commission_fixed!)})
+                  {formatAmount(config.commission_fixed!)} fixe par RDV
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 600 }}>
-                  Plafonné à {formatAmount(config.commission_cap!)}
+                <Typography variant="body2" color="success.main" sx={{ fontWeight: 600, mt: 0.5 }}>
+                  ✓ Pas de pourcentage variable
                 </Typography>
-              </>
+                <Typography variant="body2" color="success.main" sx={{ fontWeight: 600 }}>
+                  ✓ Pas de limite de rendez-vous
+                </Typography>
+                 </>
             )}
+            {/* DÉSACTIVÉS - Code conservé pour compatibilité */}
             {type === 'starter' && (
               <>
                 <Typography variant="body2" color="text.secondary">
@@ -250,33 +257,6 @@ const ContractTypeSelector: React.FC<ContractTypeSelectorProps> = ({
         </Grid>
       </RadioGroup>
 
-      <Box sx={{ mt: 3 }}>
-        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 1 }}>
-          💡 <strong>Exemples de calcul pour un RDV à 120€ :</strong>
-        </Typography>
-        <Grid container spacing={1}>
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="caption" color="text.secondary">
-              <strong>DÉCOUVERTE:</strong> 14,40€ (max entre 10€ et 12% = 14,40€)
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="caption" color="text.secondary">
-              <strong>STARTER:</strong> 6€ (min entre 6€ et 8% = 6€) + 2 RDV gratuits
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="caption" color="text.secondary">
-              <strong>PRO:</strong> 3€ fixe + 4 RDV gratuits
-            </Typography>
-          </Grid>
-          <Grid item xs={12} sm={6} md={3}>
-            <Typography variant="caption" color="text.secondary">
-              <strong>PREMIUM:</strong> 0€ - tous RDV gratuits
-            </Typography>
-          </Grid>
-        </Grid>
-      </Box>
     </Box>
   );
 };

@@ -2,9 +2,12 @@
 // Types pour le système de paiement et de redistribution (Modèle D)
 
 /**
- * Type de contrat intervenant selon le Modèle D
+ * Type de contrat intervenant
+ * Note: 'standard' est le seul abonnement actif actuellement
+ * 'decouverte' est conservé pour les anciens contrats (mapped vers standard)
+ * Les autres sont conservés pour compatibilité et possibilité de réactivation future
  */
-export type ContractType = 'decouverte' | 'starter' | 'pro' | 'premium';
+export type ContractType = 'decouverte' | 'standard' | 'starter' | 'pro' | 'premium';
 
 /**
  * Statut d'un contrat intervenant
@@ -65,6 +68,7 @@ export interface PractitionerContract {
 
   // Stripe
   stripe_subscription_id: string | null;
+  cancel_at_period_end: boolean | null;
 
   // Dates et statut
   start_date: string; // ISO date
@@ -276,15 +280,31 @@ export interface ContractConfig {
 }
 
 /**
- * Configuration complète des contrats selon BusinessPlan.txt
+ * Configuration des contrats intervenants
+ *
+ * ACTIF:
+ * - Standard (4,90€/mois + 8€/RDV fixe) - Seul abonnement sélectionnable
+ * - Decouverte (mapped vers Standard) - Pour les anciens contrats existants
+ *
+ * DÉSACTIVÉS (conservés pour compatibilité):
+ * - Starter, Pro, Premium - Non sélectionnables mais conservés dans le code
  */
 export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
   decouverte: {
-    monthly_fee: 9,
-    commission_fixed: 10,
-    commission_percentage: 12,
-    commission_cap: 25,
-    max_appointments_per_month: 10,
+    // ANCIEN TYPE - Mappé vers la config Standard pour compatibilité
+    monthly_fee: 4.90,
+    commission_fixed: 8,
+    commission_percentage: null,
+    commission_cap: null,
+    max_appointments_per_month: null,
+    free_appointments_per_month: 0,
+  },
+  standard: {
+    monthly_fee: 4.90,
+    commission_fixed: 8,
+    commission_percentage: null, // Pas de pourcentage, seulement 8€ fixe
+    commission_cap: null,
+    max_appointments_per_month: null, // Pas de limite
     free_appointments_per_month: 0, // Pas de RDV gratuits
   },
   starter: {
@@ -293,7 +313,7 @@ export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
     commission_percentage: 8,
     commission_cap: 25,
     max_appointments_per_month: 20,
-    free_appointments_per_month: 2, // 2 premiers RDV gratuits/mois
+    free_appointments_per_month: 2, // DÉSACTIVÉ - conservé pour compatibilité
   },
   pro: {
     monthly_fee: 99,
@@ -301,7 +321,7 @@ export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
     commission_percentage: null,
     commission_cap: null,
     max_appointments_per_month: null,
-    free_appointments_per_month: 4, // 4 premiers RDV gratuits/mois
+    free_appointments_per_month: 4, // DÉSACTIVÉ - conservé pour compatibilité
   },
   premium: {
     monthly_fee: 159,
@@ -309,7 +329,7 @@ export const CONTRACT_CONFIGS: Record<ContractType, ContractConfig> = {
     commission_percentage: null,
     commission_cap: null,
     max_appointments_per_month: null,
-    free_appointments_per_month: 0, // Tous les RDV sont déjà sans commission
+    free_appointments_per_month: 0, // DÉSACTIVÉ - conservé pour compatibilité
   },
 };
 
@@ -374,7 +394,8 @@ export interface PractitionerPaymentStats {
  */
 export function getContractTypeLabel(type: ContractType): string {
   const labels: Record<ContractType, string> = {
-    decouverte: 'Découverte',
+    decouverte: 'FL2M Standard', // Ancien type mappé vers Standard
+    standard: 'FL2M Standard',
     starter: 'Starter',
     pro: 'Pro',
     premium: 'Premium',
