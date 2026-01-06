@@ -282,3 +282,34 @@ export const updateMessageNote = async (
     return { success: false, error: err };
   }
 };
+
+/**
+ * Récupérer les messages du jour pour un bénéficiaire
+ */
+export const getTodayMessages = async (
+  beneficiaryId: string
+): Promise<{ data: DailyMessageHistory[]; error: Error | null }> => {
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    const { data, error } = await supabase
+      .from('daily_message_history')
+      .select('*')
+      .eq('beneficiary_id', beneficiaryId)
+      .gte('viewed_at', `${today}T00:00:00`)
+      .lte('viewed_at', `${today}T23:59:59`)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      logger.error('[Daily Message History] Erreur récupération messages du jour:', error);
+      return { data: [], error };
+    }
+
+    logger.info('[Daily Message History] Messages du jour récupérés:', data?.length || 0);
+    return { data: data || [], error: null };
+
+  } catch (err: any) {
+    logger.error('[Daily Message History] Exception récupération messages du jour:', err);
+    return { data: [], error: err };
+  }
+};

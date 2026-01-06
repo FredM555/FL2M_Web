@@ -120,16 +120,12 @@ export const useDailyDrawVisitor = () => {
 
 /**
  * Hook pour gérer le tirage du jour d'un bénéficiaire
+ * Utilise la table daily_message_history au lieu de localStorage
  */
 export const useDailyDrawBeneficiary = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [drawData, setDrawData] = useState<DailyDrawData | null>(null);
-
-  // Nettoyer les anciens tirages au montage
-  useEffect(() => {
-    cleanOldTirages();
-  }, []);
 
   const getDailyDraw = async ({
     beneficiaryId,
@@ -150,16 +146,65 @@ export const useDailyDrawBeneficiary = () => {
 
     try {
       const today = new Date();
-      const storageKey = generateBeneficiaryStorageKey(beneficiaryId, today);
 
-      // Vérifier le cache
-      const cached = localStorage.getItem(storageKey);
-      if (cached) {
-        const cachedData = JSON.parse(cached);
-        setDrawData({ ...cachedData, cached: true });
-        setLoading(false);
-        return cachedData;
+      // Vérifier si des messages existent déjà dans la base pour aujourd'hui
+      const { data: todayMessages, error: fetchError } = await supabase
+        .from('daily_message_history')
+        .select('*')
+        .eq('beneficiary_id', beneficiaryId)
+        .gte('viewed_at', `${today.toISOString().split('T')[0]}T00:00:00`)
+        .lte('viewed_at', `${today.toISOString().split('T')[0]}T23:59:59`)
+        .order('created_at', { ascending: true });
+
+      if (fetchError) {
+        logger.error('[Daily Draw] Erreur récupération messages du jour:', fetchError);
+        throw fetchError;
       }
+
+      // Si des messages existent, les reconstituer
+      if (todayMessages && todayMessages.length >= 3) {
+        logger.info('[Daily Draw] Messages trouvés dans l\'historique:', todayMessages.length);
+
+        // Récupérer les détails complets des messages depuis daily_draws
+        const [msg1Details, msg2Details, msg3Details] = await Promise.all([
+          supabase
+            .from('daily_draws')
+            .select('*')
+            .eq('id', todayMessages[0].daily_draw_id)
+            .single(),
+          supabase
+            .from('daily_draws')
+            .select('*')
+            .eq('id', todayMessages[1].daily_draw_id)
+            .single(),
+          supabase
+            .from('daily_draws')
+            .select('*')
+            .eq('id', todayMessages[2].daily_draw_id)
+            .single()
+        ]);
+
+        const result: DailyDrawData = {
+          nombre1: todayMessages[0].nombre,
+          nombre2: todayMessages[1].nombre,
+          nombre3: todayMessages[2].nombre,
+          message1: msg1Details.data,
+          message2: msg2Details.data,
+          message3: msg3Details.data,
+          firstName,
+          cached: true, // Indique que c'est récupéré de l'historique
+          label1: todayMessages[0].origine_label,
+          label2: todayMessages[1].origine_label,
+          label3: todayMessages[2].origine_label
+        };
+
+        setDrawData(result);
+        setLoading(false);
+        return result;
+      }
+
+      // Aucun message pour aujourd'hui, générer de nouveaux messages
+      logger.info('[Daily Draw] Génération de nouveaux messages');
 
       // Sélectionner 3 nombres avec leurs labels
       const { nombre1, nombre2, nombre3, label1, label2, label3 } = selectBeneficiaryThreeNumbers(
@@ -185,7 +230,7 @@ export const useDailyDrawBeneficiary = () => {
       ]);
 
       // Enregistrer les messages dans l'historique (en parallèle, sans bloquer si erreur)
-      Promise.all([
+      await Promise.all([
         message1 && saveMessageToHistory({
           beneficiaryId,
           dailyDrawId: message1.id,
@@ -230,9 +275,6 @@ export const useDailyDrawBeneficiary = () => {
         label2,
         label3
       };
-
-      // Stocker dans le cache
-      localStorage.setItem(storageKey, JSON.stringify(result));
 
       setDrawData(result);
       return result;

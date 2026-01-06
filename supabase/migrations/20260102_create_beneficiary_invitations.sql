@@ -58,7 +58,7 @@ CREATE POLICY "Users can view invitations they sent"
 CREATE POLICY "Users can view invitations for their email"
   ON beneficiary_invitations
   FOR SELECT
-  USING (invited_email = (SELECT email FROM auth.users WHERE id = auth.uid()));
+  USING (invited_email = (SELECT email FROM profiles WHERE id = auth.uid()));
 
 -- Les utilisateurs peuvent créer des invitations pour leurs bénéficiaires
 CREATE POLICY "Users can create invitations for their beneficiaries"
@@ -84,7 +84,7 @@ CREATE POLICY "Users can cancel their invitations"
 CREATE POLICY "Users can accept invitations sent to their email"
   ON beneficiary_invitations
   FOR UPDATE
-  USING (invited_email = (SELECT email FROM auth.users WHERE id = auth.uid()))
+  USING (invited_email = (SELECT email FROM profiles WHERE id = auth.uid()))
   WITH CHECK (true);
 
 -- Les admins ont tous les droits

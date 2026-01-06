@@ -93,7 +93,8 @@
       "Bash(npm run build:aab:*)",
       "Bash(gradlew.bat bundleRelease:*)",
       "Bash(java:*)",
-      "Bash(gradlew.bat:*)"
+      "Bash(gradlew.bat:*)",
+      "Bash(del fix_beneficiary_invitations_rls.sql)"
     ],
     "deny": [],
     "ask": []

@@ -1,5 +1,5 @@
 // Composant d'affichage du tirage du jour
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Box,
   Typography,
@@ -13,11 +13,16 @@ import {
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import ShareIcon from '@mui/icons-material/Share';
+import EmailIcon from '@mui/icons-material/Email';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EventIcon from '@mui/icons-material/Event';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import { DailyDrawData } from '../hooks/useDailyDraw';
 import { useNavigate } from 'react-router-dom';
+import { ShareMessageByEmailDialog } from './ShareMessageByEmailDialog';
+import { shareMessageByEmail } from '../services/shareMessage';
+import { logger } from '../utils/logger';
+import { useAuth } from '../context/AuthContext';
 
 interface DailyDrawDisplayProps {
   data: DailyDrawData;
@@ -31,6 +36,8 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
   showCTA = true
 }) => {
   const navigate = useNavigate();
+  const { user, profile } = useAuth();
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
 
   const handleShare = () => {
     if (navigator.share) {
@@ -54,6 +61,63 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
 
   const handleBookAppointment = () => {
     navigate('/appointments/booking');
+  };
+
+  const handleOpenEmailDialog = () => {
+    setEmailDialogOpen(true);
+  };
+
+  const handleCloseEmailDialog = () => {
+    setEmailDialogOpen(false);
+  };
+
+  const handleSendEmail = async (recipientEmail: string, comment: string) => {
+    try {
+      const today = new Date();
+
+      // Récupérer le nom complet de l'expéditeur
+      const senderName = profile
+        ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim()
+        : user?.email || 'Un utilisateur FL2M';
+
+      const messageData = {
+        firstName: data.firstName,
+        date: today.toLocaleDateString('fr-FR', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        }),
+        nombre1: data.nombre1,
+        nombre2: data.nombre2,
+        nombre3: data.nombre3,
+        label1: data.label1 || 'Objectif de vie',
+        label2: data.label2 || 'Jour personnel',
+        label3: data.label3 || 'Message 3',
+        titre1: data.message1?.titre || '',
+        titre2: data.message2?.titre || '',
+        titre3: data.message3?.titre || '',
+        message1: data.message1?.message || '',
+        message2: data.message2?.message || '',
+        message3: data.message3?.message || ''
+      };
+
+      const { success, error } = await shareMessageByEmail({
+        recipientEmail,
+        senderName,
+        senderComment: comment,
+        messageData
+      });
+
+      if (!success) {
+        throw error || new Error('Erreur lors de l\'envoi de l\'email');
+      }
+
+      logger.info('[Daily Draw Display] Email partagé avec succès');
+    } catch (error: any) {
+      logger.error('[Daily Draw Display] Erreur partage email:', error);
+      throw error;
+    }
   };
 
   return (
@@ -362,6 +426,21 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
         >
           Partager
         </Button>
+        <Button
+          variant="outlined"
+          startIcon={<EmailIcon />}
+          onClick={handleOpenEmailDialog}
+          sx={{
+            borderColor: '#1D3461',
+            color: '#1D3461',
+            '&:hover': {
+              borderColor: '#345995',
+              backgroundColor: 'rgba(29, 52, 97, 0.1)',
+            }
+          }}
+        >
+          Partager par email
+        </Button>
         {onReset && (
           <Button
             variant="contained"
@@ -438,6 +517,26 @@ const DailyDrawDisplay: React.FC<DailyDrawDisplayProps> = ({
           </Typography>
         </Box>
       )}
+
+      {/* Dialogue de partage par email */}
+      <ShareMessageByEmailDialog
+        open={emailDialogOpen}
+        onClose={handleCloseEmailDialog}
+        senderName={profile ? `${profile.first_name || ''} ${profile.last_name || ''}`.trim() : user?.email || 'Vous'}
+        messageData={{
+          firstName: data.firstName,
+          nombre1: data.nombre1,
+          nombre2: data.nombre2,
+          nombre3: data.nombre3,
+          label1: data.label1 || 'Objectif de vie',
+          label2: data.label2 || 'Jour personnel',
+          label3: data.label3 || 'Message 3',
+          message1: data.message1?.message || '',
+          message2: data.message2?.message || '',
+          message3: data.message3?.message || ''
+        }}
+        onSend={handleSendEmail}
+      />
     </Box>
   );
 };

@@ -1,5 +1,5 @@
 // Composant pour afficher le tirage du jour d'un bénéficiaire
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, CircularProgress, Alert, Button, Typography, Paper } from '@mui/material';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import { useDailyDrawBeneficiary } from '../hooks/useDailyDraw';
@@ -37,6 +37,35 @@ const BeneficiaryDailyDraw: React.FC<BeneficiaryDailyDrawProps> = ({
   const { getDailyDraw, loading, error, drawData } = useDailyDrawBeneficiary();
   const [showResult, setShowResult] = useState(false);
 
+  // Charger automatiquement le message du jour au montage
+  useEffect(() => {
+    const autoLoadMessage = async () => {
+      // Ne rien faire si les données ne sont pas complètes
+      if (!racine1 || !racine2 || !tronc || !dynamiqueDeVie || !ecorce || !branche || !feuille || !fruit || !birthDay || !birthMonth) {
+        return;
+      }
+
+      // Charger ou générer automatiquement le message
+      await getDailyDraw({
+        beneficiaryId,
+        firstName,
+        racine1,
+        racine2,
+        tronc,
+        dynamiqueDeVie,
+        ecorce,
+        branche,
+        feuille,
+        fruit,
+        birthDay,
+        birthMonth
+      });
+      setShowResult(true);
+    };
+
+    autoLoadMessage();
+  }, [beneficiaryId]); // Relancer quand le bénéficiaire change
+
   const handleGetMessage = async () => {
     if (racine1 && racine2 && tronc && dynamiqueDeVie && ecorce && branche && feuille && fruit && birthDay && birthMonth) {
       await getDailyDraw({
@@ -65,6 +94,16 @@ const BeneficiaryDailyDraw: React.FC<BeneficiaryDailyDrawProps> = ({
           Votre profil numérologique n'est pas encore complet.
           Les données nécessaires pour générer votre message du jour sont manquantes.
         </Alert>
+      </Box>
+    );
+  }
+
+  // Afficher le chargement
+  if (loading && !drawData) {
+    return (
+      <Box sx={{ maxWidth: 800, mx: 'auto', py: 4, px: 2, textAlign: 'center' }}>
+        <CircularProgress />
+        <Typography sx={{ mt: 2 }}>Chargement de votre message du jour...</Typography>
       </Box>
     );
   }

@@ -26,6 +26,21 @@ export const reduceToSingleDigit = (num: number): number => {
 };
 
 /**
+ * Réduit un nombre à un chiffre entre 1 et 9
+ * Ne garde PAS les nombres maîtres (11 → 2, 22 → 4)
+ */
+export const reduceToSingleDigitNoMaster = (num: number): number => {
+  // Réduction sans garder les nombres maîtres
+  while (num > 9) {
+    num = String(num)
+      .split('')
+      .reduce((sum, digit) => sum + parseInt(digit), 0);
+  }
+
+  return num;
+};
+
+/**
  * Calcule le nombre basé sur jour + mois de naissance (Objectif de vie)
  * Utilise la gématrie (réduction numérologique)
  */
@@ -37,6 +52,7 @@ export const calculateBirthNumber = (day: number, month: number): number => {
 /**
  * Calcule le nombre du jour personnel
  * Formule: gématrie de (jour naissance + mois naissance + jour tirage + mois tirage + année tirage)
+ * Note: Ne garde PAS les nombres maîtres (11 → 2, 22 → 4)
  */
 export const calculatePersonalDayNumber = (
   birthDay: number,
@@ -50,8 +66,8 @@ export const calculatePersonalDayNumber = (
   // Calculer la somme
   const sum = birthDay + birthMonth + day + month + year;
 
-  // Appliquer la gématrie (réduction numérologique)
-  return reduceToSingleDigit(sum);
+  // Appliquer la gématrie (réduction numérologique sans nombres maîtres)
+  return reduceToSingleDigitNoMaster(sum);
 };
 
 /**
@@ -125,6 +141,7 @@ export const generateStorageKey = (
 
 /**
  * Génère une clé unique pour un bénéficiaire
+ * @deprecated Plus utilisé - les messages des bénéficiaires sont stockés en base de données
  */
 export const generateBeneficiaryStorageKey = (
   beneficiaryId: string,
