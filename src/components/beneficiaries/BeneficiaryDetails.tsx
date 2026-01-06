@@ -21,6 +21,8 @@ import {
   Note as NoteIcon,
   Description as DescriptionIcon,
   Edit as EditIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
 } from '@mui/icons-material';
 import { BeneficiaryWithAccess, formatBirthDate, calculateAge, BeneficiaryRelationship, getRelationshipLabel } from '../../types/beneficiary';
 import {
@@ -307,6 +309,41 @@ export const BeneficiaryDetails: React.FC<BeneficiaryDetailsProps> = ({
               {beneficiary.last_name}
             </Typography>
           </Grid>
+
+          {/* Email et Téléphone */}
+          {(beneficiary.email || beneficiary.phone) && (
+            <Grid item xs={12}>
+              <Grid container spacing={2}>
+                {beneficiary.email && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Email
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <EmailIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {beneficiary.email}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
+
+                {beneficiary.phone && (
+                  <Grid item xs={12} sm={6}>
+                    <Typography variant="body2" color="text.secondary" gutterBottom>
+                      Téléphone
+                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <PhoneIcon sx={{ fontSize: 18, color: 'text.secondary' }} />
+                      <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                        {beneficiary.phone}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                )}
+              </Grid>
+            </Grid>
+          )}
 
           <Grid item xs={12}>
             <Grid container spacing={3}>

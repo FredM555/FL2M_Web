@@ -16,6 +16,9 @@ import {
   Share as ShareIcon,
   PersonOutline as PersonIcon,
   CakeOutlined as CakeIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  Send as SendIcon,
 } from '@mui/icons-material';
 import { BeneficiaryWithAccess } from '../../types/beneficiary';
 import { calculateAge } from '../../types/beneficiary';
@@ -38,6 +41,7 @@ interface BeneficiaryCardProps {
   onEdit?: () => void;
   onDelete?: () => void;
   onShare?: () => void;
+  onInvite?: () => void;
   onClick?: () => void;
   userType?: 'admin' | 'intervenant' | 'client';
 }
@@ -50,6 +54,7 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
   onEdit,
   onDelete,
   onShare,
+  onInvite,
   onClick,
   userType = 'client',
 }) => {
@@ -243,7 +248,7 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
             </Typography>
 
             {/* Âge et date de naissance */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
               <CakeIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
               <Typography variant="body2" color="text.secondary">
                 {age} ans ({new Date(beneficiary.birth_date).toLocaleDateString('fr-FR', {
@@ -253,11 +258,46 @@ export const BeneficiaryCard: React.FC<BeneficiaryCardProps> = ({
                 })})
               </Typography>
             </Box>
+
+            {/* Email */}
+            {beneficiary.email && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
+                <EmailIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                  {beneficiary.email}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Téléphone */}
+            {beneficiary.phone && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <PhoneIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.875rem' }}>
+                  {beneficiary.phone}
+                </Typography>
+              </Box>
+            )}
           </Box>
 
           {/* Boutons d'action en haut à droite */}
-          {(onEdit || onDelete || onShare) && (
+          {(onEdit || onDelete || onShare || onInvite) && (
             <Box sx={{ display: 'flex', gap: 0.5, ml: 1 }}>
+              {onInvite && beneficiary.is_owner && (
+                <Tooltip title="Inviter à rejoindre FL2M">
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onInvite();
+                    }}
+                    sx={{ color: 'success.main' }}
+                  >
+                    <SendIcon fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+
               {onShare && beneficiary.can_share && (
                 <Tooltip title="Partager l'accès">
                   <IconButton

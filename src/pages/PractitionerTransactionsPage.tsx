@@ -67,6 +67,7 @@ const getCommissionTooltip = (commissionType: ContractType | null, isFreeFree: b
 
   const contractLabels: Record<ContractType, string> = {
     decouverte: 'Découverte',
+    standard: 'Standard',
     starter: 'Starter',
     pro: 'Pro',
     premium: 'Premium'

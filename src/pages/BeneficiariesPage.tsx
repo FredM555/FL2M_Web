@@ -27,6 +27,7 @@ import { BeneficiaryAccessManager } from '../components/beneficiaries/Beneficiar
 import { BeneficiaryDetails } from '../components/beneficiaries/BeneficiaryDetails';
 import { BeneficiaryDocuments } from '../components/beneficiaries/BeneficiaryDocuments';
 import { BeneficiaryMessageHistory } from '../components/beneficiary/BeneficiaryMessageHistory';
+import { BeneficiaryInvitationDialog } from '../components/beneficiaries/BeneficiaryInvitationDialog';
 import { AppointmentDetailsDialog } from '../components/appointments/AppointmentDetailsDialog';
 import {
   getUserBeneficiaries,
@@ -79,6 +80,10 @@ export const BeneficiariesPage: React.FC = () => {
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
   const [appointmentDialogOpen, setAppointmentDialogOpen] = useState(false);
   const [loadingAppointment, setLoadingAppointment] = useState(false);
+
+  // État pour le dialog d'invitation
+  const [invitationDialogOpen, setInvitationDialogOpen] = useState(false);
+  const [beneficiaryToInvite, setBeneficiaryToInvite] = useState<BeneficiaryWithAccess | null>(null);
 
   // Charger les bénéficiaires uniquement au montage ou si l'utilisateur change vraiment
   useEffect(() => {
@@ -285,6 +290,17 @@ export const BeneficiariesPage: React.FC = () => {
     setSelectedAppointment(null);
   };
 
+  // Fonction pour ouvrir le dialog d'invitation
+  const handleInvite = (beneficiary: BeneficiaryWithAccess) => {
+    setBeneficiaryToInvite(beneficiary);
+    setInvitationDialogOpen(true);
+  };
+
+  const handleCloseInvitationDialog = () => {
+    setInvitationDialogOpen(false);
+    setBeneficiaryToInvite(null);
+  };
+
   return (
     <Box sx={{ width: '100%', position: 'relative', minHeight: '100vh' }}>
       {/* Image de fond avec opacité */}
@@ -370,6 +386,7 @@ export const BeneficiariesPage: React.FC = () => {
           onAdd={handleCreate}
           onEdit={handleEdit}
           onDelete={handleDelete}
+          onInvite={handleInvite}
           onClick={handleView}
           userType={profile?.user_type}
         />
@@ -591,6 +608,17 @@ export const BeneficiariesPage: React.FC = () => {
             onAppointmentUpdate={(updatedAppointment) => {
               setSelectedAppointment(updatedAppointment);
             }}
+          />
+        )}
+
+        {/* Dialog d'invitation */}
+        {beneficiaryToInvite && profile && (
+          <BeneficiaryInvitationDialog
+            open={invitationDialogOpen}
+            onClose={handleCloseInvitationDialog}
+            beneficiary={beneficiaryToInvite}
+            inviterName={`${profile.first_name} ${profile.last_name}`}
+            inviterUserId={user!.id}
           />
         )}
 

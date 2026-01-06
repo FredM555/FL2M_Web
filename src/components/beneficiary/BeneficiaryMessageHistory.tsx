@@ -50,7 +50,7 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'rated' | 'unrated'>('all');
-  const [minRating, setMinRating] = useState<number | null>(null);
+  const [minRating, setMinRating] = useState<number>(0);
 
   // Charger les messages et les stats
   useEffect(() => {
@@ -272,7 +272,7 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
           onChange={(_, newRating) => setMinRating(newRating)}
           size="small"
         >
-          <ToggleButton value={null} sx={{ py: 0.5, px: 1.5 }}>Toutes</ToggleButton>
+          <ToggleButton value={0} sx={{ py: 0.5, px: 1.5 }}>Toutes</ToggleButton>
           <ToggleButton value={5} sx={{ py: 0.5, px: 1.5 }}>5★</ToggleButton>
           <ToggleButton value={4} sx={{ py: 0.5, px: 1.5 }}>4★+</ToggleButton>
           <ToggleButton value={3} sx={{ py: 0.5, px: 1.5 }}>3★+</ToggleButton>

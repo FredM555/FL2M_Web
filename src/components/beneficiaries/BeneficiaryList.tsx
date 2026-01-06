@@ -31,6 +31,7 @@ interface BeneficiaryListProps {
   onEdit?: (beneficiary: BeneficiaryWithAccess) => void;
   onDelete?: (beneficiary: BeneficiaryWithAccess) => void;
   onShare?: (beneficiary: BeneficiaryWithAccess) => void;
+  onInvite?: (beneficiary: BeneficiaryWithAccess) => void;
   onClick?: (beneficiary: BeneficiaryWithAccess) => void;
   userType?: 'admin' | 'intervenant' | 'client';
 }
@@ -49,6 +50,7 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
   onEdit,
   onDelete,
   onShare,
+  onInvite,
   onClick,
   userType = 'client',
 }) => {
@@ -516,6 +518,7 @@ export const BeneficiaryList: React.FC<BeneficiaryListProps> = ({
                 onEdit={onEdit ? () => onEdit(beneficiary) : undefined}
                 onDelete={onDelete ? () => onDelete(beneficiary) : undefined}
                 onShare={onShare ? () => onShare(beneficiary) : undefined}
+                onInvite={onInvite ? () => onInvite(beneficiary) : undefined}
                 onClick={onClick ? () => onClick(beneficiary) : undefined}
                 userType={userType}
               />
