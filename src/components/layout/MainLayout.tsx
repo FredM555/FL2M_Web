@@ -1817,7 +1817,7 @@ const MainLayout: React.FC = () => {
                     },
                   }}
                 >
-                  📱 Application Android v{import.meta.env.VITE_APP_VERSION || '1.0.1'}
+                  📱 Application Android :  v{import.meta.env.VITE_APP_VERSION || '1.0.1'}
                 </Typography>
               </Box>
             </Grid>
