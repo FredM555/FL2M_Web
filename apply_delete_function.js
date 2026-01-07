@@ -5,6 +5,7 @@ import * as path from 'path';
 import { fileURLToPath } from 'url';
 import * as dotenv from 'dotenv';
 
+
 // Charger les variables d'environnement
 dotenv.config();
 
