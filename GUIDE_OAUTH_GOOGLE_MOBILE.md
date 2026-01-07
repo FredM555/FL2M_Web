@@ -3,6 +3,21 @@
 ## Problème résolu
 Après la connexion Google, l'application ouvrait le site web au lieu de rester dans l'app mobile.
 
+## Comment ça fonctionne (Android App Links)
+
+**Flux de connexion Google sur mobile** :
+
+1. 👤 Utilisateur clique sur "Se connecter avec Google" dans l'app
+2. 🌐 Google OAuth redirige vers `https://www.fl2m.fr/auth/callback?token=...`
+3. 📱 Android vérifie si une app peut gérer cette URL (via `assetlinks.json`)
+4. ✅ Android trouve l'app FL2M et l'ouvre directement (pas de navigateur !)
+5. 🔐 L'app reçoit le callback et finalise la connexion
+
+**Fichiers clés** :
+- `public/.well-known/assetlinks.json` → Prouve que FL2M.fr autorise l'app à gérer ses URLs
+- `AndroidManifest.xml` → Déclare que l'app peut gérer `https://www.fl2m.fr/auth/callback`
+- Custom scheme `fl2mapp://` → Fallback uniquement, **non utilisé par Google OAuth**
+
 ## Solution mise en place
 
 ### 1. Configuration Android App Links
@@ -52,13 +67,17 @@ Après la connexion Google, l'application ouvrait le site web au lieu de rester 
    - ✅ `http://localhost:5173` (déjà présent)
    - ✅ `https://phokxjbocljahmbdkrbs.supabase.co` (déjà présent)
 
-5. **Ajoutez les URI de redirection autorisés** :
-   - ✅ `http://localhost:5173/auth/callback` (déjà présent)
-   - ✅ `https://phokxjbocljahmbdkrbs.supabase.co/auth/v1/callback` (déjà présent)
-   - ✅ `https://www.fl2m.fr/auth/callback` (déjà présent)
-   - ⚠️ **À AJOUTER** : `fl2mapp://auth/callback` (Custom URL Scheme pour l'app mobile)
+5. **Vérifiez les URI de redirection autorisés** (déjà configurés, rien à ajouter) :
+   - ✅ `http://localhost:5173/auth/callback`
+   - ✅ `https://phokxjbocljahmbdkrbs.supabase.co/auth/v1/callback`
+   - ✅ `https://www.fl2m.fr/auth/callback`
 
-6. Sauvegardez les modifications
+   **⚠️ IMPORTANT** : NE PAS ajouter `fl2mapp://auth/callback`
+   - Google OAuth refuse les custom URL schemes
+   - Le custom scheme est uniquement un fallback dans AndroidManifest
+   - Android interceptera automatiquement `https://www.fl2m.fr/auth/callback` grâce à assetlinks.json
+
+6. Aucune modification nécessaire si ces 3 URIs sont déjà configurés
 
 ⏱️ **Attention** : Les modifications peuvent prendre de 5 minutes à quelques heures pour être appliquées par Google
 
