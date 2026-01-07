@@ -215,7 +215,22 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
     }).format(date);
   };
 
+  // Vérifier si le message le plus récent est d'aujourd'hui
+  const hasMessageToday = () => {
+    if (messages.length === 0) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const mostRecentMessage = messages[0];
+    const messageDate = new Date(mostRecentMessage.viewed_at);
+    messageDate.setHours(0, 0, 0, 0);
+
+    return messageDate.getTime() === today.getTime();
+  };
+
   const messagesByDate = groupMessagesByDate();
+  const shouldShowTodayAlert = messages.length === 0 || !hasMessageToday();
 
   if (loading) {
     return (
@@ -289,11 +304,11 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
         </Alert>
       )}
 
-      {/* Messages groupés par date */}
-      {messages.length === 0 ? (
+      {/* Alerte si pas de message aujourd'hui */}
+      {shouldShowTodayAlert && (
         <Alert
           severity="info"
-          sx={{ py: 1.5 }}
+          sx={{ py: 1.5, mb: messages.length > 0 ? 2 : 0 }}
           action={
             <Button
               color="inherit"
@@ -310,9 +325,14 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
             </Button>
           }
         >
-          Aucun message trouvé pour ce bénéficiaire. Consultez le message du jour pour commencer l'historique !
+          {messages.length === 0
+            ? 'Aucun message trouvé pour ce bénéficiaire. Consultez le message du jour pour commencer l\'historique !'
+            : 'Aucun message du jour trouvé pour ce bénéficiaire. Consultez le message du jour pour commencer l\'historique !'}
         </Alert>
-      ) : (
+      )}
+
+      {/* Messages groupés par date */}
+      {messages.length > 0 && (
         <Stack spacing={2}>
           {messagesByDate.map((group) => (
             <Box key={group.date}>
