@@ -592,7 +592,7 @@ const AppointmentBookingPage: React.FC = () => {
     return `Module ${service.name}`;
   };
 
-  const handleServiceSelect = (service: Service) => {
+  const handleServiceSelect = async (service: Service) => {
     // Si le service est "nous consulter" (prix 9999), rediriger vers la page de contact
     if (service.price === 9999) {
       const params = new URLSearchParams({
@@ -604,6 +604,10 @@ const AppointmentBookingPage: React.FC = () => {
     }
 
     setSelectedService(service);
+
+    // Charger automatiquement les données de la semaine et passer à l'étape suivante
+    await loadWeeksData(service.id);
+    setActiveStep(1);
   };
   
   const handleWeekChange = (week: WeekInfo) => {
@@ -632,6 +636,9 @@ const AppointmentBookingPage: React.FC = () => {
   
   const handleSlotSelect = (slot: AppointmentSlot) => {
     setSelectedSlot(slot);
+
+    // Passer automatiquement à l'étape de confirmation et paiement
+    setActiveStep(2);
   };
 
   // Gestion de la création d'un nouveau bénéficiaire
