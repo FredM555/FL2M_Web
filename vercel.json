@@ -3,7 +3,7 @@
   "installCommand": "npm install --legacy-peer-deps",
   "headers": [
     {
-      "source": "/downloads/(.*)",
+      "source": "/downloads/(.*\\.apk)",
       "headers": [
         {
           "key": "Content-Type",
@@ -18,21 +18,8 @@
   ],
   "rewrites": [
     {
-      "source": "/(.*)",
+      "source": "/((?!downloads/).*)",
       "destination": "/index.html"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/downloads/.*\\.(apk|pdf|zip)$",
-      "dest": "$0"
-    },
-    {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/index.html"
     }
   ]
 }
