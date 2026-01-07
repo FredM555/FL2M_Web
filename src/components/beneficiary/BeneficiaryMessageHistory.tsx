@@ -15,8 +15,10 @@ import {
   Divider,
   Stack,
   Paper,
-  IconButton
+  IconButton,
+  Button
 } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import StarIcon from '@mui/icons-material/Star';
 import StarBorderIcon from '@mui/icons-material/StarBorder';
 import EditIcon from '@mui/icons-material/Edit';
@@ -45,6 +47,7 @@ interface MessagesByDate {
 }
 
 export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, beneficiaryName }) => {
+  const navigate = useNavigate();
   const [messages, setMessages] = useState<DailyMessageHistory[]>([]);
   const [stats, setStats] = useState<MessageHistoryStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -288,8 +291,26 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
 
       {/* Messages groupés par date */}
       {messages.length === 0 ? (
-        <Alert severity="info" sx={{ py: 1 }}>
-          Aucun message trouvé. Consultez votre message du jour pour commencer votre historique !
+        <Alert
+          severity="info"
+          sx={{ py: 1.5 }}
+          action={
+            <Button
+              color="inherit"
+              size="small"
+              variant="outlined"
+              onClick={() => navigate('/message-du-jour')}
+              sx={{
+                ml: 2,
+                textTransform: 'none',
+                fontWeight: 600
+              }}
+            >
+              Voir mon message du jour
+            </Button>
+          }
+        >
+          Aucun message trouvé pour ce bénéficiaire. Consultez le message du jour pour commencer l'historique !
         </Alert>
       ) : (
         <Stack spacing={2}>
