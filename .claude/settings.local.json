@@ -94,7 +94,8 @@
       "Bash(gradlew.bat bundleRelease:*)",
       "Bash(java:*)",
       "Bash(gradlew.bat:*)",
-      "Bash(del fix_beneficiary_invitations_rls.sql)"
+      "Bash(del fix_beneficiary_invitations_rls.sql)",
+      "Bash(npx supabase@latest db diff:*)"
     ],
     "deny": [],
     "ask": []
