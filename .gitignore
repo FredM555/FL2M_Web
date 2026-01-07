@@ -32,3 +32,6 @@ nul
 # AAB files (too large for GitHub)
 *.aab
 public/downloads/*.aab
+
+# Build info (generated at build time)
+public/build-info.json

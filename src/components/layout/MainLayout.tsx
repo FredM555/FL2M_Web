@@ -1,5 +1,5 @@
 // src/components/layout/MainLayout.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   AppBar,
   Toolbar,
@@ -40,6 +40,7 @@ import GroupIcon from '@mui/icons-material/Group';
 import SacredGeometryBackground from '../SacredGeometryBackground';
 import MobileBottomNav from './MobileBottomNav';
 import { logger } from '../../utils/logger';
+import type { BuildInfo } from '../../types/build-info';
 
 const MainLayout: React.FC = () => {
   const { user, profile, signOut } = useAuth();
@@ -52,6 +53,9 @@ const MainLayout: React.FC = () => {
   const [userMenuAnchor, setUserMenuAnchor] = useState<null | HTMLElement>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+
+  // État pour les informations de build
+  const [buildInfo, setBuildInfo] = useState<BuildInfo | null>(null);
 
   // Slogans en défilement
   const slogans = React.useMemo(() => [
@@ -140,6 +144,23 @@ const MainLayout: React.FC = () => {
     const interval = setInterval(loadUnreadCount, 60000);
     return () => clearInterval(interval);
   }, [user]);
+
+  // Charger les informations de build
+  useEffect(() => {
+    const loadBuildInfo = async () => {
+      try {
+        const response = await fetch('/build-info.json');
+        if (response.ok) {
+          const info: BuildInfo = await response.json();
+          setBuildInfo(info);
+        }
+      } catch (error) {
+        logger.debug('Build info not available:', error);
+      }
+    };
+
+    loadBuildInfo();
+  }, []);
 
   // Hauteur totale du bandeau pour décaler le contenu principal
   const headerHeight = isMobile ? '56px' : '108px'; // Hauteur réduite du header
@@ -1920,6 +1941,34 @@ const MainLayout: React.FC = () => {
               Force • Légitimité • Mouvement • Métamorphose
             </Typography>
           </Box>
+
+          {/* Informations de build (discrètes) */}
+          {buildInfo && (
+            <Box
+              sx={{
+                textAlign: 'center',
+                pb: 2,
+              }}
+            >
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'rgba(255, 255, 255, 0.3)',
+                  fontSize: '0.65rem',
+                  fontFamily: 'monospace',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                v{buildInfo.version} • {buildInfo.commitHash} • {new Date(buildInfo.buildDate).toLocaleString('fr-FR', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Typography>
+            </Box>
+          )}
         </Container>
       </Box>
 

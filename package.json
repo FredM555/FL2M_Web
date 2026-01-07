@@ -1,14 +1,16 @@
 {
   "name": "flm-services-new",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.2",
   "type": "module",
   "scripts": {
     "start": "npm run copy-pdf-worker && vite",
     "dev": "npm run copy-pdf-worker && vite",
+    "prebuild": "node scripts/generate-build-info.cjs",
     "build": "npm run copy-pdf-worker && tsc -b && vite build",
     "build:apk": "node build-apk.cjs",
     "build:aab": "node build-aab.cjs",
+    "generate-build-info": "node scripts/generate-build-info.cjs",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
