@@ -166,8 +166,8 @@ const MainLayout: React.FC = () => {
   const headerHeight = isMobile ? '56px' : '108px'; // Hauteur réduite du header
 
   // Fonctions de gestion des menus
-  const handleMenuOpen = (setter: React.Dispatch<React.SetStateAction<HTMLElement | null>>) => 
-    (event: React.MouseEvent<HTMLButtonElement>) => {
+  const handleMenuOpen = (setter: React.Dispatch<React.SetStateAction<HTMLElement | null>>) =>
+    (event: React.MouseEvent<HTMLElement>) => {
       setter(event.currentTarget);
     };
 
@@ -320,14 +320,50 @@ const MainLayout: React.FC = () => {
               {/* Boutons de connexion/inscription ou menu utilisateur */}
               <Box>
                 {isMobile && (
-                  <IconButton 
-                    color="inherit"
-                    onClick={toggleMobileMenu}
-                    edge="end"
-                    size="large"
-                  >
-                    <MenuIcon />
-                  </IconButton>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    {/* Avatar utilisateur sur mobile si connecté */}
+                    {user && profile && (
+                      <Box
+                        onClick={handleMenuOpen(setUserMenuAnchor)}
+                        sx={{
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '4px',
+                          borderRadius: '50%',
+                          border: '2px solid rgba(255, 215, 0, 0.4)',
+                          background: 'rgba(255, 255, 255, 0.1)',
+                          backdropFilter: 'blur(10px)',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            borderColor: '#FFD700',
+                            background: 'rgba(255, 255, 255, 0.15)',
+                            boxShadow: '0 0 12px rgba(255, 215, 0, 0.4)',
+                          },
+                        }}
+                      >
+                        <UserAvatar
+                          avatarUrl={profile?.avatar_url}
+                          firstName={profile?.first_name}
+                          lastName={profile?.last_name}
+                          racine1={profile?.racine1}
+                          racine2={profile?.racine2}
+                          tronc={profile?.tronc}
+                          dynamique_de_vie={profile?.dynamique_de_vie}
+                          size={36}
+                        />
+                      </Box>
+                    )}
+                    {/* Menu hamburger */}
+                    <IconButton
+                      color="inherit"
+                      onClick={toggleMobileMenu}
+                      edge="end"
+                      size="large"
+                    >
+                      <MenuIcon />
+                    </IconButton>
+                  </Box>
                 )}
 
                 {!isMobile && (
