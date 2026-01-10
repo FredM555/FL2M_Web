@@ -1915,6 +1915,7 @@ const MainLayout: React.FC = () => {
           <Box
             sx={{
               py: 3,
+              pb: { xs: 'calc(100px + env(safe-area-inset-bottom))', md: 3 }, // Espace pour la barre de navigation mobile
               display: 'flex',
               flexDirection: { xs: 'column', sm: 'row' },
               justifyContent: 'space-between',

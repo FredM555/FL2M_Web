@@ -1,5 +1,5 @@
 // src/App.tsx
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
 import { Box } from '@mui/material';
 import './index.css'
@@ -7,6 +7,8 @@ import ErrorBoundary from './components/ErrorBoundary';
 import ScrollToTop from './components/ScrollToTop';
 import LoadingScreen from './components/LoadingScreen';
 import { useEffect, useState } from 'react';
+import { App as CapacitorApp } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 
 // Layouts
 import MainLayout from './components/layout/MainLayout';
@@ -126,6 +128,7 @@ const AdminRoute = ({ children }: { children: React.ReactNode }) => {
 function App() {
   const { user, profile, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   logger.debug("État Auth dans App:", { user, profile, loading, path: location.pathname });
   const [appReady, setAppReady] = useState(false);
 
@@ -136,6 +139,34 @@ function App() {
       setAppReady(true);
     }
   }, [loading]);
+
+  // Gérer les App Links (deep links) pour OAuth callback
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    let listener: any;
+
+    CapacitorApp.addListener('appUrlOpen', (event: { url: string }) => {
+      logger.info('[APP_URL_OPEN] Deep link intercepté:', event.url);
+
+      // Extraire le chemin de l'URL
+      const url = new URL(event.url);
+      const path = url.pathname + url.search + url.hash;
+
+      logger.info('[APP_URL_OPEN] Navigation vers:', path);
+
+      // Naviguer vers le chemin dans l'application
+      navigate(path, { replace: true });
+    }).then((handle) => {
+      listener = handle;
+    });
+
+    return () => {
+      if (listener) {
+        listener.remove();
+      }
+    };
+  }, [navigate]);
 
   // Protection contre aria-hidden bloqué sur #root (bug MUI Modal)
   useEffect(() => {

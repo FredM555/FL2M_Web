@@ -14,14 +14,13 @@ import { Capacitor } from '@capacitor/core';
 const configureStatusBar = async () => {
   if (Capacitor.isNativePlatform()) {
     try {
-      // Configurer la barre de statut en mode overlay (transparent)
-      await StatusBar.setOverlaysWebView({ overlay: true });
+      // La webview ne doit PAS passer sous la barre de statut
+      await StatusBar.setOverlaysWebView({ overlay: false });
 
       // Définir le style (contenu clair sur fond sombre pour la barre de statut)
       await StatusBar.setStyle({ style: Style.Dark });
 
-      // Optionnel: définir une couleur de fond pour la barre de statut
-      // Utilisez une couleur qui correspond à votre thème
+      // Définir la couleur de fond pour la barre de statut
       await StatusBar.setBackgroundColor({ color: '#1D3461' });
     } catch (error) {
       console.log('StatusBar configuration error:', error);
