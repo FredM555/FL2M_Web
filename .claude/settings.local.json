@@ -96,7 +96,8 @@
       "Bash(gradlew.bat:*)",
       "Bash(del fix_beneficiary_invitations_rls.sql)",
       "Bash(npx supabase@latest db diff:*)",
-      "Bash(npm run generate-build-info:*)"
+      "Bash(npm run generate-build-info:*)",
+      "Bash(npm run build:apk:*)"
     ],
     "deny": [],
     "ask": []

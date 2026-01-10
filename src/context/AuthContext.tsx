@@ -388,12 +388,11 @@ const logLoginFailed = (email: string, reason?: string) => {
       sessionStorage.setItem('oauth_redirect', currentPath);
     }
 
-    // Détecter la plateforme et utiliser la bonne URL de redirection
-    const isNative = Capacitor.isNativePlatform();
-    const redirectTo = isNative
-      ? 'https://www.fl2m.fr/auth/callback'  // Deep link pour mobile
-      : `${window.location.origin}/auth/callback`; // URL web standard
+    // Pour mobile ET web, on utilise toujours la même URL HTTPS
+    // L'Android App Link interceptera automatiquement sur mobile
+    const redirectTo = 'https://www.fl2m.fr/auth/callback';
 
+    const isNative = Capacitor.isNativePlatform();
     logger.info('[SIGNIN_GOOGLE] Plateforme:', isNative ? 'Mobile (native)' : 'Web', 'redirectTo:', redirectTo);
 
     return supabase.auth.signInWithOAuth({
@@ -424,12 +423,11 @@ const logLoginFailed = (email: string, reason?: string) => {
       sessionStorage.setItem('oauth_redirect', currentPath);
     }
 
-    // Détecter la plateforme et utiliser la bonne URL de redirection
-    const isNative = Capacitor.isNativePlatform();
-    const redirectTo = isNative
-      ? 'https://www.fl2m.fr/auth/callback'  // Deep link pour mobile
-      : `${window.location.origin}/auth/callback`; // URL web standard
+    // Pour mobile ET web, on utilise toujours la même URL HTTPS
+    // L'Android App Link interceptera automatiquement sur mobile
+    const redirectTo = 'https://www.fl2m.fr/auth/callback';
 
+    const isNative = Capacitor.isNativePlatform();
     logger.info('[SIGNIN_APPLE] Plateforme:', isNative ? 'Mobile (native)' : 'Web', 'redirectTo:', redirectTo);
 
     return supabase.auth.signInWithOAuth({

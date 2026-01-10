@@ -20,6 +20,11 @@ const config: CapacitorConfig = {
       iosSpinnerStyle: 'large',
       spinnerColor: '#FFD700',
     },
+    StatusBar: {
+      style: 'dark',
+      backgroundColor: '#1D3461',
+      overlaysWebView: true,
+    },
     PushNotifications: {
       presentationOptions: ['badge', 'sound', 'alert'],
     },

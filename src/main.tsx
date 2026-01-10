@@ -7,6 +7,27 @@ import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import theme from './theme'; // Import du nouveau thème
 import { SplashScreen } from '@capacitor/splash-screen';
+import { StatusBar, Style } from '@capacitor/status-bar';
+import { Capacitor } from '@capacitor/core';
+
+// Configuration de la barre de statut pour Android
+const configureStatusBar = async () => {
+  if (Capacitor.isNativePlatform()) {
+    try {
+      // Configurer la barre de statut en mode overlay (transparent)
+      await StatusBar.setOverlaysWebView({ overlay: true });
+
+      // Définir le style (contenu clair sur fond sombre pour la barre de statut)
+      await StatusBar.setStyle({ style: Style.Dark });
+
+      // Optionnel: définir une couleur de fond pour la barre de statut
+      // Utilisez une couleur qui correspond à votre thème
+      await StatusBar.setBackgroundColor({ color: '#1D3461' });
+    } catch (error) {
+      console.log('StatusBar configuration error:', error);
+    }
+  }
+};
 
 // Cacher le splash screen natif une fois que l'app est prête
 const hideSplashScreen = async () => {
@@ -17,6 +38,9 @@ const hideSplashScreen = async () => {
     console.log('Splash screen not available');
   }
 };
+
+// Initialiser la configuration de la barre de statut
+configureStatusBar();
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   //<React.StrictMode>
