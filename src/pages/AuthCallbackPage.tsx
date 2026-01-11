@@ -37,9 +37,23 @@ const AuthCallbackPage = () => {
           return;
         }
 
+        // Vérifier si l'URL contient des hash fragments OAuth (tokens)
+        const hash = window.location.hash;
+        const hasOAuthParams = hash.includes('access_token') || hash.includes('refresh_token') || hash.includes('code');
+
+        logger.debug('[AUTH_CALLBACK] Hash fragments présents:', hasOAuthParams, 'Hash:', hash);
+
+        // Sur mobile avec Capacitor, les tokens OAuth sont dans les hash fragments
+        // Supabase les traite automatiquement, mais il faut attendre un peu
+        if (hasOAuthParams) {
+          logger.debug('[AUTH_CALLBACK] Tokens OAuth détectés, attente du traitement par Supabase...');
+          // Attendre 1 seconde pour laisser à Supabase le temps de traiter les tokens
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
         // Récupérer la session actuelle
         setStatus('processing');
-        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+        let { data: { session }, error: sessionError } = await supabase.auth.getSession();
 
         if (sessionError) {
           logger.error('[AUTH_CALLBACK] Erreur récupération session:', sessionError);
@@ -47,13 +61,35 @@ const AuthCallbackPage = () => {
         }
 
         if (!session) {
-          logger.warn('[AUTH_CALLBACK] Aucune session trouvée');
-          setError('Aucune session trouvée. Redirection vers la page de connexion...');
-          setStatus('error');
-          setTimeout(() => {
-            navigate('/login', { replace: true });
-          }, 2000);
-          return;
+          // Si on a des paramètres OAuth mais pas de session, réessayer après un délai supplémentaire
+          if (hasOAuthParams) {
+            logger.debug('[AUTH_CALLBACK] Pas de session trouvée malgré les tokens OAuth, nouvelle tentative...');
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            const retryResult = await supabase.auth.getSession();
+
+            if (retryResult.error) {
+              logger.error('[AUTH_CALLBACK] Erreur lors de la nouvelle tentative:', retryResult.error);
+              throw retryResult.error;
+            }
+
+            if (retryResult.data.session) {
+              logger.debug('[AUTH_CALLBACK] Session trouvée lors de la nouvelle tentative');
+              // Continuer avec la session trouvée
+              session = retryResult.data.session;
+            }
+          }
+
+          // Si toujours pas de session
+          if (!session) {
+            logger.warn('[AUTH_CALLBACK] Aucune session trouvée');
+            setError('Aucune session trouvée. Redirection vers la page de connexion...');
+            setStatus('error');
+            setTimeout(() => {
+              navigate('/login', { replace: true });
+            }, 2000);
+            return;
+          }
         }
 
         logger.debug('[AUTH_CALLBACK] Session OAuth récupérée:', session.user.id);
