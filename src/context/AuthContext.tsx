@@ -12,7 +12,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, password: string) => Promise<{ error: Error | null }>;
   signInWithGoogle: () => Promise<{ error: Error | null }>;
   signInWithApple: () => Promise<{ error: Error | null }>;
-  signUpWithEmail: (email: string, password: string, userData: Partial<Profile>) => Promise<{ error: Error | null }>;
+  signUpWithEmail: (email: string, password: string, userData: Partial<Profile>) => Promise<{ error: Error | null; data: any }>;
   signOut: () => Promise<{ error: Error | null }>;
   updateProfile: (profileData: Partial<Profile>) => Promise<{ error: Error | null }>;
 }
@@ -390,7 +390,8 @@ const logLoginFailed = (email: string, reason?: string) => {
 
     // Pour mobile ET web, on utilise toujours la même URL HTTPS
     // L'Android App Link interceptera automatiquement sur mobile
-    const redirectTo = 'https://www.fl2m.fr/auth/callback';
+    const baseUrl = import.meta.env.VITE_APP_URL || 'https://www.fl2m.fr';
+    const redirectTo = `${baseUrl}/auth/callback`;
 
     const isNative = Capacitor.isNativePlatform();
     logger.info('[SIGNIN_GOOGLE] Plateforme:', isNative ? 'Mobile (native)' : 'Web', 'redirectTo:', redirectTo);
@@ -425,7 +426,8 @@ const logLoginFailed = (email: string, reason?: string) => {
 
     // Pour mobile ET web, on utilise toujours la même URL HTTPS
     // L'Android App Link interceptera automatiquement sur mobile
-    const redirectTo = 'https://www.fl2m.fr/auth/callback';
+    const baseUrl = import.meta.env.VITE_APP_URL || 'https://www.fl2m.fr';
+    const redirectTo = `${baseUrl}/auth/callback`;
 
     const isNative = Capacitor.isNativePlatform();
     logger.info('[SIGNIN_APPLE] Plateforme:', isNative ? 'Mobile (native)' : 'Web', 'redirectTo:', redirectTo);
@@ -445,40 +447,64 @@ const logLoginFailed = (email: string, reason?: string) => {
       });
   };
 
-  const signUpWithEmail = (email: string, password: string, userData: Partial<Profile>) => {
-    logger.info('[SIGNUP_EMAIL] Tentative d\'inscription avec email');
-    return supabase.auth.signUp({ email, password })
-      .then(({ data, error }) => {
-        if (!error && data?.user) {
-          logger.info('[SIGNUP_EMAIL] Inscription réussie, création du profil');
+  const signUpWithEmail = async (email: string, password: string, userData: Partial<Profile>) => {
+    try {
+      logger.info('[SIGNUP_EMAIL] Tentative d\'inscription avec email');
 
-          return supabase
-            .from('profiles')
-            .update(userData)
-            .eq('id', data.user.id)
-            .select()
-            .single()
-            .then(({ error: profileError }) => {
-              if (profileError) {
-                logger.error('[SIGNUP_EMAIL] Erreur création profil:', profileError.message);
-              } else {
-                logger.info('[SIGNUP_EMAIL] Profil créé avec succès');
-              }
+      const { data, error } = await supabase.auth.signUp({ email, password });
 
-              return { error: profileError ? new Error(profileError.message) : null };
-            });
+      if (error) {
+        logger.error('[SIGNUP_EMAIL] Erreur inscription:', error.message);
+        return { error: new Error(error.message), data: null };
+      }
+
+      if (!data?.user) {
+        return { error: new Error('Aucun utilisateur créé'), data: null };
+      }
+
+      logger.info('[SIGNUP_EMAIL] Inscription réussie, ID:', data.user.id);
+
+      // Attendre que la session soit établie
+      if (data.session) {
+        logger.info('[SIGNUP_EMAIL] Session établie, mise à jour du profil');
+
+        // Utiliser upsert pour créer ou mettre à jour le profil
+        // Maintenant que la session est établie, le RLS autorisera l'opération
+        const profileData = {
+          id: data.user.id,
+          email: email,
+          ...userData
+        };
+
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert(profileData, {
+            onConflict: 'id',
+            ignoreDuplicates: false
+          })
+          .select()
+          .single();
+
+        if (profileError) {
+          logger.error('[SIGNUP_EMAIL] Erreur mise à jour profil:', profileError.message);
+          // Ne pas bloquer l'inscription si la mise à jour du profil échoue
+          // Le trigger DB a déjà créé le profil de base
+          logger.info('[SIGNUP_EMAIL] Profil de base créé par le trigger, mise à jour échouée mais non bloquante');
+        } else {
+          logger.info('[SIGNUP_EMAIL] Profil mis à jour avec succès');
         }
+      } else {
+        logger.info('[SIGNUP_EMAIL] Pas de session immédiate, le profil sera créé par le trigger DB');
+        // Si pas de session immédiate, le trigger DB créera le profil
+        // L'utilisateur devra peut-être vérifier son email d'abord
+      }
 
-        if (error) {
-          logger.error('[SIGNUP_EMAIL] Erreur inscription:', error.message);
-        }
+      return { error: null, data };
 
-        return { error: error ? new Error(error.message) : null };
-      })
-      .catch(error => {
-        logger.error('[SIGNUP_EMAIL] Exception lors de l\'inscription:', error);
-        return { error: error as Error };
-      });
+    } catch (error: any) {
+      logger.error('[SIGNUP_EMAIL] Exception lors de l\'inscription:', error);
+      return { error: error as Error, data: null };
+    }
   };
 
   const signOut = () => {
@@ -512,64 +538,61 @@ const logLoginFailed = (email: string, reason?: string) => {
       });
   };
 
-  const updateProfile = (profileData: Partial<Profile>) => {
+  const updateProfile = async (profileData: Partial<Profile>) => {
     if (!user) {
       logger.error('[UPDATE_PROFILE] Tentative de mise à jour du profil sans être authentifié');
-      return Promise.resolve({ error: new Error('Non authentifié') });
+      return { error: new Error('Non authentifié') };
     }
 
-    logger.info('[UPDATE_PROFILE] Tentative de mise à jour du profil:', profileData);
+    try {
+      logger.info('[UPDATE_PROFILE] Tentative de mise à jour du profil:', profileData);
 
-    // D'abord mettre à jour la BDD
-    return (supabase.from('profiles').update(profileData).eq('id', user.id) as any)
-      .then(({ error: updateError }: any) => {
-        if (updateError) {
-          logger.error('[UPDATE_PROFILE] Erreur mise à jour profil:', updateError.message);
-          throw updateError;
-        }
+      // Utiliser upsert pour créer ou mettre à jour le profil
+      // Cela fonctionne que le profil existe ou non
+      const fullProfileData = {
+        id: user.id,
+        email: user.email || profileData.email,
+        ...profileData
+      };
 
-        logger.debug('[UPDATE_PROFILE] Mise à jour BDD réussie');
+      const { data, error: upsertError } = await supabase
+        .from('profiles')
+        .upsert(fullProfileData, {
+          onConflict: 'id',
+          ignoreDuplicates: false
+        })
+        .select()
+        .single();
 
-        // Ensuite récupérer le profil complet depuis la BDD
-        return supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .single();
-      })
-      .then(({ data, error: fetchError }: any) => {
-        if (fetchError) {
-          logger.error('[UPDATE_PROFILE] Erreur récupération profil après update:', fetchError.message);
-          // Même si on ne peut pas récupérer, on met à jour le contexte localement
-          safeSetState(setProfile, (prev: any) => {
-            if (!prev) {
-              return {
-                id: user.id,
-                email: user.email,
-                ...profileData,
-              } as Profile;
-            }
-            const updated = { ...prev, ...profileData };
-            logger.debug('[UPDATE_PROFILE] Nouvel état profil (local):', updated);
-            return updated;
-          }, 'profile (update local)');
+      if (upsertError) {
+        logger.error('[UPDATE_PROFILE] Erreur upsert profil:', upsertError.message);
 
-          return { error: null }; // Ne pas bloquer même si la récupération échoue
-        }
+        // Même si l'upsert échoue, on met à jour le contexte localement
+        safeSetState(setProfile, (prev: any) => {
+          if (!prev) {
+            return fullProfileData as Profile;
+          }
+          const updated = { ...prev, ...profileData };
+          logger.debug('[UPDATE_PROFILE] Nouvel état profil (local après erreur):', updated);
+          return updated;
+        }, 'profile (update local after error)');
 
-        logger.debug('[UPDATE_PROFILE] Profil récupéré avec succès:', data);
+        return { error: new Error(upsertError.message) };
+      }
 
-        // Mettre à jour le contexte avec les données fraîches de la BDD
-        if (data) {
-          safeSetState(setProfile, data, 'profile (update from DB)');
-        }
+      logger.debug('[UPDATE_PROFILE] Profil upsert avec succès:', data);
 
-        return { error: null };
-      })
-      .catch((error: any) => {
-        logger.error('[UPDATE_PROFILE] Exception lors de la mise à jour du profil:', error);
-        return { error: error as Error };
-      });
+      // Mettre à jour le contexte avec les données fraîches de la BDD
+      if (data) {
+        safeSetState(setProfile, data, 'profile (upsert from DB)');
+      }
+
+      return { error: null };
+
+    } catch (error: any) {
+      logger.error('[UPDATE_PROFILE] Exception lors de la mise à jour du profil:', error);
+      return { error: error as Error };
+    }
   };
 
   const value = {

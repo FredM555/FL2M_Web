@@ -37,6 +37,7 @@ import { logger } from '../../utils/logger';
 interface Props {
   beneficiaryId: string;
   beneficiaryName: string;
+  todayOnly?: boolean; // Afficher uniquement les messages d'aujourd'hui
 }
 
 // Grouper les messages par jour
@@ -46,7 +47,7 @@ interface MessagesByDate {
   timestamp: number;
 }
 
-export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, beneficiaryName }) => {
+export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, beneficiaryName, todayOnly = false }) => {
   const navigate = useNavigate();
   const [messages, setMessages] = useState<DailyMessageHistory[]>([]);
   const [stats, setStats] = useState<MessageHistoryStats | null>(null);
@@ -78,7 +79,21 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
 
       if (messagesError) throw messagesError;
 
-      setMessages(messagesData);
+      // Filtrer pour n'afficher que les messages d'aujourd'hui si demandé
+      let filteredMessages = messagesData;
+      if (todayOnly) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+
+        filteredMessages = messagesData.filter(msg => {
+          const messageDate = new Date(msg.viewed_at);
+          return messageDate >= today && messageDate < tomorrow;
+        });
+      }
+
+      setMessages(filteredMessages);
 
       // Charger les stats
       const { data: statsData, error: statsError } = await getBeneficiaryRatingStats(beneficiaryId);
@@ -242,8 +257,8 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
 
   return (
     <Box>
-      {/* Statistiques compactes */}
-      {stats && stats.total_messages > 0 && (
+      {/* Statistiques compactes (masquées si todayOnly) */}
+      {!todayOnly && stats && stats.total_messages > 0 && (
         <Paper sx={{ p: 2, mb: 2, backgroundColor: 'rgba(52, 89, 149, 0.05)' }}>
           <Grid container spacing={2}>
             <Grid item xs={3}>
@@ -271,31 +286,33 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
         </Paper>
       )}
 
-      {/* Filtres compacts */}
-      <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-        <ToggleButtonGroup
-          value={filter}
-          exclusive
-          onChange={(_, newFilter) => newFilter && setFilter(newFilter)}
-          size="small"
-        >
-          <ToggleButton value="all" sx={{ py: 0.5, px: 1.5 }}>Tous</ToggleButton>
-          <ToggleButton value="rated" sx={{ py: 0.5, px: 1.5 }}>Notés</ToggleButton>
-          <ToggleButton value="unrated" sx={{ py: 0.5, px: 1.5 }}>Non notés</ToggleButton>
-        </ToggleButtonGroup>
+      {/* Filtres compacts (masqués si todayOnly) */}
+      {!todayOnly && (
+        <Box sx={{ mb: 2, display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+          <ToggleButtonGroup
+            value={filter}
+            exclusive
+            onChange={(_, newFilter) => newFilter && setFilter(newFilter)}
+            size="small"
+          >
+            <ToggleButton value="all" sx={{ py: 0.5, px: 1.5 }}>Tous</ToggleButton>
+            <ToggleButton value="rated" sx={{ py: 0.5, px: 1.5 }}>Notés</ToggleButton>
+            <ToggleButton value="unrated" sx={{ py: 0.5, px: 1.5 }}>Non notés</ToggleButton>
+          </ToggleButtonGroup>
 
-        <ToggleButtonGroup
-          value={minRating}
-          exclusive
-          onChange={(_, newRating) => setMinRating(newRating)}
-          size="small"
-        >
-          <ToggleButton value={0} sx={{ py: 0.5, px: 1.5 }}>Toutes</ToggleButton>
-          <ToggleButton value={5} sx={{ py: 0.5, px: 1.5 }}>5★</ToggleButton>
-          <ToggleButton value={4} sx={{ py: 0.5, px: 1.5 }}>4★+</ToggleButton>
-          <ToggleButton value={3} sx={{ py: 0.5, px: 1.5 }}>3★+</ToggleButton>
-        </ToggleButtonGroup>
-      </Box>
+          <ToggleButtonGroup
+            value={minRating}
+            exclusive
+            onChange={(_, newRating) => setMinRating(newRating)}
+            size="small"
+          >
+            <ToggleButton value={0} sx={{ py: 0.5, px: 1.5 }}>Toutes</ToggleButton>
+            <ToggleButton value={5} sx={{ py: 0.5, px: 1.5 }}>5★</ToggleButton>
+            <ToggleButton value={4} sx={{ py: 0.5, px: 1.5 }}>4★+</ToggleButton>
+            <ToggleButton value={3} sx={{ py: 0.5, px: 1.5 }}>3★+</ToggleButton>
+          </ToggleButtonGroup>
+        </Box>
+      )}
 
       {/* Messages d'erreur */}
       {error && (
@@ -326,8 +343,12 @@ export const BeneficiaryMessageHistory: React.FC<Props> = ({ beneficiaryId, bene
           }
         >
           {messages.length === 0
-            ? 'Aucun message trouvé pour ce bénéficiaire. Consultez le message du jour pour commencer l\'historique !'
-            : 'Aucun message du jour trouvé pour ce bénéficiaire. Consultez le message du jour pour commencer l\'historique !'}
+            ? todayOnly
+              ? 'Aucun message trouvé pour aujourd\'hui. Consultez le message du jour !'
+              : 'Aucun message trouvé pour ce bénéficiaire. Consultez le message du jour pour commencer l\'historique !'
+            : todayOnly
+              ? 'Aucun message trouvé pour aujourd\'hui. Consultez le message du jour !'
+              : 'Aucun message du jour trouvé pour ce bénéficiaire. Consultez le message du jour pour commencer l\'historique !'}
         </Alert>
       )}
 

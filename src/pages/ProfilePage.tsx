@@ -16,10 +16,11 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  InputAdornment
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -34,16 +35,15 @@ import CakeIcon from '@mui/icons-material/Cake';
 import SaveIcon from '@mui/icons-material/Save';
 import WorkIcon from '@mui/icons-material/Work';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import LocationOnIcon from '@mui/icons-material/LocationOn';
+import LockResetIcon from '@mui/icons-material/LockReset';
 import SacredGeometryBackground from '../components/SacredGeometryBackground';
 import { UserRoleBadge } from '../components/profile/UserRoleBadge';
 import BecomePractitionerCard from '../components/practitioner/BecomePractitionerCard';
 import { AvatarUpload } from '../components/profile/AvatarUpload';
 import { getUserBeneficiaries, createBeneficiary, updateBeneficiary } from '../services/beneficiaries';
 import type { BeneficiaryWithAccess } from '../types/beneficiary';
-import { getBeneficiaryDocuments, getSignedBeneficiaryDocumentUrl, DOCUMENT_TYPE_LABELS } from '../services/beneficiaryDocuments';
-import type { BeneficiaryDocument } from '../services/beneficiaryDocuments';
 import { logger } from '../utils/logger';
 import { BeneficiaryMessageHistory } from '../components/beneficiary/BeneficiaryMessageHistory';
 
@@ -82,9 +82,16 @@ const ProfilePage = () => {
   const [myBeneficiary, setMyBeneficiary] = useState<BeneficiaryWithAccess | null>(null);
   const [loadingBeneficiary, setLoadingBeneficiary] = useState(true);
 
-  // Documents du bénéficiaire
-  const [documents, setDocuments] = useState<BeneficiaryDocument[]>([]);
-  const [loadingDocuments, setLoadingDocuments] = useState(false);
+  // Dialogue de changement de mot de passe
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordLoading, setPasswordLoading] = useState(false);
 
   // Charger le bénéficiaire "Moi" au chargement de la page
   useEffect(() => {
@@ -108,8 +115,6 @@ const ProfilePage = () => {
 
         if (selfBeneficiary) {
           setMyBeneficiary(selfBeneficiary);
-          // Charger les documents du bénéficiaire
-          loadDocuments(selfBeneficiary.id);
         }
       }
     } catch (err) {
@@ -119,38 +124,64 @@ const ProfilePage = () => {
     }
   };
 
-  // Fonction pour charger les documents du bénéficiaire
-  const loadDocuments = async (beneficiaryId: string) => {
-    setLoadingDocuments(true);
-    try {
-      const { data, error } = await getBeneficiaryDocuments(beneficiaryId);
-      if (error) {
-        logger.error('Erreur lors du chargement des documents:', error);
-      } else if (data) {
-        // Filtrer pour n'afficher QUE les documents publics
-        // Les documents privés sont accessibles uniquement dans la partie intervenant (rendez-vous)
-        const publicDocuments = data.filter(doc => doc.visibility === 'public');
-        setDocuments(publicDocuments);
-      }
-    } catch (err) {
-      logger.error('Erreur:', err);
-    } finally {
-      setLoadingDocuments(false);
-    }
-  };
+  const handleChangePassword = async () => {
+    setPasswordError('');
 
-  // Fonction pour ouvrir un document PDF
-  const handleOpenDocument = async (document: BeneficiaryDocument) => {
+    // Validations
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Veuillez remplir tous les champs');
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('Les nouveaux mots de passe ne correspondent pas');
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setPasswordError('Le nouveau mot de passe doit contenir au moins 8 caractères');
+      return;
+    }
+
+    setPasswordLoading(true);
+
     try {
-      const url = await getSignedBeneficiaryDocumentUrl(document.file_path);
-      window.open(url, '_blank');
-    } catch (err) {
-      logger.error('Erreur lors de l\'ouverture du document:', err);
+      // Vérifier d'abord le mot de passe actuel en essayant de se reconnecter
+      if (user?.email) {
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: user.email,
+          password: currentPassword
+        });
+
+        if (signInError) {
+          throw new Error('Mot de passe actuel incorrect');
+        }
+      }
+
+      // Mettre à jour le mot de passe
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (updateError) throw updateError;
+
+      // Réinitialiser et fermer
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setPasswordDialogOpen(false);
+
       setSnackbar({
         open: true,
-        message: 'Impossible d\'ouvrir le document. Veuillez réessayer.',
-        severity: 'error'
+        message: 'Mot de passe modifié avec succès !',
+        severity: 'success'
       });
+
+    } catch (err: any) {
+      logger.error('Erreur changement mot de passe:', err);
+      setPasswordError(err.message || 'Erreur lors du changement de mot de passe');
+    } finally {
+      setPasswordLoading(false);
     }
   };
 
@@ -385,8 +416,8 @@ const ProfilePage = () => {
                   height: '100%',
                 }}
               >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
+                <CardContent sx={{ p: 2.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Box
                       sx={{
                         width: 48,
@@ -413,7 +444,7 @@ const ProfilePage = () => {
                     </Typography>
                   </Box>
 
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <TextField
                       label="Pseudo"
                       fullWidth
@@ -509,6 +540,24 @@ const ProfilePage = () => {
                         },
                       }}
                     />
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      startIcon={<LockResetIcon />}
+                      onClick={() => setPasswordDialogOpen(true)}
+                      sx={{
+                        borderColor: '#345995',
+                        color: '#345995',
+                        borderRadius: '12px',
+                        py: 1,
+                        '&:hover': {
+                          borderColor: '#FFA500',
+                          background: 'rgba(255, 165, 0, 0.1)',
+                        },
+                      }}
+                    >
+                      Changer mon mot de passe
+                    </Button>
                   </Box>
                 </CardContent>
               </Card>
@@ -525,8 +574,8 @@ const ProfilePage = () => {
                   border: '2px solid rgba(255, 215, 0, 0.2)',
                 }}
               >
-                <CardContent sx={{ p: 4 }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <CardContent sx={{ p: 2.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
                     <Box
                       sx={{
                         width: 48,
@@ -592,12 +641,13 @@ const ProfilePage = () => {
                     severity="info"
                     icon={false}
                     sx={{
-                      mb: 3,
+                      mb: 2,
+                      py: 0.5,
                       borderRadius: '12px',
                       background: 'rgba(255, 215, 0, 0.1)',
                       border: '1px solid rgba(255, 215, 0, 0.3)',
                       '& .MuiAlert-message': {
-                        fontSize: '0.875rem',
+                        fontSize: '0.8rem',
                         color: '#1D3461',
                       },
                     }}
@@ -605,7 +655,7 @@ const ProfilePage = () => {
                     Ces informations sont essentielles pour la Numérologie Stratégique®
                   </Alert>
 
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                     <TextField
                       label="Tous les prénoms"
                       fullWidth
@@ -725,137 +775,14 @@ const ProfilePage = () => {
               </Card>
             </Grid>
 
-            {/* Documents du bénéficiaire "Moi" */}
-            {myBeneficiary && (
-              <Grid item xs={12}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    borderRadius: '16px',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-                    border: '2px solid rgba(52, 89, 149, 0.2)',
-                  }}
-                >
-                  <CardContent sx={{ p: 4 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                      <Box
-                        sx={{
-                          width: 48,
-                          height: 48,
-                          borderRadius: '12px',
-                          background: 'linear-gradient(135deg, #345995, #1D3461)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          mr: 2,
-                        }}
-                      >
-                        <PictureAsPdfIcon sx={{ color: '#FFD700', fontSize: '1.5rem' }} />
-                      </Box>
-                      <Typography
-                        variant="h5"
-                        component="h2"
-                        sx={{
-                          fontWeight: 700,
-                          color: '#1D3461',
-                        }}
-                      >
-                        Mes documents
-                      </Typography>
-                    </Box>
-
-                    {loadingDocuments ? (
-                      <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                        <CircularProgress />
-                      </Box>
-                    ) : documents.length > 0 ? (
-                      <List>
-                        {documents.map((doc) => (
-                          <ListItem
-                            key={doc.id}
-                            sx={{
-                              borderRadius: '12px',
-                              mb: 1,
-                              background: 'rgba(52, 89, 149, 0.05)',
-                              '&:hover': {
-                                background: 'rgba(52, 89, 149, 0.1)',
-                                cursor: 'pointer',
-                              },
-                            }}
-                            onClick={() => handleOpenDocument(doc)}
-                          >
-                            <ListItemIcon>
-                              <PictureAsPdfIcon sx={{ color: '#d32f2f' }} />
-                            </ListItemIcon>
-                            <ListItemText
-                              primary={
-                                <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                                  <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                                    {doc.file_name}
-                                  </Typography>
-                                  <Chip
-                                    label={DOCUMENT_TYPE_LABELS[doc.document_type]}
-                                    size="small"
-                                    sx={{
-                                      background: '#345995',
-                                      color: 'white',
-                                      fontSize: '0.75rem',
-                                    }}
-                                  />
-                                </Box>
-                              }
-                              secondary={
-                                doc.description ||
-                                `Ajouté le ${new Date(doc.uploaded_at).toLocaleDateString('fr-FR')}`
-                              }
-                            />
-                          </ListItem>
-                        ))}
-                      </List>
-                    ) : (
-                      <Alert
-                        severity="info"
-                        sx={{
-                          borderRadius: '12px',
-                          background: 'rgba(52, 89, 149, 0.1)',
-                          border: '1px solid rgba(52, 89, 149, 0.3)',
-                        }}
-                      >
-                        Aucun document public disponible pour le moment. Vos documents publics seront ajoutés par vos intervenants. Les documents privés sont accessibles uniquement dans la partie intervenant.
-                      </Alert>
-                    )}
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
-
-            {/* Section Mes Messages du Jour */}
-            {myBeneficiary && (
-              <Grid item xs={12}>
-                <Card
-                  elevation={0}
-                  sx={{
-                    borderRadius: '16px',
-                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
-                  }}
-                >
-                  <CardContent sx={{ p: 4 }}>
-                    <BeneficiaryMessageHistory
-                      beneficiaryId={myBeneficiary.id}
-                      beneficiaryName={myBeneficiary.first_name}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
-
             {/* Bouton d'enregistrement */}
             <Grid item xs={12}>
               <Box
                 sx={{
                   display: 'flex',
                   justifyContent: 'center',
-                  mt: 2,
+                  mt: 1,
+                  mb: 2,
                 }}
               >
                 <Button
@@ -890,6 +817,27 @@ const ProfilePage = () => {
               </Box>
             </Grid>
 
+            {/* Section Mes Messages du Jour */}
+            {myBeneficiary && (
+              <Grid item xs={12}>
+                <Card
+                  elevation={0}
+                  sx={{
+                    borderRadius: '16px',
+                    boxShadow: '0 8px 32px rgba(0, 0, 0, 0.08)',
+                  }}
+                >
+                  <CardContent sx={{ p: 4 }}>
+                    <BeneficiaryMessageHistory
+                      beneficiaryId={myBeneficiary.id}
+                      beneficiaryName={myBeneficiary.first_name}
+                      todayOnly={true}
+                    />
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
+
             {/* Card pour devenir intervenant (uniquement pour les clients) */}
             {profile?.user_type === 'client' && (
               <Grid item xs={12} md={6}>
@@ -902,6 +850,148 @@ const ProfilePage = () => {
         </Box>
         </Container>
       </Box>
+
+      {/* Dialogue de changement de mot de passe */}
+      <Dialog
+        open={passwordDialogOpen}
+        onClose={() => {
+          setPasswordDialogOpen(false);
+          setPasswordError('');
+          setCurrentPassword('');
+          setNewPassword('');
+          setConfirmPassword('');
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '8px',
+                background: 'linear-gradient(135deg, #345995, #1D3461)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <LockResetIcon sx={{ color: '#FFD700' }} />
+            </Box>
+            <Typography variant="h6" sx={{ fontWeight: 700, color: '#1D3461' }}>
+              Changer mon mot de passe
+            </Typography>
+          </Box>
+        </DialogTitle>
+
+        <DialogContent sx={{ pt: 2 }}>
+          {passwordError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {passwordError}
+            </Alert>
+          )}
+
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              label="Mot de passe actuel"
+              type={showCurrentPassword ? 'text' : 'password'}
+              fullWidth
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              disabled={passwordLoading}
+              autoComplete="current-password"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                      edge="end"
+                    >
+                      {showCurrentPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              label="Nouveau mot de passe"
+              type={showNewPassword ? 'text' : 'password'}
+              fullWidth
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              disabled={passwordLoading}
+              helperText="Minimum 8 caractères"
+              autoComplete="new-password"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      edge="end"
+                    >
+                      {showNewPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+
+            <TextField
+              label="Confirmer le nouveau mot de passe"
+              type={showConfirmPassword ? 'text' : 'password'}
+              fullWidth
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              disabled={passwordLoading}
+              autoComplete="new-password"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      edge="end"
+                    >
+                      {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                    </IconButton>
+                  </InputAdornment>
+                ),
+              }}
+            />
+          </Box>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button
+            onClick={() => {
+              setPasswordDialogOpen(false);
+              setPasswordError('');
+              setCurrentPassword('');
+              setNewPassword('');
+              setConfirmPassword('');
+            }}
+            disabled={passwordLoading}
+          >
+            Annuler
+          </Button>
+          <Button
+            onClick={handleChangePassword}
+            variant="contained"
+            disabled={passwordLoading}
+            sx={{
+              background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+              color: '#1D3461',
+              fontWeight: 600,
+              '&:hover': {
+                background: 'linear-gradient(135deg, #FFA500, #FFD700)',
+              },
+            }}
+          >
+            {passwordLoading ? <CircularProgress size={24} /> : 'Changer le mot de passe'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Snackbar pour le profil */}
       <Snackbar

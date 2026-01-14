@@ -89,19 +89,38 @@ const SignupPage: React.FC = () => {
     setLoading(true);
     
     try {
-      const { error: signUpError } = await signUpWithEmail(email, password, {
+      const { error: signUpError, data: signUpData } = await signUpWithEmail(email, password, {
         first_name: firstName,
         last_name: lastName,
         pseudo: pseudo,
         birth_date: birthDate,
         user_type: 'client'
       });
-      
+
       if (signUpError) {
         throw signUpError;
       }
-      
-      // Inscription réussie, rediriger vers la page spécifiée ou par défaut
+
+      // Vérifier si l'email doit être confirmé
+      // Si data.session est null, cela signifie qu'une confirmation d'email est requise
+      const needsEmailConfirmation = !signUpData?.session;
+
+      if (needsEmailConfirmation) {
+        // Afficher un message de confirmation d'email
+        setError(null);
+        setLoading(false);
+        // On pourrait afficher un message de succès au lieu d'une erreur
+        alert('Inscription réussie ! Veuillez vérifier votre email pour confirmer votre compte.');
+        // Rediriger vers la page de login
+        navigate('/login', {
+          state: {
+            message: 'Veuillez vérifier votre email pour confirmer votre compte.'
+          }
+        });
+        return;
+      }
+
+      // Inscription réussie avec session établie, rediriger vers la page spécifiée ou par défaut
       if (state.from) {
         // Si la redirection vient de la page module adulte et contient les informations de service
         if (state.from === '/prendre-rendez-vous' && state.preSelectedServiceId) {
@@ -119,7 +138,7 @@ const SignupPage: React.FC = () => {
         // Redirection par défaut
         navigate('/');
       }
-      
+
     } catch (err) {
       logger.error('Erreur d\'inscription:', err);
       setError('Erreur lors de l\'inscription. Veuillez réessayer.');
@@ -246,6 +265,7 @@ const SignupPage: React.FC = () => {
                 label="Confirmer le mot de passe"
                 type={showConfirmPassword ? 'text' : 'password'}
                 id="confirmPassword"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 disabled={loading}

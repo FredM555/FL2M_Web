@@ -36,8 +36,15 @@ const ForgotPasswordPage: React.FC = () => {
       }
 
       // Envoyer l'email de réinitialisation via Supabase
+      // Utiliser une URL explicite pour éviter les problèmes de redirection
+      const resetUrl = import.meta.env.VITE_APP_URL
+        ? `${import.meta.env.VITE_APP_URL}/reset-password`
+        : `${window.location.origin}/reset-password`;
+
+      logger.info('[FORGOT_PASSWORD] URL de redirection:', resetUrl);
+
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/reset-password`,
+        redirectTo: resetUrl,
       });
 
       if (resetError) throw resetError;
